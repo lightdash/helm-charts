@@ -1,0 +1,14 @@
+apiVersion: v1
+entries:
+  lightdash:
+  - apiVersion: v2
+    appVersion: 1.16.0
+    created: "2022-02-17T02:13:33.147346533Z"
+    description: A Helm chart to deploy lightsash on kubernetes
+    digest: 1ddc1a7040c2af6a149a3d90ea387951e602c26de42b5ab4f66433e0e82bf04f
+    name: lightdash
+    type: application
+    urls:
+    - https://github.com/lightdash/helm-charts/releases/download/lightdash-0.1.0/lightdash-0.1.0.tgz
+    version: 0.1.0
+generated: "2022-02-17T02:13:32.773172735Z"
