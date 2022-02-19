@@ -1,16 +1,5 @@
 # Lightdash helm-charts
 
-Helm Charts to deploy [lightdash](https://github.com/lightdash/lightdash). 
-
-## Installing Lightdash: 
-
-```
-helm repo add lightdash https://lightdash.github.io/helm-charts
-helm install lightdash ligthdash/lightdash \
-  --set args.lightdashSecret=abc123 \
-  ... etc...
-```
-
 ## 🚧 WARNING 🚧
 
 Please be advised that these helm charts are under rapid development and will be refactored in the very near future.
