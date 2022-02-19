@@ -1,0 +1,24 @@
+name: Generate Helm Docs
+
+on:
+  pull_request:
+
+jobs:
+  generate-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Generate Helm Docs
+        uses: docker://jnorwood/helm-docs:v1.7.0
+        with:
+          entrypoint: /usr/bin/helm-docs
+          args: --chart-search-root /github/workspace
+
+      - name: commit changes
+        uses: stefanzweifel/git-auto-commit-action@v4.13.1
+        with:
+          commit_message: ":robot: update docs [skip ci]"
+          repository: .

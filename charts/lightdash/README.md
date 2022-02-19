@@ -33,6 +33,9 @@ helm install lightdash ligthdash/lightdash \
 
 ## Values
 
+Note The `secret.*` values are used to create [kubernetes secrets](https://kubernetes.io/docs/concepts/configuration/secret/).
+If you don't want helm to manage this, you may wish to separately create a secret named `<release-name>-lightdash`.
+
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | affinity | object | `{}` |  |
@@ -40,7 +43,6 @@ helm install lightdash ligthdash/lightdash \
 | autoscaling.maxReplicas | int | `100` |  |
 | autoscaling.minReplicas | int | `1` |  |
 | autoscaling.targetCPUUtilizationPercentage | int | `80` |  |
-| configMap | object | `{"DBT_PROJECT_DIR":"","PGDATABASE":"lightdash","PGHOST":"localhost","PGPORT":"5432","PGUSER":"lightdash","PORT":"8080","SECURE_COOKIES":"false","TRUST_PROXY":"false"}` | The configmap values are passed in as environment variables to the lightdash container. |
 | configMap.DBT_PROJECT_DIR | string | `""` | Path to your local dbt project. Only set this value if you are mounting a DBT project |
 | configMap.PGDATABASE | string | `"lightdash"` | The name of the PostgreSQL database |
 | configMap.PGHOST | string | `"localhost"` | The hostname of the PostgreSQL database |
@@ -67,7 +69,6 @@ helm install lightdash ligthdash/lightdash \
 | podSecurityContext | object | `{}` |  |
 | replicaCount | int | `1` | Specify the number of lightdash instances. |
 | resources | object | `{}` |  |
-| secrets | object | `{"LIGHTDASH_SECRET":"changeme","PGPASSWORD":"changeme"}` | The secret values are passed in as environment variables to the lightdash container. You may also supply these outside of helm by commenting out the secrets key and values and separately creating a secret named `<release-name>-lightdash`. |
 | secrets.LIGHTDASH_SECRET | string | `"changeme"` | This is the secret used to sign the session ID cookie and to encrypt sensitive information. Do not share this secret! |
 | secrets.PGPASSWORD | string | `"changeme"` | The password for the ligthdash account in the PostgreSQL database |
 | securityContext | object | `{}` |  |

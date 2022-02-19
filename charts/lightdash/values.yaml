@@ -1,4 +1,4 @@
-# -- The configmap values are passed in as environment variables to the lightdash container.
+
 configMap:
   # -- The hostname of the PostgreSQL database
   PGHOST: localhost
@@ -17,7 +17,6 @@ configMap:
   # -- Path to your local dbt project. Only set this value if you are mounting a DBT project
   DBT_PROJECT_DIR: ""
 
-# -- The secret values are passed in as environment variables to the lightdash container. You may also supply these outside of helm by commenting out the secrets key and values and separately creating a secret named `<release-name>-lightdash`.
 secrets:
   # -- The password for the ligthdash account in the PostgreSQL database
   PGPASSWORD: changeme
