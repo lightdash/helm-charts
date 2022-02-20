@@ -45,7 +45,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | autoscaling.targetCPUUtilizationPercentage | int | `80` |  |
 | configMap.DBT_PROJECT_DIR | string | `""` | Path to your local dbt project. Only set this value if you are mounting a DBT project |
 | configMap.PGDATABASE | string | `"lightdash"` | The name of the PostgreSQL database |
-| configMap.PGHOST | string | `"localhost"` | The hostname of the PostgreSQL database |
+| configMap.PGHOST | string | `"lightdashdb-postgresql.default.svc.cluster.local"` | The hostname of the PostgreSQL database |
 | configMap.PGPORT | string | `"5432"` | The database port of the PostgreSQL database |
 | configMap.PGUSER | string | `"lightdash"` | The username for the lightdash account in the PostgreSQL database |
 | configMap.PORT | string | `"8080"` | Port for lightdash |
@@ -54,7 +54,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | fullnameOverride | string | `""` |  |
 | image.pullPolicy | string | `"IfNotPresent"` |  |
 | image.repository | string | `"lightdash/lightdash"` |  |
-| image.tag | string | `"latest"` | Override the image tag |
+| image.tag | string | `"0.25.0"` | Override the image tag |
 | imagePullSecrets | list | `[]` |  |
 | ingress.annotations | object | `{}` |  |
 | ingress.className | string | `""` |  |
