@@ -61,4 +61,4 @@ jobs:
           helm install lightdashdb bitnami/postgresql --set auth.username=lightdash,auth.password=changeme,auth.database=lightdash --set primary.persistence.enabled=false
 
       - name: Run chart-testing (install)
-        run: ct install --config .github/ct-install.yaml
+        run: ct install --config .github/ct-install.yaml --all
