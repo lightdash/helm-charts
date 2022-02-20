@@ -1,7 +1,6 @@
-
 configMap:
   # -- The hostname of the PostgreSQL database
-  PGHOST: localhost
+  PGHOST: lightdashdb-postgresql.default.svc.cluster.local
   # -- The username for the lightdash account in the PostgreSQL database
   PGUSER: lightdash
   # -- The database port of the PostgreSQL database
@@ -31,7 +30,7 @@ image:
   repository: lightdash/lightdash
   pullPolicy: IfNotPresent
   # -- Override the image tag
-  tag: "latest"
+  tag: "0.25.0"
 
 imagePullSecrets: []
 nameOverride: ""
