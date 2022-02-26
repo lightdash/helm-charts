@@ -31,7 +31,7 @@ jobs:
           script: |
             const fs = require('fs');
             const yaml = require('js-yaml');
-            
+
             const { LIGHTDASH_VERSION } = process.env;
             const semanticVersionRegex = /(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?/;
 
@@ -44,7 +44,7 @@ jobs:
               try {
                 return fs.readFileSync(`${path}`, 'utf8');
               } catch {
-                return `ERROR reading ${path}. See the run for more details`
+                core.error `ERROR reading ${path}. See the run for more details`
               }
             }
 
@@ -52,7 +52,7 @@ jobs:
               try {
                 fs.writeFileSync(`${path}`, content, 'utf8');
               } catch {
-                console.error(`ERROR writing ${path}. See the run for more details`);
+                core.error `ERROR writing ${path}. See the run for more details` ;
               }
             }
 
@@ -81,12 +81,11 @@ jobs:
             }
 
             const originalChartYaml = readFile('charts/lightdash/Chart.yaml');
-            const originalValuesYaml = readFile('charts/lightdash/values.yaml');
-
             const newChartYaml = incrementChartVersion(setAppVersion(originalChartYaml, LIGHTDASH_VERSION));
-            const newValuesYaml = setImageTag(originalValuesYaml, LIGHTDASH_VERSION);
-
             writeFile('charts/lightdash/Chart.yaml', newChartYaml);
+
+            const originalValuesYaml = readFile('charts/lightdash/values.yaml');
+            const newValuesYaml = setImageTag(originalValuesYaml, LIGHTDASH_VERSION);
             writeFile('charts/lightdash/values.yaml', newValuesYaml);
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
