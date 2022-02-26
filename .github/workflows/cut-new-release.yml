@@ -35,11 +35,6 @@ jobs:
             const { LIGHTDASH_VERSION } = process.env;
             const semanticVersionRegex = /(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?/;
 
-
-            function loadFile(path) {
-              return yaml.load(readFile(path));
-            }
-
             function readFile(path) {
               try {
                 return fs.readFileSync(`${path}`, 'utf8');
@@ -57,7 +52,7 @@ jobs:
             }
 
             function incrementChartVersion(rawChartYaml) {
-              const chartYaml = loadFile(rawChartYaml);
+              const chartYaml = yaml.load(rawChartYaml);
               const version = chartYaml.version.match(semanticVersionRegex);
               const newVersion = `${version[1]}.${version[2]}.${parseInt(version[3]) + 1}`;
               rawChartYaml.replace(`version: ${version}`, `version: ${newVersion}`);
@@ -65,7 +60,7 @@ jobs:
             }
 
             function setAppVersion(rawChartYaml, appVersion) {
-              const chartYaml = loadFile(rawChartYaml);
+              const chartYaml = yaml.load(rawChartYaml);
               const version = chartYaml.appVersion.match(semanticVersionRegex);
               const newVersion = appVersion;
               rawChartYaml.replace(`appVersion: ${version}`, `appVersion: ${newVersion}`);
@@ -73,7 +68,7 @@ jobs:
             }
 
             function setImageTag(rawValuesYaml, appVersion) {
-              const valuesYaml = loadFile(rawValuesYaml);
+              const valuesYaml = yaml.load(rawValuesYaml);
               const version = valuesYaml.image.tag.match(semanticVersionRegex);
               const newVersion = appVersion;
               rawValuesYaml.replace(`  tag: ${version}`, `  tag: ${newVersion}`);
