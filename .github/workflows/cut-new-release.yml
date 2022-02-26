@@ -48,10 +48,6 @@ jobs:
               }
             }
 
-            function dumpFile(path, content) {
-              writeFile(path, yaml.dump(content));
-            }
-
             function writeFile(path, content) {
               try {
                 fs.writeFileSync(`${path}`, content, 'utf8');
@@ -60,31 +56,38 @@ jobs:
               }
             }
 
-            function incrementChartVersion(chartYaml) {
+            function incrementChartVersion(rawChartYaml) {
+              const chartYaml = loadFile(rawChartYaml);
               const version = chartYaml.version.match(semanticVersionRegex);
               const newVersion = `${version[1]}.${version[2]}.${parseInt(version[3]) + 1}`;
-              chartYaml.version = newVersion;
-              return chartYaml;
+              rawChartYaml.replace(`version: ${version}`, `version: ${newVersion}`);
+              return rawChartYaml;
             }
 
-            function setAppVersion(chartYaml, appVersion) {
-              chartYaml.appVersion = appVersion;
-              return chartYaml;
+            function setAppVersion(rawChartYaml, appVersion) {
+              const chartYaml = loadFile(rawChartYaml);
+              const version = chartYaml.appVersion.match(semanticVersionRegex);
+              const newVersion = appVersion;
+              rawChartYaml.replace(`appVersion: ${version}`, `appVersion: ${newVersion}`);
+              return rawChartYaml;
             }
 
-            function setImageTag(valuesYaml, appVersion) {
-              valuesYaml.image.tag = appVersion;
-              return valuesYaml;
+            function setImageTag(rawValuesYaml, appVersion) {
+              const valuesYaml = loadFile(rawValuesYaml);
+              const version = valuesYaml.image.tag.match(semanticVersionRegex);
+              const newVersion = appVersion;
+              rawValuesYaml.replace(`  tag: ${version}`, `  tag: ${newVersion}`);
+              return rawValuesYaml;
             }
 
-            const originalChartYaml = loadFile('charts/lightdash/Chart.yaml');
-            const originalValuesYaml = loadFile('charts/lightdash/values.yaml');
+            const originalChartYaml = readFile('charts/lightdash/Chart.yaml');
+            const originalValuesYaml = readFile('charts/lightdash/values.yaml');
 
             const newChartYaml = incrementChartVersion(setAppVersion(originalChartYaml, LIGHTDASH_VERSION));
             const newValuesYaml = setImageTag(originalValuesYaml, LIGHTDASH_VERSION);
 
-            dumpFile('charts/lightdash/Chart.yaml', newChartYaml);
-            dumpFile('charts/lightdash/values.yaml', newValuesYaml);
+            writeFile('charts/lightdash/Chart.yaml', newChartYaml);
+            writeFile('charts/lightdash/values.yaml', newValuesYaml);
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
         with:
