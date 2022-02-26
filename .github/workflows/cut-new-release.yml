@@ -1,0 +1,94 @@
+name: Cut New Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      lightdash-version:
+        description: The Semantic Version number of the Lightdash App.
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  update-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Increment versions
+        uses: actions/github-script@v5
+        env:
+          LIGHTDASH_VERSION: ${{ github.event.inputs.lightdash-version }}
+        with:
+          script: |
+            const fs = require('fs');
+            const yaml = require('js-yaml');
+            
+            const { LIGHTDASH_VERSION } = process.env;
+            const semanticVersionRegex = /(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?/;
+
+
+            function loadFile(path) {
+              return yaml.safeLoad(readFile(path));
+            }
+
+            function readFile(path) {
+              try {
+                return fs.readFileSync(`${path}`, 'utf8');
+              } catch {
+                return `ERROR reading ${path}. See the run for more details`
+              }
+            }
+
+            function dumpFile(path, content) {
+              writeFile(path, yaml.safeDump(content));
+            }
+
+            function writeFile(path, content) {
+              try {
+                fs.writeFileSync(`${path}`, content, 'utf8');
+              } catch {
+                console.error(`ERROR writing ${path}. See the run for more details`);
+              }
+            }
+
+            function incrementChartVersion(chartYaml) {
+              const version = chartYaml.version.match(semanticVersionRegex);
+              const newVersion = `${version[1]}.${version[2]}.${parseInt(version[3]) + 1}`;
+              chartYaml.version = newVersion;
+              return chartYaml;
+            }
+
+            function setAppVersion(chartYaml, appVersion) {
+              chartYaml.appVersion = appVersion;
+              return chartYaml;
+            }
+
+            function setImageTag(valuesYaml, appVersion) {
+              valuesYaml.image.tag = appVersion;
+              return valuesYaml;
+            }
+
+            const originalChartYaml = loadFile('charts/lightdash/Chart.yaml');
+            const originalValuesYaml = loadFile('charts/lightdash/values.yaml');
+
+            const newChartYaml = incrementChartVersion(setAppVersion(originalChartYaml, LIGHTDASH_VERSION));
+            const newValuesYaml = setImageTag(originalValuesYaml, LIGHTDASH_VERSION);
+
+            dumpFile('charts/lightdash/Chart.yaml', newChartYaml);
+            dumpFile('charts/lightdash/values.yaml', newValuesYaml);
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          add-paths: |
+            charts/lightdash/values.yaml
+            charts/lightdash/Chart.yaml
+          commit-message: ":robot: fix(release): Update Lightdash App Version to ${{ github.event.inputs.lightdash-version }}"
+          branch: release/lightdash/appVersion/${{ github.event.inputs.lightdash-version }}
+          delete-branch: true
+          title: "Update Lightdash App Version to ${{ github.event.inputs.lightdash-version }}"
