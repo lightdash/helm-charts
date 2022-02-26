@@ -92,3 +92,4 @@ jobs:
           branch: "release/lightdash/appVersion/0.28.0"
           delete-branch: true
           title: "Update Lightdash App Version to 0.28.0"
+          body: "This is a release of the Lightdash App. The appVersion has been bumped to 0.28.0"
