@@ -37,7 +37,7 @@ jobs:
 
 
             function loadFile(path) {
-              return yaml.safeLoad(readFile(path));
+              return yaml.load(readFile(path));
             }
 
             function readFile(path) {
@@ -49,7 +49,7 @@ jobs:
             }
 
             function dumpFile(path, content) {
-              writeFile(path, yaml.safeDump(content));
+              writeFile(path, yaml.dump(content));
             }
 
             function writeFile(path, content) {
