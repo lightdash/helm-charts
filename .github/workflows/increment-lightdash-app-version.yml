@@ -1,9 +1,6 @@
-name: Cut New Release
+name: Increment Lightdash App version
 
 on:
-  push:
-    branches:
-      - jimp/trigger-an-appVersion-bump
   workflow_dispatch:
     inputs:
       lightdash-version:
@@ -26,7 +23,7 @@ jobs:
       - name: Increment versions
         uses: actions/github-script@v5
         env:
-          LIGHTDASH_VERSION: "0.28.0"
+          LIGHTDASH_VERSION: "${{ github.event.inputs.lightdash-version }}"
         with:
           script: |
             const fs = require('fs');
@@ -85,8 +82,8 @@ jobs:
           add-paths: |
             charts/lightdash/values.yaml
             charts/lightdash/Chart.yaml
-          commit-message: ":robot: fix(release): Update Lightdash App Version to 0.28.0"
-          branch: "release/lightdash/appVersion/0.28.0"
+          commit-message: ":robot: fix(release): Update Lightdash App Version to ${{ github.event.inputs.lightdash-version }}"
+          branch: "release/lightdash/appVersion/${{ github.event.inputs.lightdash-version }}"
           delete-branch: true
-          title: "Update Lightdash App Version to 0.28.0"
-          body: "This is a release of the Lightdash App. The appVersion has been bumped to 0.28.0"
+          title: "Update Lightdash App Version to ${{ github.event.inputs.lightdash-version }}"
+          body: "This is a release of the Lightdash App. The appVersion has been bumped to ${{ github.event.inputs.lightdash-version }}"
