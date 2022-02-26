@@ -55,7 +55,7 @@ jobs:
               const chartYaml = yaml.load(rawChartYaml);
               const version = chartYaml.version.match(semanticVersionRegex);
               const newVersion = `${version[1]}.${version[2]}.${parseInt(version[3]) + 1}`;
-              rawChartYaml.replace(`version: ${version}`, `version: ${newVersion}`);
+              rawChartYaml.replace(`version: ${version[0]}`, `version: ${newVersion}`);
               return rawChartYaml;
             }
 
@@ -63,7 +63,7 @@ jobs:
               const chartYaml = yaml.load(rawChartYaml);
               const version = chartYaml.appVersion.match(semanticVersionRegex);
               const newVersion = appVersion;
-              rawChartYaml.replace(`appVersion: ${version}`, `appVersion: ${newVersion}`);
+              rawChartYaml.replace(`appVersion: ${version[0]}`, `appVersion: ${newVersion}`);
               return rawChartYaml;
             }
 
@@ -71,7 +71,7 @@ jobs:
               const valuesYaml = yaml.load(rawValuesYaml);
               const version = valuesYaml.image.tag.match(semanticVersionRegex);
               const newVersion = appVersion;
-              rawValuesYaml.replace(`  tag: ${version}`, `  tag: ${newVersion}`);
+              rawValuesYaml.replace(`  tag: ${version[0]}`, `  tag: ${newVersion}`);
               return rawValuesYaml;
             }
 
