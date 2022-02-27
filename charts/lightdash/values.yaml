@@ -1,23 +1,29 @@
-args:
-  secureCookies: false
-  trustProxy: false
-  lightdashSecret:
+configMap:
+  # -- The hostname of the PostgreSQL database
+  PGHOST: lightdashdb-postgresql.default.svc.cluster.local
+  # -- The username for the lightdash account in the PostgreSQL database
+  PGUSER: lightdash
+  # -- The database port of the PostgreSQL database
+  PGPORT: "5432"
+  # -- The name of the PostgreSQL database
+  PGDATABASE: lightdash
+  # -- Secure Cookies
+  SECURE_COOKIES: "false"
+  # -- Trust the reverse proxy when setting secure cookies (via the "X-Forwarded-Proto" header)
+  TRUST_PROXY: "false"
+  # -- Port for lightdash
+  PORT: "8080"
+  # -- Path to your local dbt project. Only set this value if you are mounting a DBT project
+  DBT_PROJECT_DIR: ""
 
-  postgres:
-    host:
-    port: 5432
-    database:
-    # You can provide username and password from a rawValue key, containing
-    # the value itself, of from a secret, then, define secretName and secretKey instead.
-    username:
-      rawValue:
-      secretName:
-      secretKey:
-    password:
-      rawValue:
-      secretName:
-      secretKey:
+secrets:
+  # -- The password for the ligthdash account in the PostgreSQL database
+  PGPASSWORD: changeme
+  # -- 	This is the secret used to sign the session ID cookie and to encrypt sensitive information. Do not share this secret!
+  LIGHTDASH_SECRET: changeme
 
+
+# -- Specify the number of lightdash instances.
 replicaCount: 1
 
 image:

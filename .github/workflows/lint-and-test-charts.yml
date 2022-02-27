@@ -1,0 +1,64 @@
+name: Lint and Test Charts
+
+on: pull_request
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.2.0
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v1
+        with:
+          version: v3.7.2
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+
+      - name: Set up chart-testing
+        uses: helm/chart-testing-action@v2.2.0
+
+      - name: Run chart-testing (lint)
+        run: ct lint --all
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # When changing versions here, check that the version exists at: https://hub.docker.com/r/kindest/node/tags?page=1&ordering=last_updated
+        k8s:
+          - v1.20.2
+          - v1.21.2
+          - v1.22.5
+          - v1.23.3
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.2.0
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v1
+        with:
+          version: v3.7.2
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+
+      - name: Set up chart-testing
+        uses: helm/chart-testing-action@v2.2.0
+
+      - name: Create kind ${{ matrix.k8s }} cluster
+        uses: helm/kind-action@v1.2.0
+        with:
+          node_image: kindest/node:${{ matrix.k8s }}
+
+      - name: Install PostgreSQL dependency
+        run: |
+          helm repo add bitnami https://charts.bitnami.com/bitnami
+          helm install lightdashdb bitnami/postgresql --set auth.username=lightdash,auth.password=changeme,auth.database=lightdash --set primary.persistence.enabled=false
+
+      - name: Run chart-testing (install)
+        run: ct install --config .github/ct-install.yaml --all
