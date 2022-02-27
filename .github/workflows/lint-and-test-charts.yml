@@ -1,4 +1,4 @@
-name: Lint and Test Charts
+name: Lint, Test, Autorelease Charts
 
 on: pull_request
 
@@ -62,3 +62,18 @@ jobs:
 
       - name: Run chart-testing (install)
         run: ct install --config .github/ct-install.yaml --all
+
+  automerge:
+    needs: [lint, test]
+    if: ${{ contains(github.event.pull_request.labels, 'merge after testing') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: automerge
+        uses: "pascalgn/automerge-action@v0.14.3"
+        env:
+          MERGE_LABELS: "merge after testing"
+          MERGE_METHOD: squash
+          MERGE_COMMIT_MESSAGE: pull-request-title
+          MERGE_FORKS: false
+          MERGE_DELETE_BRANCH: true
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"

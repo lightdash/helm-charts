@@ -87,6 +87,7 @@ jobs:
           delete-branch: true
           title: "Update Lightdash App Version to ${{ github.event.inputs.lightdash-version }}"
           body: "This is a release of the Lightdash App. The appVersion has been bumped to ${{ github.event.inputs.lightdash-version }}"
+          labels: merge after testing
       ## In order to skip the Pull Request and automatically release a new chart, swap the below step with the one above.
       # - name: Commit and Push
       #   uses: stefanzweifel/git-auto-commit-action@v4.13.1
