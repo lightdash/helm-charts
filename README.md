@@ -1,15 +1,12 @@
 # Lightdash helm-charts
 
-Helm Charts to deploy [lightdash](https://github.com/lightdash/lightdash). 
 
-## Installing Lightdash: 
+# Development
 
-```
-helm repo add lightdash https://lightdash.github.io/helm-charts
-helm install lightdash ligthdash/lightdash \
-  --set args.lightdashSecret=abc123 \
-  ... etc...
-```
+It is recommended to work on this project with VS Code, as the development environment is pre-configured in a [development container](https://code.visualstudio.com/docs/remote/create-dev-container).
+
+## Linting
+  `ct lint --all`
 
 ## 🚧 WARNING 🚧
 

@@ -1,5 +1,6 @@
 name: Lint, Test, Autorelease Charts
 
+
 on: pull_request
 
 jobs:
@@ -77,3 +78,4 @@ jobs:
           MERGE_FORKS: false
           MERGE_DELETE_BRANCH: true
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+
