@@ -32,49 +32,17 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          env:
-          - name: PGHOST
-            value: {{ .Values.args.postgres.host}}
-          
-          {{- if .Values.args.postgres.password.rawValue }}
-          - name: PGPASSWORD
-            value: {{ .Values.args.postgres.password.rawValue }}
+          command: {{ .Values.image.command }}
+          args: {{ .Values.image.args }}
+          envFrom:
+          {{- if $.Values.configMap }}
+            - configMapRef:
+                name: {{ template "helm.fullname" $ }}
           {{- end }}
-
-          {{- if .Values.args.postgres.password.secretName }}
-            - name: PGPASSWORD
-              valueFrom:
-                secretKeyRef:
-                  key: {{ .Values.args.postgres.password.secretKey }}
-                  name: {{ .Values.args.postgres.password.secretName }}
+          {{- if $.Values.secrets }}
+            - secretRef:
+                name: {{ template "helm.fullname" $ }}
           {{- end }}
-
-          {{- if .Values.args.postgres.username.rawValue }}
-          - name: PGUSER
-            value: {{ .Values.args.postgres.username.rawValue }}
-          {{- end }}
-
-          {{- if .Values.args.postgres.username.secretName }}
-            - name: PGUSER
-              valueFrom:
-                secretKeyRef:
-                  key: {{ .Values.args.postgres.username.secretKey }}
-                  name: {{ .Values.args.postgres.username.secretName }}
-          {{- end }}
-
-          - name: PGPORT
-            value: {{ .Values.args.postgres.port | quote }}
-          - name: PGDATABASE
-            value: {{ .Values.args.postgres.database }}
-          
-          - name: SECURE_COOKIES
-            value: {{ .Values.args.secureCookies | quote }}
-          - name: TRUST_PROXY
-            value: {{ .Values.args.trustProxy | quote }}
-          - name: LIGHTDASH_SECRET
-            value: {{ .Values.args.lightdashSecret | quote }}
-          - name: DBT_PROJECT_DIR
-            value: {{ .Values.args.dbtProjectDir | quote }}
           ports:
             - name: http
               containerPort: 8080
