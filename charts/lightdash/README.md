@@ -2,7 +2,6 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-
 ![Version: 0.2.0](https://img.shields.io/badge/Version-0.2.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.27.1](https://img.shields.io/badge/AppVersion-0.27.1-informational?style=flat-square)
 
 ## Prerequisites
@@ -55,7 +54,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | fullnameOverride | string | `""` |  |
 | image.pullPolicy | string | `"IfNotPresent"` |  |
 | image.repository | string | `"lightdash/lightdash"` |  |
-| image.tag | string | `"0.27.1"` | Override the image tag |
+| image.tag | string | `"0.27.1"` |  |
 | imagePullSecrets | list | `[]` |  |
 | ingress.annotations | object | `{}` |  |
 | ingress.className | string | `""` |  |
