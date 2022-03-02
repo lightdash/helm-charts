@@ -1,0 +1,13 @@
+lightdashSecrets:
+  # -- Secret key used to secure various tokens in Lightdash. This must be fixed between deployments. If the secret changes, you won't have access to Lightdash data.
+  LIGHTDASH_SECRET: changeme
+
+databaseConfigMap:
+  # -- Hostname of postgres server to store Lightdash data
+  PGHOST: lightdashdb-postgresql.default.svc.cluster.local
+
+databaseSecrets:
+  # -- Username of postgres user to access postgres server to store Lightdash data
+  PGUSER: lightdash
+  # -- 	Password for PGUSER
+  PGPASSWORD: changeme

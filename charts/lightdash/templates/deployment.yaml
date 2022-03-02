@@ -35,14 +35,10 @@ spec:
           command: {{ .Values.image.command }}
           args: {{ .Values.image.args }}
           envFrom:
-          {{- if $.Values.configMap }}
             - configMapRef:
                 name: {{ template "helm.fullname" $ }}
-          {{- end }}
-          {{- if $.Values.secrets }}
             - secretRef:
                 name: {{ template "helm.fullname" $ }}
-          {{- end }}
           ports:
             - name: http
               containerPort: 8080
