@@ -29,8 +29,7 @@ replicaCount: 1
 image:
   repository: lightdash/lightdash
   pullPolicy: IfNotPresent
-  # -- Override the image tag
-  tag: "0.27.1"
+  tag: 0.27.1
 
 imagePullSecrets: []
 nameOverride: ""

@@ -54,7 +54,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | fullnameOverride | string | `""` |  |
 | image.pullPolicy | string | `"IfNotPresent"` |  |
 | image.repository | string | `"lightdash/lightdash"` |  |
-| image.tag | string | `"0.27.1"` | Override the image tag |
+| image.tag | string | `"0.27.1"` |  |
 | imagePullSecrets | list | `[]` |  |
 | ingress.annotations | object | `{}` |  |
 | ingress.className | string | `""` |  |

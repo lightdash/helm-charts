@@ -1,0 +1,95 @@
+name: Increment Lightdash App version
+
+on:
+  workflow_dispatch:
+    inputs:
+      lightdash-version:
+        description: The Semantic Version number of the Lightdash App.
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  update-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - run: npm i js-yaml
+      - name: Increment versions
+        uses: actions/github-script@v5
+        env:
+          LIGHTDASH_VERSION: "${{ github.event.inputs.lightdash-version }}"
+        with:
+          script: |
+            const fs = require('fs');
+            const yaml = require('js-yaml');
+
+            const { LIGHTDASH_VERSION } = process.env;
+            const semanticVersionRegex = /(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?/;
+
+            function readFile(path) {
+              try {
+                return fs.readFileSync(`${path}`, 'utf8');
+              } catch {
+                core.error `ERROR reading ${path}. See the run for more details`
+              }
+            }
+
+            function writeFile(path, content) {
+              try {
+                fs.writeFileSync(`${path}`, content, 'utf8');
+              } catch {
+                core.error `ERROR writing ${path}. See the run for more details` ;
+              }
+            }
+
+            function incrementChartVersion(rawChartYaml) {
+              const chartYaml = yaml.load(rawChartYaml);
+              const version = chartYaml.version.match(semanticVersionRegex);
+              const newVersion = `${version[1]}.${version[2]}.${parseInt(version[3]) + 1}`;
+              return rawChartYaml.replace(`version: ${version[0]}`, `version: ${newVersion}`);
+            }
+
+            function setAppVersion(rawChartYaml, appVersion) {
+              const chartYaml = yaml.load(rawChartYaml);
+              const version = chartYaml.appVersion.match(semanticVersionRegex);
+              const newVersion = appVersion;
+              return rawChartYaml.replace(`appVersion: ${version[0]}`, `appVersion: ${newVersion}`);
+            }
+
+            function setImageTag(rawValuesYaml, appVersion) {
+              const valuesYaml = yaml.load(rawValuesYaml);
+              const version = valuesYaml.image.tag.match(semanticVersionRegex);
+              const newVersion = appVersion;
+              return rawValuesYaml.replace(`  tag: ${version[0]}`, `  tag: ${newVersion}`);
+            }
+
+            const originalChartYaml = readFile('charts/lightdash/Chart.yaml');
+            const newChartYaml = incrementChartVersion(setAppVersion(originalChartYaml, LIGHTDASH_VERSION));
+            writeFile('charts/lightdash/Chart.yaml', newChartYaml);
+
+            const originalValuesYaml = readFile('charts/lightdash/values.yaml');
+            const newValuesYaml = setImageTag(originalValuesYaml, LIGHTDASH_VERSION);
+            writeFile('charts/lightdash/values.yaml', newValuesYaml);
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          add-paths: |
+            charts/lightdash/values.yaml
+            charts/lightdash/Chart.yaml
+          commit-message: ":robot: fix(release): Update Lightdash App Version to ${{ github.event.inputs.lightdash-version }}"
+          branch: "release/lightdash/appVersion/${{ github.event.inputs.lightdash-version }}"
+          delete-branch: true
+          title: "Update Lightdash App Version to ${{ github.event.inputs.lightdash-version }}"
+          body: "This is a release of the Lightdash App. The appVersion has been bumped to ${{ github.event.inputs.lightdash-version }}"
+          labels: merge after testing
+      ## In order to skip the Pull Request and automatically release a new chart, swap the below step with the one above.
+      # - name: Commit and Push
+      #   uses: stefanzweifel/git-auto-commit-action@v4.13.1
+      #   with:
+      #     commit_message: ":robot: fix(release):  Update Lightdash App Version to ${{ github.event.inputs.lightdash-version }}"
