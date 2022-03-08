@@ -50,6 +50,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | configMap.PGUSER | string | `"lightdash"` | The username for the lightdash account in the PostgreSQL database |
 | configMap.PORT | string | `"8080"` | Port for lightdash |
 | configMap.SECURE_COOKIES | string | `"false"` | Secure Cookies |
+| configMap.SITE_ENV | string | `""` | Public URL of your instance including protocol e.g. https://lightdash.myorg.com |
 | configMap.TRUST_PROXY | string | `"false"` | Trust the reverse proxy when setting secure cookies (via the "X-Forwarded-Proto" header) |
 | fullnameOverride | string | `""` |  |
 | image.pullPolicy | string | `"IfNotPresent"` |  |
