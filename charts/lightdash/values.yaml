@@ -16,7 +16,7 @@ configMap:
   # -- Path to your local dbt project. Only set this value if you are mounting a DBT project
   DBT_PROJECT_DIR: ""
   # -- Public URL of your instance including protocol e.g. https://lightdash.myorg.com
-  SITE_ENV: ""
+  SITE_URL: ""
 
 secrets:
   # -- The password for the ligthdash account in the PostgreSQL database
