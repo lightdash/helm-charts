@@ -39,7 +39,7 @@ spec:
             - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "common.names.fullname" . }}-env
+                  name: {{ template "helm.fullname" $ }}
                   key: PGPASSWORD
             {{- else }}
             - name: PGPASSWORD
