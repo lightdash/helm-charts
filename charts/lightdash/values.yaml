@@ -1,3 +1,21 @@
+## @section Global Parameters
+
+## @param global.imageRegistry Global Docker image registry
+## @param global.storageClass Global StorageClass for Persistent Volume(s)
+##
+global:
+  imageRegistry: ""
+  storageClass: ""
+
+## @section Common Parameters
+
+## @param nameOverride String to partially override airbyte.fullname template with a string (will prepend the release name)
+##
+nameOverride: ""
+## @param fullnameOverride String to fully override airbyte.fullname template with a string
+##
+fullnameOverride: ""
+
 configMap:
   # -- Secure Cookies
   SECURE_COOKIES: "false"
@@ -20,11 +38,9 @@ replicaCount: 1
 image:
   repository: lightdash/lightdash
   pullPolicy: IfNotPresent
-  tag: 0.27.1
+  tag: 0.110.1
 
 imagePullSecrets: []
-nameOverride: ""
-fullnameOverride: ""
 
 podAnnotations: {}
 
@@ -103,7 +119,8 @@ affinity: {}
 ##
 postgresql:
   enabled: true
-  postgresqlUsername: lightdash
+  ## with Postgres 10 helm chart, user "postgres" has superuser privileges (fixing lightdash uuid)
+  postgresqlUsername: postgres
   postgresqlPassword: lightdash
   postgresqlDatabase: lightdash
   ## This secret is used in case of postgresql.enabled=true and we would like to specify password for newly created postgresql instance
