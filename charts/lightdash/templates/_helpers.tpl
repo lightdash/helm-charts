@@ -49,3 +49,89 @@ Selector labels
 app.kubernetes.io/name: {{ include "helm.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
+
+
+{{/*
+Create a default fully qualified postgresql name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+*/}}
+{{- define "lightdash.postgresql.fullname" -}}
+{{- $name := default "postgresql" .Values.postgresql.nameOverride -}}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+
+{{/*
+Get the Postgresql credentials secret.
+*/}}
+{{- define "lightdash.postgresql.secretName" -}}
+{{- if and (.Values.postgresql.enabled) (not .Values.postgresql.existingSecret) -}}
+    {{- printf "%s" (include "lightdash.postgresql.fullname" .) -}}
+{{- else if and (.Values.postgresql.enabled) (.Values.postgresql.existingSecret) -}}
+    {{- printf "%s" .Values.postgresql.existingSecret -}}
+{{- else }}
+    {{- if .Values.externalDatabase.existingSecret -}}
+        {{- printf "%s" .Values.externalDatabase.existingSecret -}}
+    {{- else -}}
+        {{ printf "%s-%s" .Release.Name "externaldb" }}
+    {{- end -}}
+{{- end -}}
+{{- end -}}
+
+
+{{/*
+Add environment variables to configure database values
+*/}}
+{{- define "lightdash.database.host" -}}
+{{- ternary (include "lightdash.postgresql.fullname" .) .Values.externalDatabase.host .Values.postgresql.enabled -}}
+{{- end -}}
+
+{{/*
+Add environment variables to configure database values
+*/}}
+{{- define "lightdash.database.user" -}}
+{{- ternary .Values.postgresql.postgresqlUsername .Values.externalDatabase.user .Values.postgresql.enabled -}}
+{{- end -}}
+
+{{/*
+Add environment variables to configure database values
+*/}}
+{{- define "lightdash.database.name" -}}
+{{- ternary .Values.postgresql.postgresqlDatabase .Values.externalDatabase.database .Values.postgresql.enabled -}}
+{{- end -}}
+
+{{/*
+Add environment variables to configure database values
+*/}}
+{{- define "lightdash.database.existingsecret.key" -}}
+{{- if .Values.postgresql.enabled -}}
+    {{- printf "%s" "postgresql-password" -}}
+{{- else -}}
+    {{- if .Values.externalDatabase.existingSecret -}}
+        {{- if .Values.externalDatabase.existingSecretPasswordKey -}}
+            {{- printf "%s" .Values.externalDatabase.existingSecretPasswordKey -}}
+        {{- else -}}
+            {{- printf "%s" "postgresql-password" -}}
+        {{- end -}}
+    {{- else -}}
+        {{- printf "%s" "postgresql-password" -}}
+    {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Add environment variables to configure database values
+*/}}
+{{- define "lightdash.database.port" -}}
+{{- ternary "5432" .Values.externalDatabase.port .Values.postgresql.enabled -}}
+{{- end -}}
+
+{{/*
+Add environment variables to configure database values
+*/}}
+{{- define "lightdash.database.url" -}}
+{{- $host := (include "lightdash.database.host" .) -}}
+{{- $dbName := (include "lightdash.database.name" .) -}}
+{{- $port := (include "lightdash.database.port" . ) -}}
+{{- printf "jdbc:postgresql://%s:%s/%s" $host $port $dbName -}}
+{{- end -}}
