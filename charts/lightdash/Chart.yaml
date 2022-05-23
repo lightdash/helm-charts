@@ -8,9 +8,6 @@ maintainers:
   - name: jim80net
     email: jim@ramtank.com
     url: https://github.com/jim80net
-  - name: aboutphilippe
-    email: philippe@restack.io
-    url: https://github.com/aboutphilippe
 icon: https://docs.lightdash.com/img/logo.png
 dependencies:
   - name: common
