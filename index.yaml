@@ -2,6 +2,21 @@ apiVersion: v1
 entries:
   lightdash:
   - apiVersion: v2
+    appVersion: 0.138.0
+    created: "2022-06-13T10:45:52.421061856Z"
+    description: A Helm chart to deploy lightdash on kubernetes
+    digest: 65bb9c284fcd9b85a399c471d18093281e4daf6250226d8faef983254821d0bf
+    icon: https://docs.lightdash.com/img/logo.png
+    maintainers:
+    - email: jim@ramtank.com
+      name: jim80net
+      url: https://github.com/jim80net
+    name: lightdash
+    type: application
+    urls:
+    - https://github.com/lightdash/helm-charts/releases/download/lightdash-0.3.0/lightdash-0.3.0.tgz
+    version: 0.3.0
+  - apiVersion: v2
     appVersion: 0.27.1
     created: "2022-02-28T14:32:09.160809896Z"
     description: A Helm chart to deploy lightdash on kubernetes
