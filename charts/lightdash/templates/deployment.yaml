@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "helm.fullname" . }}
+  name: {{ include "lightdash.fullname" . }}
   labels:
-    {{- include "helm.labels" . | nindent 4 }}
+    {{- include "lightdash.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "helm.selectorLabels" . | nindent 6 }}
+      {{- include "lightdash.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -18,7 +18,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "helm.selectorLabels" . | nindent 8 }}
+        {{- include "lightdash.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -34,14 +34,28 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: {{ .Values.image.command }}
           args: {{ .Values.image.args }}
+          env:
+            {{- if .Values.postgresql.enabled }}
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "lightdash.fullname" $ }}
+                  key: PGPASSWORD
+            {{- else }}
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "lightdash.postgresql.secretName" . }}
+                  key: {{ include "lightdash.database.existingsecret.key" . }}
+            {{- end }}
           envFrom:
           {{- if $.Values.configMap }}
             - configMapRef:
-                name: {{ template "helm.fullname" $ }}
+                name: {{ template "lightdash.fullname" $ }}
           {{- end }}
           {{- if $.Values.secrets }}
             - secretRef:
-                name: {{ template "helm.fullname" $ }}
+                name: {{ template "lightdash.fullname" $ }}
           {{- end }}
           ports:
             - name: http
