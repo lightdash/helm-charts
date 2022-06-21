@@ -1,9 +1,9 @@
 apiVersion: v2
-appVersion: 0.110.2
+appVersion: 0.138.0
 name: lightdash
 description: A Helm chart to deploy lightdash on kubernetes
 type: application
-version: 0.2.2
+version: 0.3.2
 maintainers:
   - name: jim80net
     email: jim@ramtank.com
