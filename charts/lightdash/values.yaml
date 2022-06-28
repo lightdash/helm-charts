@@ -151,8 +151,10 @@ externalDatabase:
   port: 5432
 
 ## @param additional sidecar containers for the lightdash image
-extraContainers: {}
+extraContainers: []
 
 ## Create service account for workload identity
 serviceAccount:
-  create: false
+  create: true
+  name: ""
+  annotations: {}
