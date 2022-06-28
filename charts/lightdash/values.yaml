@@ -152,3 +152,7 @@ externalDatabase:
 
 ## @param additional sidecar containers for the lightdash image
 extraContainers: {}
+
+## Create service account for workload identity
+serviceAccount:
+  create: false

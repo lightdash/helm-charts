@@ -12,9 +12,12 @@ version: 0.3.3
 # incremented each time you make changes to the application. Versions are not expected to
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
-appVersion: 0.138.0
+appVersion: 0.165.3
 
 maintainers:
+  - name: owlas
+    email: oliver@lightdash.com
+    url: https://github.com/owlas
   - name: jim80net
     email: jim@ramtank.com
     url: https://github.com/jim80net

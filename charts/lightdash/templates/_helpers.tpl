@@ -135,3 +135,14 @@ Add environment variables to configure database values
 {{- $port := (include "lightdash.database.port" . ) -}}
 {{- printf "jdbc:postgresql://%s:%s/%s" $host $port $dbName -}}
 {{- end -}}
+
+{{/*
+ Create the name of the service account to use
+ */}}
+{{- define "lightdash.serviceAccountName" -}}
+{{- if .Values.serviceAccount.create -}}
+    {{- .Values.serviceAccount.name | default (include "lighdash.fullname" .) -}}
+{{- else -}}
+    {{- .Values.serviceAccount.name | default "default" -}}
+{{- end -}}
+{{- end -}}
