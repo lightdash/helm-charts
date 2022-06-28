@@ -141,7 +141,7 @@ Add environment variables to configure database values
  */}}
 {{- define "lightdash.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create -}}
-    {{- .Values.serviceAccount.name | default (include "lighdash.fullname" .) -}}
+    {{- .Values.serviceAccount.name | default (include "lightdash.fullname" .) -}}
 {{- else -}}
     {{- .Values.serviceAccount.name | default "default" -}}
 {{- end -}}
