@@ -57,8 +57,8 @@ spec:
             - secretRef:
                 name: {{ template "lightdash.fullname" $ }}
           {{- end }}
-          env:
           {{- if .Values.extraEnvVars }}
+          env:
             {{- .Values.extraEnvVars | toYaml | nindent 12 }}
           {{- end }}
           ports:
