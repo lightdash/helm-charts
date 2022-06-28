@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 0.2.0](https://img.shields.io/badge/Version-0.2.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.27.1](https://img.shields.io/badge/AppVersion-0.27.1-informational?style=flat-square)
+![Version: 0.3.2](https://img.shields.io/badge/Version-0.3.2-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.138.0](https://img.shields.io/badge/AppVersion-0.138.0-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -31,6 +31,13 @@ helm install lightdash ligthdash/lightdash \
 
 ```
 
+## Requirements
+
+| Repository | Name | Version |
+|------------|------|---------|
+| https://charts.bitnami.com/bitnami | common | 1.x.x |
+| https://charts.bitnami.com/bitnami | postgresql | 10.x.x |
+
 ## Values
 
 Note The `secret.*` values are used to create [kubernetes secrets](https://kubernetes.io/docs/concepts/configuration/secret/).
@@ -44,18 +51,23 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | autoscaling.minReplicas | int | `1` |  |
 | autoscaling.targetCPUUtilizationPercentage | int | `80` |  |
 | configMap.DBT_PROJECT_DIR | string | `""` | Path to your local dbt project. Only set this value if you are mounting a DBT project |
-| configMap.PGDATABASE | string | `"lightdash"` | The name of the PostgreSQL database |
-| configMap.PGHOST | string | `"lightdashdb-postgresql.default.svc.cluster.local"` | The hostname of the PostgreSQL database |
-| configMap.PGPORT | string | `"5432"` | The database port of the PostgreSQL database |
-| configMap.PGUSER | string | `"lightdash"` | The username for the lightdash account in the PostgreSQL database |
 | configMap.PORT | string | `"8080"` | Port for lightdash |
 | configMap.SECURE_COOKIES | string | `"false"` | Secure Cookies |
 | configMap.SITE_URL | string | `""` | Public URL of your instance including protocol e.g. https://lightdash.myorg.com |
 | configMap.TRUST_PROXY | string | `"false"` | Trust the reverse proxy when setting secure cookies (via the "X-Forwarded-Proto" header) |
+| externalDatabase.database | string | `"lightdash"` |  |
+| externalDatabase.existingSecret | string | `""` |  |
+| externalDatabase.existingSecretPasswordKey | string | `""` |  |
+| externalDatabase.host | string | `"localhost"` |  |
+| externalDatabase.password | string | `""` |  |
+| externalDatabase.port | int | `5432` |  |
+| externalDatabase.user | string | `"lightdash"` |  |
 | fullnameOverride | string | `""` |  |
+| global.imageRegistry | string | `""` |  |
+| global.storageClass | string | `""` |  |
 | image.pullPolicy | string | `"IfNotPresent"` |  |
 | image.repository | string | `"lightdash/lightdash"` |  |
-| image.tag | string | `"0.27.1"` |  |
+| image.tag | string | `"0.138.0"` |  |
 | imagePullSecrets | list | `[]` |  |
 | ingress.annotations | object | `{}` |  |
 | ingress.className | string | `""` |  |
@@ -68,10 +80,17 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | nodeSelector | object | `{}` |  |
 | podAnnotations | object | `{}` |  |
 | podSecurityContext | object | `{}` |  |
+| postgresql.commonAnnotations."helm.sh/hook" | string | `"pre-install,pre-upgrade"` |  |
+| postgresql.commonAnnotations."helm.sh/hook-weight" | string | `"-1"` |  |
+| postgresql.containerSecurityContext.runAsNonRoot | bool | `true` |  |
+| postgresql.enabled | bool | `true` |  |
+| postgresql.existingSecret | string | `""` |  |
+| postgresql.postgresqlDatabase | string | `"lightdash"` |  |
+| postgresql.postgresqlPassword | string | `"lightdash"` |  |
+| postgresql.postgresqlUsername | string | `"postgres"` |  |
 | replicaCount | int | `1` | Specify the number of lightdash instances. |
 | resources | object | `{}` |  |
 | secrets.LIGHTDASH_SECRET | string | `"changeme"` | This is the secret used to sign the session ID cookie and to encrypt sensitive information. Do not share this secret! |
-| secrets.PGPASSWORD | string | `"changeme"` | The password for the ligthdash account in the PostgreSQL database |
 | securityContext | object | `{}` |  |
 | service.port | int | `80` |  |
 | service.type | string | `"ClusterIP"` |  |
