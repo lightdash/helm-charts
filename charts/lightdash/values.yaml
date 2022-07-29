@@ -149,6 +149,7 @@ externalDatabase:
   existingSecretPasswordKey: ""
   database: lightdash
   port: 5432
+  sslmode: ""
 
 ## @param additional sidecar containers for the lightdash image
 extraContainers: []
