@@ -48,6 +48,8 @@ spec:
                 secretKeyRef:
                   name: {{ include "lightdash.postgresql.secretName" . }}
                   key: {{ include "lightdash.database.existingsecret.key" . }}
+            - name: PGSSLMODE
+              value: {{ .Values.externalDatabase.sslmode }}
             {{- end }}
           envFrom:
           {{- if $.Values.configMap }}
