@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 0.3.4](https://img.shields.io/badge/Version-0.3.4-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.165.3](https://img.shields.io/badge/AppVersion-0.165.3-informational?style=flat-square)
+![Version: 0.3.7](https://img.shields.io/badge/Version-0.3.7-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.201.0](https://img.shields.io/badge/AppVersion-0.201.0-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -62,7 +62,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | externalDatabase.password | string | `""` |  |
 | externalDatabase.port | int | `5432` |  |
 | externalDatabase.user | string | `"lightdash"` |  |
-| extraContainers | object | `{}` |  |
+| extraContainers | list | `[]` |  |
 | fullnameOverride | string | `""` |  |
 | global.imageRegistry | string | `""` |  |
 | global.storageClass | string | `""` |  |
@@ -95,7 +95,9 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | securityContext | object | `{}` |  |
 | service.port | int | `80` |  |
 | service.type | string | `"ClusterIP"` |  |
-| serviceAccount.create | bool | `false` |  |
+| serviceAccount.annotations | object | `{}` |  |
+| serviceAccount.create | bool | `true` |  |
+| serviceAccount.name | string | `""` |  |
 | tolerations | list | `[]` |  |
 
 ----------------------------------------------
