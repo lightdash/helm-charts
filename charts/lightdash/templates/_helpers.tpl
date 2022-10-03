@@ -146,3 +146,14 @@ Add environment variables to configure database values
     {{- .Values.serviceAccount.name | default "default" -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+ Create the name of the backend configuration
+ */}}
+{{- define "lightdash.backendConfigName" -}}
+{{- if .Values.backendConfig.create -}}
+    {{- .Values.backendConfig.name | default (include "lightdash.fullname" .) -}}
+{{- else -}}
+    {{- .Values.backendConfig.name | default "default" -}}
+{{- end -}}
+{{- end -}}

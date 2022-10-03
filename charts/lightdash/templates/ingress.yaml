@@ -22,6 +22,9 @@ metadata:
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
+  {{- if .Values.backendConfig.create }}
+    cloud.google.com/backend-config: '{"default": "{{ include "lightdash.backendConfigName" . }}"}'
+  {{- end }}
 spec:
   {{- if and .Values.ingress.className (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion) }}
   ingressClassName: {{ .Values.ingress.className }}
