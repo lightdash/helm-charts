@@ -1,0 +1,10 @@
+{{- if .Values.backendConfig.create }}
+apiVersion: cloud.google.com/v1beta1
+kind: BackendConfig
+metadata:
+  name: {{ include "lightdash.backendConfigName" . }}
+{{- if .Values.backendConfig.spec }}
+spec:
+  {{- toYaml .Values.backendConfig.spec | nindent 2 }}
+{{- end }}
+{{- end }}
