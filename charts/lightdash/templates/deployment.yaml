@@ -60,16 +60,22 @@ spec:
           {{- end }}
           ports:
             - name: http
-              containerPort: 8080
+              containerPort: {{ .Values.service.port }}
               protocol: TCP
           livenessProbe:
+            initialDelaySeconds: 20
+            timeoutSeconds: 2
+            periodSeconds: 5
             httpGet:
-              path: /
-              port: http
+              path: /api/v1/livez
+              port: {{ .Values.service.port }}
           readinessProbe:
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
             httpGet:
-              path: /
-              port: http
+              path: /api/v1/health
+              port: {{ .Values.service.port }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
         {{- if .Values.extraContainers }}
