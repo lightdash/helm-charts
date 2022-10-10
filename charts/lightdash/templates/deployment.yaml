@@ -68,7 +68,7 @@ spec:
             periodSeconds: 5
             httpGet:
               path: /api/v1/livez
-              port: { { .Values.serverPort } }
+              port: {{ .Values.service.port }}
           readinessProbe:
             initialDelaySeconds: 60
             periodSeconds: 10
