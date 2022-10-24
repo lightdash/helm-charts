@@ -1,11 +1,12 @@
-{{- if not .Values.postgresql.enabled }}
+{{- if not .Values.externalDatabase.existingSecret }}
 apiVersion: v1
 kind: Secret
 metadata:
-  name: {{ include "lightdash.postgresql.secretName" . }}
+  name: {{ include "lightdash.database.secretName" . }}
   annotations:
     helm.sh/hook: pre-install,pre-upgrade
     helm.sh/hook-weight: "-1"
 data:
-  postgresql-password: {{ .Values.externalDatabase.password | b64enc }}
+  {{ include "lightdash.database.secret.passwordKey" . }}: {{ (ternary .Values.postgresql.postgresqlPassword .Values.externalDatabase.password .Values.postgresql.enabled) | b64enc}}
+  {{ include "lightdash.database.secret.userKey" . }}: {{ include "lightdash.database.user" .}}
 {{- end }}

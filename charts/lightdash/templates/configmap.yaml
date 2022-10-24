@@ -8,8 +8,6 @@ metadata:
 data:
   # -- The hostname of the PostgreSQL database
   PGHOST: {{ include "lightdash.database.host" . }}
-  # -- The username for the lightdash account in the PostgreSQL database
-  PGUSER: {{ include "lightdash.database.user" . }}
   # -- The database port of the PostgreSQL database
   PGPORT: {{ include "lightdash.database.port" . | quote }}
   # -- The name of the PostgreSQL database
