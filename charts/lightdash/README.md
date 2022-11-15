@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 0.3.9](https://img.shields.io/badge/Version-0.3.9-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.271.1](https://img.shields.io/badge/AppVersion-0.271.1-informational?style=flat-square)
+![Version: 0.3.11](https://img.shields.io/badge/Version-0.3.11-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.323.1](https://img.shields.io/badge/AppVersion-0.323.1-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -69,7 +69,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | global.storageClass | string | `""` |  |
 | image.pullPolicy | string | `"IfNotPresent"` |  |
 | image.repository | string | `"lightdash/lightdash"` |  |
-| image.tag | string | `"0.138.0"` |  |
+| image.tag | string | `"0.316.0"` |  |
 | imagePullSecrets | list | `[]` |  |
 | ingress.annotations | object | `{}` |  |
 | ingress.className | string | `""` |  |
@@ -94,7 +94,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | resources | object | `{}` |  |
 | secrets.LIGHTDASH_SECRET | string | `"changeme"` | This is the secret used to sign the session ID cookie and to encrypt sensitive information. Do not share this secret! |
 | securityContext | object | `{}` |  |
-| service.port | int | `80` |  |
+| service.port | int | `8080` |  |
 | service.type | string | `"ClusterIP"` |  |
 | serviceAccount.annotations | object | `{}` |  |
 | serviceAccount.create | bool | `true` |  |
