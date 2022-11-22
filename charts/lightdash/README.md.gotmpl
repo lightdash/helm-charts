@@ -26,7 +26,7 @@ Use `--set primary.persistence.enabled=false` to skip creating a persistent volu
 
 ```
 helm repo add lightdash https://lightdash.github.io/helm-charts
-helm install lightdash ligthdash/lightdash \
+helm install lightdash lightdash/lightdash \
   --set configMap.PGHOST=lightdashdb-postgresql.default.svc.cluster.local \
   --set secrets.PGPASSWORD=changeme \
 
