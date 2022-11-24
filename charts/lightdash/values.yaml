@@ -104,6 +104,21 @@ tolerations: []
 
 affinity: {}
 
+## Browserless Chrome chart configuration
+## ref: https://github.com/sagikazarmark/helm-charts/tree/master/charts/browserless-chrome
+## @param browserless-chrome.enabled default true - whether to enable headless browser
+## @param browserless-chrome.replicaCount total replicas
+## @param browserless-chrome.resources custom limits and requests for resources
+## @param browserless-chrome.image.tag override appVersion in chart
+## @param browserless-chrome.image.port override default port of service
+browserless-chrome:
+  enabled: true
+  replicaCount: 1
+  resources: {}
+  image:
+    tag: ""
+  service:
+    port: 80
 ## @section Lightdash Database parameters
 
 ## PostgreSQL chart configuration
