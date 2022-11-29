@@ -114,7 +114,13 @@ affinity: {}
 browserless-chrome:
   enabled: true
   replicaCount: 1
-  resources: {}
+  resources:
+    limits:
+      memory: '512Mi'
+      cpu: '500m'
+    requests:
+      memory: '512Mi'
+      cpu: '500m'
   image:
     tag: ""
   service:
