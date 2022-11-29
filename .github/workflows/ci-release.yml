@@ -27,6 +27,7 @@ jobs:
       - name: Add Helm dependency repos
         run: |
           helm repo add bitnami https://charts.bitnami.com/bitnami
+          helm repo add sagikazarmark https://charts.sagikazarmark.dev
           helm repo update
 
       - name: Run chart-releaser
