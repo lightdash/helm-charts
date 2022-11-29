@@ -157,3 +157,22 @@ Add environment variables to configure database values
     {{- .Values.backendConfig.name | default "default" -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Create a default fully qualified headless browser name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+*/}}
+{{- define "lightdash.headlessBrowser.fullname" -}}
+{{- $name := default "browserless-chrome" (index .Values "browserless-chrome").nameOverride -}}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
+  Create the host and port of the headless browser
+*/}}
+{{- define "lightdash.headlessBrowser.host" -}}
+    {{- ternary (include "lightdash.headlessBrowser.fullname" .) "" (index .Values "browserless-chrome").enabled -}}
+{{- end -}}
+{{- define "lightdash.headlessBrowser.port" -}}
+    {{- printf ((index .Values "browserless-chrome").service.port | toString) -}}
+{{- end -}}

@@ -14,5 +14,7 @@ data:
   PGPORT: {{ include "lightdash.database.port" . | quote }}
   # -- The name of the PostgreSQL database
   PGDATABASE: {{ include "lightdash.database.name" . }}
+  HEADLESS_BROWSER_HOST: {{ include "lightdash.headlessBrowser.host" . }}
+  HEADLESS_BROWSER_PORT: {{ include "lightdash.headlessBrowser.port" .  | quote }}
   {{- toYaml .Values.configMap | nindent 2 }}
 {{- end }}
