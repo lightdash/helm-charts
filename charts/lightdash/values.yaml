@@ -161,6 +161,7 @@ postgresql:
 ## @param externalDatabase.existingSecretPasswordKey Name of an existing secret key containing the DB password
 ## @param externalDatabase.database Database name
 ## @param externalDatabase.port Database port number
+## @param externalDatabase.updateSecret used to update existing secrets containing DB password
 ##
 externalDatabase:
   host: localhost
@@ -170,6 +171,7 @@ externalDatabase:
   existingSecretPasswordKey: ""
   database: lightdash
   port: 5432
+  updateSecret: false
 
 ## @param additional sidecar containers for the lightdash image
 extraContainers: []
