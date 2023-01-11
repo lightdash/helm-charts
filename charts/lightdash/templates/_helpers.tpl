@@ -65,10 +65,10 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 Get the Postgresql credentials secret.
 */}}
 {{- define "lightdash.postgresql.secretName" -}}
-{{- if and (.Values.postgresql.enabled) (not .Values.postgresql.existingSecret) -}}
+{{- if and (.Values.postgresql.enabled) (not .Values.postgresql.auth.existingSecret) -}}
     {{- printf "%s" (include "lightdash.postgresql.fullname" .) -}}
-{{- else if and (.Values.postgresql.enabled) (.Values.postgresql.existingSecret) -}}
-    {{- printf "%s" .Values.postgresql.existingSecret -}}
+{{- else if and (.Values.postgresql.enabled) (.Values.postgresql.auth.existingSecret) -}}
+    {{- printf "%s" .Values.postgresql.auth.existingSecret -}}
 {{- else }}
     {{- if .Values.externalDatabase.existingSecret -}}
         {{- printf "%s" .Values.externalDatabase.existingSecret -}}
@@ -90,14 +90,14 @@ Add environment variables to configure database values
 Add environment variables to configure database values
 */}}
 {{- define "lightdash.database.user" -}}
-{{- ternary .Values.postgresql.postgresqlUsername .Values.externalDatabase.user .Values.postgresql.enabled -}}
+{{- ternary .Values.postgresql.auth.username .Values.externalDatabase.user .Values.postgresql.enabled -}}
 {{- end -}}
 
 {{/*
 Add environment variables to configure database values
 */}}
 {{- define "lightdash.database.name" -}}
-{{- ternary .Values.postgresql.postgresqlDatabase .Values.externalDatabase.database .Values.postgresql.enabled -}}
+{{- ternary .Values.postgresql.auth.database .Values.externalDatabase.database .Values.postgresql.enabled -}}
 {{- end -}}
 
 {{/*

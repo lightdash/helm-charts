@@ -30,7 +30,7 @@ dependencies:
     version: 1.x.x
   - condition: postgresql.enabled
     name: postgresql
-    version: 10.x.x
+    version: 11.x.x
     repository: https://charts.bitnami.com/bitnami
   - name: browserless-chrome
     version: 0.0.4

@@ -4,9 +4,9 @@ dependencies:
   version: 1.17.1
 - name: postgresql
   repository: https://charts.bitnami.com/bitnami
-  version: 10.16.2
+  version: 11.9.13
 - name: browserless-chrome
   repository: https://charts.sagikazarmark.dev
   version: 0.0.4
-digest: sha256:eafdf0249476bab38a1e328d9e4e2f3710f7a6cef8073457680494edfefc5f69
-generated: "2022-11-24T15:44:16.533411Z"
+digest: sha256:e67eebb04f4ad84367593b74cf5dd71a4ee8e5daede54549be6dfea396419064
+generated: "2023-01-11T20:11:55.264423Z"

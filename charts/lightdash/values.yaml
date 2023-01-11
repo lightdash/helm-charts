@@ -151,14 +151,13 @@ browserless-chrome:
 postgresql:
   enabled: true
   ## with Postgres 10 helm chart, user "postgres" has superuser privileges (fixing lightdash uuid)
-  postgresqlUsername: postgres
-  postgresqlPassword: lightdash
-  postgresqlDatabase: lightdash
-  ## This secret is used in case of postgresql.enabled=true and we would like to specify password for newly created postgresql instance
-  ##
-  existingSecret: ""
-  containerSecurityContext:
-    runAsNonRoot: true
+  auth:
+    username: lightdash
+    password: lightdash
+    database: lightdash
+    ## This secret is used in case of postgresql.enabled=true and we would like to specify password for newly created postgresql instance
+    ##
+    existingSecret: ""
   commonAnnotations:
     helm.sh/hook: pre-install,pre-upgrade
     helm.sh/hook-weight: "-1"
