@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 0.4.0](https://img.shields.io/badge/Version-0.4.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.331.0](https://img.shields.io/badge/AppVersion-0.331.0-informational?style=flat-square)
+![Version: 0.6.0](https://img.shields.io/badge/Version-0.6.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.331.0](https://img.shields.io/badge/AppVersion-0.331.0-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -25,7 +25,7 @@ Use `--set primary.persistence.enabled=false` to skip creating a persistent volu
 
 ```
 helm repo add lightdash https://lightdash.github.io/helm-charts
-helm install lightdash ligthdash/lightdash \
+helm install lightdash lightdash/lightdash \
   --set configMap.PGHOST=lightdashdb-postgresql.default.svc.cluster.local \
   --set secrets.PGPASSWORD=changeme \
 
@@ -36,7 +36,7 @@ helm install lightdash ligthdash/lightdash \
 | Repository | Name | Version |
 |------------|------|---------|
 | https://charts.bitnami.com/bitnami | common | 1.x.x |
-| https://charts.bitnami.com/bitnami | postgresql | 10.x.x |
+| https://charts.bitnami.com/bitnami | postgresql | 11.x.x |
 | https://charts.sagikazarmark.dev | browserless-chrome | 0.0.4 |
 
 ## Values
@@ -87,18 +87,23 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | ingress.hosts[0].paths[0].path | string | `"/"` |  |
 | ingress.hosts[0].paths[0].pathType | string | `"ImplementationSpecific"` |  |
 | ingress.tls | list | `[]` |  |
+| livenessProbe.initialDelaySeconds | int | `20` |  |
+| livenessProbe.periodSeconds | int | `5` |  |
+| livenessProbe.timeoutSeconds | int | `2` |  |
 | nameOverride | string | `""` |  |
 | nodeSelector | object | `{}` |  |
 | podAnnotations | object | `{}` |  |
 | podSecurityContext | object | `{}` |  |
+| postgresql.auth.database | string | `"lightdash"` |  |
+| postgresql.auth.existingSecret | string | `""` |  |
+| postgresql.auth.password | string | `"lightdash"` |  |
+| postgresql.auth.username | string | `"lightdash"` |  |
 | postgresql.commonAnnotations."helm.sh/hook" | string | `"pre-install,pre-upgrade"` |  |
 | postgresql.commonAnnotations."helm.sh/hook-weight" | string | `"-1"` |  |
-| postgresql.containerSecurityContext.runAsNonRoot | bool | `true` |  |
 | postgresql.enabled | bool | `true` |  |
-| postgresql.existingSecret | string | `""` |  |
-| postgresql.postgresqlDatabase | string | `"lightdash"` |  |
-| postgresql.postgresqlPassword | string | `"lightdash"` |  |
-| postgresql.postgresqlUsername | string | `"postgres"` |  |
+| readinessProbe.initialDelaySeconds | int | `60` |  |
+| readinessProbe.periodSeconds | int | `10` |  |
+| readinessProbe.timeoutSeconds | int | `5` |  |
 | replicaCount | int | `1` | Specify the number of lightdash instances. |
 | resources | object | `{}` |  |
 | secrets.LIGHTDASH_SECRET | string | `"changeme"` | This is the secret used to sign the session ID cookie and to encrypt sensitive information. Do not share this secret! |
