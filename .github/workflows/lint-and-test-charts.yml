@@ -25,6 +25,9 @@ jobs:
       - name: Add bitnami repo for dependencies
         run: helm repo add bitnami https://charts.bitnami.com/bitnami
 
+      - name: Add browserless-chrome repo for dependencies
+        run: helm repo add browserless-chrome https://charts.sagikazarmark.dev
+
       - name: Run chart-testing (lint)
         run: ct lint --all
 
@@ -58,6 +61,9 @@ jobs:
         uses: helm/kind-action@v1.2.0
         with:
           node_image: kindest/node:${{ matrix.k8s }}
+
+      - name: Add browserless-chrome repo for dependencies
+        run: helm repo add browserless-chrome https://charts.sagikazarmark.dev
 
       - name: Install PostgreSQL dependency
         run: |
