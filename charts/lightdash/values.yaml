@@ -78,6 +78,16 @@ ingress:
   #    hosts:
   #      - chart-example.local
 
+livenessProbe:
+  initialDelaySeconds: 20
+  timeoutSeconds: 2
+  periodSeconds: 5
+
+readinessProbe:
+  initialDelaySeconds: 60
+  periodSeconds: 10
+  timeoutSeconds: 5
+
 resources:
   {}
   # We usually recommend not to specify default resources and to leave this as a conscious
