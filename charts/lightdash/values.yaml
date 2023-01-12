@@ -140,10 +140,9 @@ browserless-chrome:
 ## PostgreSQL chart configuration
 ## ref: https://github.com/bitnami/charts/blob/master/bitnami/postgresql/values.yaml
 ## @param postgresql.enabled Switch to enable or disable the PostgreSQL helm chart (i.e. deploy postgres in k8s)
-## @param postgresql.postgresqlUsername Lightdash Postgresql username
-## @param postgresql.postgresqlPassword Lightdash Postgresql password
-## @param postgresql.postgresqlDatabase Lightdash Postgresql database
-## @param postgresql.containerSecurityContext.runAsNonRoot Ensures the container will run with a non-root user
+## @param postgresql.auth.username Lightdash Postgresql username (creates non-admin user)
+## @param postgresql.auth.password Lightdash Postgresql password (creates non-admin user)
+## @param postgresql.auth.database Lightdash Postgresql database (creates new database)
 ## @param postgresql.commonAnnotations.helm.sh/hook It will determine when the hook should be rendered
 ## @param postgresql.commonAnnotations.helm.sh/hook-weight The order in which the hooks are executed. If weight is lower, it has higher priority
 ##
@@ -163,8 +162,8 @@ postgresql:
 ## @param externalDatabase.user non-root Username for Lightdash Database
 ## @param externalDatabase.password Database password
 ## @param externalDatabase.existingSecret Name of an existing secret resource containing the DB password
-## @param externalDatabase.existingSecretPasswordKey Name of an existing secret key containing the DB password
-## @param externalDatabase.existingSecretPasswordKey Name of an existing secret key containing the DB user
+## @param externalDatabase.secretKeys.password Name of an existing secret key containing the DB password
+## @param externalDatabase.secretKeys.user Name of an existing secret key containing the DB user
 ## @param externalDatabase.database Database name
 ## @param externalDatabase.port Database port number
 ##
@@ -173,8 +172,9 @@ externalDatabase:
   user: lightdash
   password: ""
   existingSecret: ""
-  existingSecretPasswordKey: ""
-  existingSecretUserKey: ""
+  secretKeys:
+    password: ""
+    user: ""
   database: lightdash
   port: 5432
 

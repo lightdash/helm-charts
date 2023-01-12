@@ -99,8 +99,8 @@ Add environment variables to configure database values
 Add environment variables to configure database values
 */}}
 {{- define "lightdash.database.secret.passwordKey" -}}
-{{- if .Values.externalDatabase.existingSecretPasswordKey -}}
-    {{- printf "%s" .Values.externalDatabase.existingSecretPasswordKey -}}
+{{- if .Values.externalDatabase.secretKeys.password -}}
+    {{- printf "%s" .Values.externalDatabase.secretKeys.password -}}
 {{- else -}}
     {{- printf "%s" "postgresql-password" -}}
 {{- end -}}
@@ -110,8 +110,8 @@ Add environment variables to configure database values
 Add environment variables to configure database values
 */}}
 {{- define "lightdash.database.secret.userKey" -}}
-{{- if .Values.externalDatabase.existingSecretUserKey -}}
-    {{- printf "%s" .Values.externalDatabase.existingSecretUserKey -}}
+{{- if .Values.externalDatabase.secretKeys.user -}}
+    {{- printf "%s" .Values.externalDatabase.secretKeys.user -}}
 {{- else -}}
     {{- printf "%s" "postgresql-user" -}}
 {{- end -}}
