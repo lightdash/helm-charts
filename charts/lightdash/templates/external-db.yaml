@@ -8,5 +8,5 @@ metadata:
     helm.sh/hook-weight: "-1"
 data:
   {{ include "lightdash.database.secret.passwordKey" . }}: {{ (ternary .Values.postgresql.auth.password .Values.externalDatabase.password .Values.postgresql.enabled) | b64enc}}
-  {{ include "lightdash.database.secret.userKey" . }}: {{ include "lightdash.database.user" .}}
+  {{ include "lightdash.database.secret.userKey" . }}: {{ (include "lightdash.database.user" .) | b64enc}}
 {{- end }}
