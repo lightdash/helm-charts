@@ -143,6 +143,8 @@ browserless-chrome:
 ## @param postgresql.auth.username Lightdash Postgresql username (creates non-admin user)
 ## @param postgresql.auth.password Lightdash Postgresql password (creates non-admin user)
 ## @param postgresql.auth.database Lightdash Postgresql database (creates new database)
+## @param postgresql.auth.existingSecret An existing secret to use for the postgres password
+## @param postgresql.auth.secretKeys.userPasswordKey Key  in the existingSecret to use for the postgres password
 ## @param postgresql.commonAnnotations.helm.sh/hook It will determine when the hook should be rendered
 ## @param postgresql.commonAnnotations.helm.sh/hook-weight The order in which the hooks are executed. If weight is lower, it has higher priority
 ##
