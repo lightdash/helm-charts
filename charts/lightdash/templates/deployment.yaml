@@ -35,26 +35,11 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: {{ .Values.image.command }}
           args: {{ .Values.image.args }}
-          env:
-            - name: PGPASSWORD
-              valueFrom:
-                secretKeyRef:
-                  key: {{ include "lightdash.database.secret.passwordKey" .}}
-                  name: {{ include "lightdash.database.secretName" . }}
-            - name: PGUSER
-              valueFrom:
-                secretKeyRef:
-                  key: {{ include "lightdash.database.secret.userKey" . }}
-                  name: {{ include "lightdash.database.secretName" . }}
           envFrom:
-          {{- if $.Values.configMap }}
             - configMapRef:
                 name: {{ template "lightdash.fullname" $ }}
-          {{- end }}
-          {{- if $.Values.secrets }}
             - secretRef:
                 name: {{ template "lightdash.fullname" $ }}
-          {{- end }}
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}

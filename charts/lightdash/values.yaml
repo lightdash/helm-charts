@@ -153,6 +153,9 @@ postgresql:
     username: lightdash
     password: lightdash
     database: lightdash
+    existingSecret: ""
+    secretKeys:
+      userPasswordKey: "password"
   commonAnnotations:
     helm.sh/hook: pre-install,pre-upgrade
     helm.sh/hook-weight: "-1"
@@ -161,9 +164,8 @@ postgresql:
 ## @param externalDatabase.host Database host
 ## @param externalDatabase.user non-root Username for Lightdash Database
 ## @param externalDatabase.password Database password
-## @param externalDatabase.existingSecret Name of an existing secret resource containing the DB password
-## @param externalDatabase.secretKeys.password Name of an existing secret key containing the DB password
-## @param externalDatabase.secretKeys.user Name of an existing secret key containing the DB user
+## @param externalDatabase.existingSecret Name of an existing secret resource containing the DB password. If not set a secret will be created from the value in externalDatabase.password
+## @param externalDatabase.secretKeys.passwordKey (only used when externalDatabase.existingSecret is set) Key in the existing secret resource containing the DB password
 ## @param externalDatabase.database Database name
 ## @param externalDatabase.port Database port number
 ##
@@ -173,8 +175,7 @@ externalDatabase:
   password: ""
   existingSecret: ""
   secretKeys:
-    password: ""
-    user: ""
+    passwordKey: "postgresql-password"
   database: lightdash
   port: 5432
 

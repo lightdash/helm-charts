@@ -63,58 +63,42 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 
 {{/*
 Get the name of the postgresql credentials secret.
-If postgres is enabled then always use postgres fully qualified name (will create a new secret).
-If using an external postgres database, can specify an override (will use an existing secret).
+If postgres is enabled, subchart creates it's own secret containing the password unless the user specifies an existingSecret
+If using an external database, the password will be stored in the lightdash secret unless the user specifies an existingSecret
 */}}
 {{- define "lightdash.database.secretName" -}}
-{{- if .Values.externalDatabase.existingSecret -}}
-    {{- printf "%s" .Values.externalDatabase.existingSecret -}}
+{{- if .Values.postgresql.enabled -}}
+  {{- default (include "lightdash.postgresql.fullname" .) .Values.postgresql.auth.existingSecret -}}
 {{- else -}}
-    {{- include "lightdash.postgresql.fullname" . -}}
+    {{- default (include "lightdash.fullname" .) .Values.externalDatabase.existingSecret -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "lightdash.database.secret.passwordKey" -}}
+{{- if .Values.postgresql.enabled -}}
+  {{- ternary .Values.postgresql.auth.secretKeys.userPasswordKey "password" .Values.postgresql.auth.existingSecret -}}
+{{- else -}}
+  {{- ternary .Values.externalDatabase.secretKeys.passwordKey "postgresql-password" .Values.externalDatabase.existingSecret -}}
 {{- end -}}
 {{- end -}}
 
 {{/*
-Add environment variables to configure database values
+Configuration for postgres credentials
 */}}
 {{- define "lightdash.database.host" -}}
 {{- ternary (include "lightdash.postgresql.fullname" .) .Values.externalDatabase.host .Values.postgresql.enabled -}}
 {{- end -}}
 
-{{/*
-Add environment variables to configure database values
-*/}}
 {{- define "lightdash.database.user" -}}
 {{- ternary .Values.postgresql.auth.username .Values.externalDatabase.user .Values.postgresql.enabled -}}
 {{- end -}}
 
-{{/*
-Add environment variables to configure database values
-*/}}
 {{- define "lightdash.database.name" -}}
 {{- ternary .Values.postgresql.auth.database .Values.externalDatabase.database .Values.postgresql.enabled -}}
 {{- end -}}
 
-{{/*
-Add environment variables to configure database values
-*/}}
-{{- define "lightdash.database.secret.passwordKey" -}}
-{{- if .Values.externalDatabase.secretKeys.password -}}
-    {{- printf "%s" .Values.externalDatabase.secretKeys.password -}}
-{{- else -}}
-    {{- printf "%s" "postgresql-password" -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Add environment variables to configure database values
-*/}}
-{{- define "lightdash.database.secret.userKey" -}}
-{{- if .Values.externalDatabase.secretKeys.user -}}
-    {{- printf "%s" .Values.externalDatabase.secretKeys.user -}}
-{{- else -}}
-    {{- printf "%s" "postgresql-user" -}}
-{{- end -}}
+{{- define "lightdash.database.password" -}}
+{{- ternary .Values.postgresql.auth.password .Values.externalDatabase.password .Values.postgresql.enabled -}}
 {{- end -}}
 
 {{/*
