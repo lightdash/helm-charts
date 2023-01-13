@@ -38,7 +38,7 @@ replicaCount: 1
 image:
   repository: lightdash/lightdash
   pullPolicy: IfNotPresent
-  tag: 0.316.0
+  tag: ""
 
 imagePullSecrets: []
 
@@ -139,12 +139,12 @@ browserless-chrome:
 
 ## PostgreSQL chart configuration
 ## ref: https://github.com/bitnami/charts/blob/master/bitnami/postgresql/values.yaml
-## @param postgresql.enabled Switch to enable or disable the PostgreSQL helm chart
-## @param postgresql.postgresqlUsername Lightdash Postgresql username
-## @param postgresql.postgresqlPassword Lightdash Postgresql password
-## @param postgresql.postgresqlDatabase Lightdash Postgresql database
-## @param postgresql.existingSecret Name of an existing secret containing the PostgreSQL password ('postgresql-password' key)
-## @param postgresql.containerSecurityContext.runAsNonRoot Ensures the container will run with a non-root user
+## @param postgresql.enabled Switch to enable or disable the PostgreSQL helm chart (i.e. deploy postgres in k8s)
+## @param postgresql.auth.username Lightdash Postgresql username (creates non-admin user)
+## @param postgresql.auth.password Lightdash Postgresql password (creates non-admin user)
+## @param postgresql.auth.database Lightdash Postgresql database (creates new database)
+## @param postgresql.auth.existingSecret An existing secret to use for the postgres password
+## @param postgresql.auth.secretKeys.userPasswordKey Key  in the existingSecret to use for the postgres password
 ## @param postgresql.commonAnnotations.helm.sh/hook It will determine when the hook should be rendered
 ## @param postgresql.commonAnnotations.helm.sh/hook-weight The order in which the hooks are executed. If weight is lower, it has higher priority
 ##
@@ -153,11 +153,11 @@ postgresql:
   ## with Postgres 10 helm chart, user "postgres" has superuser privileges (fixing lightdash uuid)
   auth:
     username: lightdash
-    password: lightdash
+    password: ""
     database: lightdash
-    ## This secret is used in case of postgresql.enabled=true and we would like to specify password for newly created postgresql instance
-    ##
     existingSecret: ""
+    secretKeys:
+      userPasswordKey: "password"
   commonAnnotations:
     helm.sh/hook: pre-install,pre-upgrade
     helm.sh/hook-weight: "-1"
@@ -166,8 +166,8 @@ postgresql:
 ## @param externalDatabase.host Database host
 ## @param externalDatabase.user non-root Username for Lightdash Database
 ## @param externalDatabase.password Database password
-## @param externalDatabase.existingSecret Name of an existing secret resource containing the DB password
-## @param externalDatabase.existingSecretPasswordKey Name of an existing secret key containing the DB password
+## @param externalDatabase.existingSecret Name of an existing secret resource containing the DB password. If not set a secret will be created from the value in externalDatabase.password
+## @param externalDatabase.secretKeys.passwordKey (only used when externalDatabase.existingSecret is set) Key in the existing secret resource containing the DB password
 ## @param externalDatabase.database Database name
 ## @param externalDatabase.port Database port number
 ##
@@ -176,7 +176,8 @@ externalDatabase:
   user: lightdash
   password: ""
   existingSecret: ""
-  existingSecretPasswordKey: ""
+  secretKeys:
+    passwordKey: "postgresql-password"
   database: lightdash
   port: 5432
 
@@ -184,6 +185,9 @@ externalDatabase:
 extraContainers: []
 
 ## Create service account for workload identity
+## @param serviceAccount.create create a service account for workload identity
+## @param serviceAccount.name name for the created service account
+## @param serviceAccount.annotations
 serviceAccount:
   create: true
   name: ""

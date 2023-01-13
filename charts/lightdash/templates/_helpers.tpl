@@ -62,61 +62,51 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 
 
 {{/*
-Get the Postgresql credentials secret.
+Get the name of the postgresql credentials secret.
+If postgres is enabled, subchart creates it's own secret containing the password unless the user specifies an existingSecret
+If using an external database, the password will be stored in the lightdash secret unless the user specifies an existingSecret
 */}}
-{{- define "lightdash.postgresql.secretName" -}}
-{{- if and (.Values.postgresql.enabled) (not .Values.postgresql.auth.existingSecret) -}}
-    {{- printf "%s" (include "lightdash.postgresql.fullname" .) -}}
-{{- else if and (.Values.postgresql.enabled) (.Values.postgresql.auth.existingSecret) -}}
-    {{- printf "%s" .Values.postgresql.auth.existingSecret -}}
-{{- else }}
-    {{- if .Values.externalDatabase.existingSecret -}}
-        {{- printf "%s" .Values.externalDatabase.existingSecret -}}
+{{- define "lightdash.database.secretName" -}}
+{{- if .Values.postgresql.enabled -}}
+    {{- if .Values.postgresql.auth.existingSecret -}}
+        {{ .Values.postgresql.auth.existingSecret -}}
     {{- else -}}
-        {{ printf "%s-%s" .Release.Name "externaldb" }}
+        {{- include "lightdash.postgresql.fullname" . -}}
+    {{- end -}}
+{{- else -}}
+    {{- if .Values.externalDatabase.existingSecret -}}
+        {{ .Values.externalDatabase.existingSecret -}}
+    {{- else -}}
+        {{- printf "%s-externaldb" (include "lightdash.fullname" .) -}}
     {{- end -}}
 {{- end -}}
 {{- end -}}
 
+{{- define "lightdash.database.secret.passwordKey" -}}
+{{- if .Values.postgresql.enabled -}}
+  {{- ternary "password" .Values.postgresql.auth.secretKeys.userPasswordKey (eq "" .Values.postgresql.auth.existingSecret) -}}
+{{- else -}}
+  {{- .Values.externalDatabase.secretKeys.passwordKey -}}
+{{- end -}}
+{{- end -}}
 
 {{/*
-Add environment variables to configure database values
+Configuration for postgres credentials
 */}}
 {{- define "lightdash.database.host" -}}
 {{- ternary (include "lightdash.postgresql.fullname" .) .Values.externalDatabase.host .Values.postgresql.enabled -}}
 {{- end -}}
 
-{{/*
-Add environment variables to configure database values
-*/}}
 {{- define "lightdash.database.user" -}}
 {{- ternary .Values.postgresql.auth.username .Values.externalDatabase.user .Values.postgresql.enabled -}}
 {{- end -}}
 
-{{/*
-Add environment variables to configure database values
-*/}}
 {{- define "lightdash.database.name" -}}
 {{- ternary .Values.postgresql.auth.database .Values.externalDatabase.database .Values.postgresql.enabled -}}
 {{- end -}}
 
-{{/*
-Add environment variables to configure database values
-*/}}
-{{- define "lightdash.database.existingsecret.key" -}}
-{{- if .Values.postgresql.enabled -}}
-    {{- printf "%s" "postgresql-password" -}}
-{{- else -}}
-    {{- if .Values.externalDatabase.existingSecret -}}
-        {{- if .Values.externalDatabase.existingSecretPasswordKey -}}
-            {{- printf "%s" .Values.externalDatabase.existingSecretPasswordKey -}}
-        {{- else -}}
-            {{- printf "%s" "postgresql-password" -}}
-        {{- end -}}
-    {{- else -}}
-        {{- printf "%s" "postgresql-password" -}}
-    {{- end -}}
-{{- end -}}
+{{- define "lightdash.database.password" -}}
+{{- ternary .Values.postgresql.auth.password .Values.externalDatabase.password .Values.postgresql.enabled -}}
 {{- end -}}
 
 {{/*
@@ -124,16 +114,6 @@ Add environment variables to configure database values
 */}}
 {{- define "lightdash.database.port" -}}
 {{- ternary "5432" .Values.externalDatabase.port .Values.postgresql.enabled -}}
-{{- end -}}
-
-{{/*
-Add environment variables to configure database values
-*/}}
-{{- define "lightdash.database.url" -}}
-{{- $host := (include "lightdash.database.host" .) -}}
-{{- $dbName := (include "lightdash.database.name" .) -}}
-{{- $port := (include "lightdash.database.port" . ) -}}
-{{- printf "jdbc:postgresql://%s:%s/%s" $host $port $dbName -}}
 {{- end -}}
 
 {{/*
@@ -146,6 +126,7 @@ Add environment variables to configure database values
     {{- .Values.serviceAccount.name | default "default" -}}
 {{- end -}}
 {{- end -}}
+
 
 {{/*
  Create the name of the backend configuration

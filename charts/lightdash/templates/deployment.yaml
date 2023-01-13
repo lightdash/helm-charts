@@ -36,28 +36,18 @@ spec:
           command: {{ .Values.image.command }}
           args: {{ .Values.image.args }}
           env:
-            {{- if .Values.postgresql.enabled }}
             - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ template "lightdash.fullname" $ }}
-                  key: PGPASSWORD
-            {{- else }}
-            - name: PGPASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "lightdash.postgresql.secretName" . }}
-                  key: {{ include "lightdash.database.existingsecret.key" . }}
-            {{- end }}
+                  name: {{ (include "lightdash.database.secretName" .) }}
+                  key: {{ (include "lightdash.database.secret.passwordKey" .) }}
           envFrom:
-          {{- if $.Values.configMap }}
             - configMapRef:
                 name: {{ template "lightdash.fullname" $ }}
-          {{- end }}
-          {{- if $.Values.secrets }}
+            {{ if .Values.secrets }}
             - secretRef:
                 name: {{ template "lightdash.fullname" $ }}
-          {{- end }}
+            {{ end }}
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}

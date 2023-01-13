@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 0.6.0](https://img.shields.io/badge/Version-0.6.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.331.0](https://img.shields.io/badge/AppVersion-0.331.0-informational?style=flat-square)
+![Version: 0.7.0](https://img.shields.io/badge/Version-0.7.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.365.1](https://img.shields.io/badge/AppVersion-0.365.1-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -67,10 +67,10 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | configMap.TRUST_PROXY | string | `"false"` | Trust the reverse proxy when setting secure cookies (via the "X-Forwarded-Proto" header) |
 | externalDatabase.database | string | `"lightdash"` |  |
 | externalDatabase.existingSecret | string | `""` |  |
-| externalDatabase.existingSecretPasswordKey | string | `""` |  |
 | externalDatabase.host | string | `"localhost"` |  |
 | externalDatabase.password | string | `""` |  |
 | externalDatabase.port | int | `5432` |  |
+| externalDatabase.secretKeys.passwordKey | string | `"postgresql-password"` |  |
 | externalDatabase.user | string | `"lightdash"` |  |
 | extraContainers | list | `[]` |  |
 | fullnameOverride | string | `""` |  |
@@ -78,7 +78,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | global.storageClass | string | `""` |  |
 | image.pullPolicy | string | `"IfNotPresent"` |  |
 | image.repository | string | `"lightdash/lightdash"` |  |
-| image.tag | string | `"0.316.0"` |  |
+| image.tag | string | `""` |  |
 | imagePullSecrets | list | `[]` |  |
 | ingress.annotations | object | `{}` |  |
 | ingress.className | string | `""` |  |
@@ -96,7 +96,8 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | podSecurityContext | object | `{}` |  |
 | postgresql.auth.database | string | `"lightdash"` |  |
 | postgresql.auth.existingSecret | string | `""` |  |
-| postgresql.auth.password | string | `"lightdash"` |  |
+| postgresql.auth.password | string | `""` |  |
+| postgresql.auth.secretKeys.userPasswordKey | string | `"password"` |  |
 | postgresql.auth.username | string | `"lightdash"` |  |
 | postgresql.commonAnnotations."helm.sh/hook" | string | `"pre-install,pre-upgrade"` |  |
 | postgresql.commonAnnotations."helm.sh/hook-weight" | string | `"-1"` |  |
