@@ -4,9 +4,74 @@ A Helm chart to deploy lightdash on kubernetes
 
 ![Version: 0.6.0](https://img.shields.io/badge/Version-0.6.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.331.0](https://img.shields.io/badge/AppVersion-0.331.0-informational?style=flat-square)
 
-## Prerequisites
+## Connecting to a postgres database
 
-### Backend Database
+### 1. Install postgresql into your cluster (not recommended for production)
+
+#### 1.1 Password in values.yaml (default)
+
+By default, the password for the postgres user is set in teh values.yaml file.
+
+#### 1.2 Password in an existing secret
+
+Set the following to use an existing secret:
+
+```yaml
+postgresql:
+  auth:
+    existingSecret: yourSecret
+    secretKeys:
+      userPasswordKey: password
+      adminPasswordKey: postgres-password
+```
+
+Example of creating the secret:
+
+```shell
+kubectl create secret generic yourSecret \
+  --from-literal=password=yourPassword \
+  --from-literal=postgres-password=yourAdminPassword
+```
+
+The additional `adminPasswordKey` is required by the postgresql subchart.
+
+### 2. Use an existing external postgres database (recommended for production)
+
+#### 2.1 Password in values.yaml (default)
+
+By default, the password is provided in the values.yaml file `externalDatabase.password` (for example using helm 
+secrets)
+
+```yaml
+postresql:
+  enabled: false
+
+externalDatabase:
+  password: secretPassword
+```
+
+#### 2.2 Use an existing secret
+
+Set the following to use an existing secret
+
+```yaml
+postgresql:
+  enabled: false
+
+externalDatabase:
+  existingSecret: yourSecret
+  secretKeys:
+    passwordKey: password
+```
+
+Example of creating a secret
+
+```shell
+kubbectl create secret generic yourSecret --from-literal=password=yourPassword
+```
+
+#### Connecting to database:
+
 
 #### Using the Bitnami PostgreSQL chart
 

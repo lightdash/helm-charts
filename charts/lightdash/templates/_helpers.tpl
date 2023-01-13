@@ -68,17 +68,25 @@ If using an external database, the password will be stored in the lightdash secr
 */}}
 {{- define "lightdash.database.secretName" -}}
 {{- if .Values.postgresql.enabled -}}
-  {{- default (include "lightdash.postgresql.fullname" .) .Values.postgresql.auth.existingSecret -}}
+    {{- if .Values.postgresql.auth.existingSecret -}}
+        {{ .Values.postgresql.auth.existingSecret -}}
+    {{- else -}}
+        {{- include "lightdash.postgresql.fullname" . -}}
+    {{- end -}}
 {{- else -}}
-    {{- default (include "lightdash.fullname" .) .Values.externalDatabase.existingSecret -}}
+    {{- if .Values.externalDatabase.existingSecret -}}
+        {{ .Values.externalDatabase.existingSecret -}}
+    {{- else -}}
+        {{- printf "%s-externaldb" (include "lightdash.fullname" .) -}}
+    {{- end -}}
 {{- end -}}
 {{- end -}}
 
 {{- define "lightdash.database.secret.passwordKey" -}}
 {{- if .Values.postgresql.enabled -}}
-  {{- ternary .Values.postgresql.auth.secretKeys.userPasswordKey "password" .Values.postgresql.auth.existingSecret -}}
+  {{- ternary "password" .Values.postgresql.auth.secretKeys.userPasswordKey (eq "" .Values.postgresql.auth.existingSecret) -}}
 {{- else -}}
-  {{- ternary .Values.externalDatabase.secretKeys.passwordKey "postgresql-password" .Values.externalDatabase.existingSecret -}}
+  {{- .Values.externalDatabase.secretKeys.passwordKey -}}
 {{- end -}}
 {{- end -}}
 

@@ -35,19 +35,19 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: {{ .Values.image.command }}
           args: {{ .Values.image.args }}
-          {{- if or (.Values.postgresql.enabled .Values.externalDatabase.existingSecret) -}}
           env:
             - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{- (include "lightdash.database.secretName" .) -}}
-                  key: {{- (include "lightdash.database.secret.passwordKey" .) -}}
-          {{- end -}}
+                  name: {{ (include "lightdash.database.secretName" .) }}
+                  key: {{ (include "lightdash.database.secret.passwordKey" .) }}
           envFrom:
             - configMapRef:
                 name: {{ template "lightdash.fullname" $ }}
+            {{ if .Values.secrets }}
             - secretRef:
                 name: {{ template "lightdash.fullname" $ }}
+            {{ end }}
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}
