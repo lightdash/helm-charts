@@ -135,6 +135,8 @@ browserless-chrome:
     tag: ""
   service:
     port: 80
+  env:
+    CONNECTION_TIMEOUT: "180000"
 ## @section Lightdash Database parameters
 
 ## PostgreSQL chart configuration
