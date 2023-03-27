@@ -10,7 +10,9 @@ data:
   PGHOST: {{ include "lightdash.database.host" . }}
   PGPORT: {{ include "lightdash.database.port" . | quote }}
   PGDATABASE: {{ include "lightdash.database.name" . }}
+  {{- if (index .Values "browserless-chrome").enabled -}}
   HEADLESS_BROWSER_HOST: {{ include "lightdash.headlessBrowser.host" . }}
   HEADLESS_BROWSER_PORT: {{ include "lightdash.headlessBrowser.port" .  | quote }}
+  {{- end -}}
   {{- toYaml .Values.configMap | nindent 2 }}
 {{- end }}
