@@ -35,6 +35,7 @@ helm install lightdash lightdash/lightdash \
 
 | Repository | Name | Version |
 |------------|------|---------|
+|  | lightdash-scheduler | 0.0.1 |
 | https://charts.bitnami.com/bitnami | common | 1.x.x |
 | https://charts.bitnami.com/bitnami | postgresql | 11.x.x |
 | https://charts.sagikazarmark.dev | browserless-chrome | 0.0.4 |
@@ -53,6 +54,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | autoscaling.targetCPUUtilizationPercentage | int | `80` |  |
 | backendConfig.create | bool | `false` |  |
 | browserless-chrome.enabled | bool | `true` |  |
+| browserless-chrome.env.CONNECTION_TIMEOUT | string | `"180000"` |  |
 | browserless-chrome.image.tag | string | `""` |  |
 | browserless-chrome.replicaCount | int | `1` |  |
 | browserless-chrome.resources.limits.cpu | string | `"500m"` |  |
@@ -107,6 +109,16 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | readinessProbe.timeoutSeconds | int | `5` |  |
 | replicaCount | int | `1` | Specify the number of lightdash instances. |
 | resources | object | `{}` |  |
+| scheduler.enabled | bool | `false` |  |
+| scheduler.replicaCount | int | `1` |  |
+| scheduler.resources.limits.cpu | string | `"475m"` |  |
+| scheduler.resources.limits.ephemeral-storage | string | `"1Gi"` |  |
+| scheduler.resources.limits.memory | string | `"725Mi"` |  |
+| scheduler.resources.requests.cpu | string | `"500m"` |  |
+| scheduler.resources.requests.memory | string | `"512Mi"` |  |
+| scheduler.sqlProxy.resources.requests.cpu | string | `"25m"` |  |
+| scheduler.sqlProxy.resources.requests.ephemeral-storage | string | `"10Mi"` |  |
+| scheduler.sqlProxy.resources.requests.memory | string | `"25Mi"` |  |
 | secrets.LIGHTDASH_SECRET | string | `"changeme"` | This is the secret used to sign the session ID cookie and to encrypt sensitive information. Do not share this secret! |
 | securityContext | object | `{}` |  |
 | service.port | int | `8080` |  |
