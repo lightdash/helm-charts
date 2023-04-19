@@ -27,6 +27,7 @@ configMap:
   DBT_PROJECT_DIR: ""
   # -- Public URL of your instance including protocol e.g. https://lightdash.myorg.com
   SITE_URL: ""
+  LIGHTDASH_SECRET: 'secret'
 
 secrets:
   # -- 	This is the secret used to sign the session ID cookie and to encrypt sensitive information. Do not share this secret!
@@ -201,19 +202,4 @@ backendConfig:
 
 
 scheduler:
-  enabled: false
-  replicaCount: 1
-  resources:
-    limits:
-      memory: '725Mi'
-      cpu: '475m'
-      ephemeral-storage: 1Gi
-    requests:
-      memory: '512Mi'
-      cpu: '500m'
-  sqlProxy:
-    resources:
-      requests:
-        memory: 25Mi
-        cpu: 25m
-        ephemeral-storage: 10Mi
+  enabled: true

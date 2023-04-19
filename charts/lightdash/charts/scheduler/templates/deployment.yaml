@@ -26,7 +26,6 @@ spec:
       {{- end }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
-      serviceAccountName: {{ include "lightdash.serviceAccountName" . }}
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
@@ -43,10 +42,10 @@ spec:
                   key: {{ (include "lightdash.database.secret.passwordKey" .) }}
           envFrom:
             - configMapRef:
-                name: {{ template "lightdash.fullname" $ }}
+                name: {{ .Release.Name }}
             {{ if .Values.secrets }}
             - secretRef:
-                name: {{ template "lightdash.fullname" $ }}
+                name: {{ .Release.Name }}
             {{ end }}
           #livenessProbe:
           #readinessProbe:

@@ -8,5 +8,8 @@ dependencies:
 - name: browserless-chrome
   repository: https://charts.sagikazarmark.dev
   version: 0.0.4
-digest: sha256:e67eebb04f4ad84367593b74cf5dd71a4ee8e5daede54549be6dfea396419064
-generated: "2023-01-11T20:11:55.264423Z"
+- name: scheduler
+  repository: ""
+  version: 0.0.1
+digest: sha256:76c1117a17d2407d41b21d0317cbdbd1cd44a910fd51b2992aba42f9280744d1
+generated: "2023-04-19T15:59:22.801299177+02:00"

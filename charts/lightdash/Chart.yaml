@@ -36,6 +36,7 @@ dependencies:
     version: 0.0.4
     repository: https://charts.sagikazarmark.dev
     condition: browserless-chrome.enabled
-  - name: lightdash-scheduler 
+  - name: scheduler 
     version: 0.0.1
     condition: scheduler.enabled
+
