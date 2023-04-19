@@ -35,6 +35,7 @@ helm install lightdash lightdash/lightdash \
 
 | Repository | Name | Version |
 |------------|------|---------|
+|  | scheduler | 0.0.1 |
 | https://charts.bitnami.com/bitnami | common | 1.x.x |
 | https://charts.bitnami.com/bitnami | postgresql | 11.x.x |
 | https://charts.sagikazarmark.dev | browserless-chrome | 0.0.4 |
@@ -53,6 +54,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | autoscaling.targetCPUUtilizationPercentage | int | `80` |  |
 | backendConfig.create | bool | `false` |  |
 | browserless-chrome.enabled | bool | `true` |  |
+| browserless-chrome.env.CONNECTION_TIMEOUT | string | `"180000"` |  |
 | browserless-chrome.image.tag | string | `""` |  |
 | browserless-chrome.replicaCount | int | `1` |  |
 | browserless-chrome.resources.limits.cpu | string | `"500m"` |  |
@@ -61,6 +63,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | browserless-chrome.resources.requests.memory | string | `"512Mi"` |  |
 | browserless-chrome.service.port | int | `80` |  |
 | configMap.DBT_PROJECT_DIR | string | `""` | Path to your local dbt project. Only set this value if you are mounting a DBT project |
+| configMap.LIGHTDASH_SECRET | string | `"secret"` |  |
 | configMap.PORT | string | `"8080"` | Port for lightdash |
 | configMap.SECURE_COOKIES | string | `"false"` | Secure Cookies |
 | configMap.SITE_URL | string | `""` | Public URL of your instance including protocol e.g. https://lightdash.myorg.com |
@@ -107,6 +110,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | readinessProbe.timeoutSeconds | int | `5` |  |
 | replicaCount | int | `1` | Specify the number of lightdash instances. |
 | resources | object | `{}` |  |
+| scheduler.enabled | bool | `true` |  |
 | secrets.LIGHTDASH_SECRET | string | `"changeme"` | This is the secret used to sign the session ID cookie and to encrypt sensitive information. Do not share this secret! |
 | securityContext | object | `{}` |  |
 | service.port | int | `8080` |  |

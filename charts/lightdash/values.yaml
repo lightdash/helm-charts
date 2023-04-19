@@ -27,6 +27,7 @@ configMap:
   DBT_PROJECT_DIR: ""
   # -- Public URL of your instance including protocol e.g. https://lightdash.myorg.com
   SITE_URL: ""
+  LIGHTDASH_SECRET: 'secret'
 
 secrets:
   # -- 	This is the secret used to sign the session ID cookie and to encrypt sensitive information. Do not share this secret!
@@ -198,3 +199,7 @@ serviceAccount:
 ## Customise backend configuration for GCP
 backendConfig:
   create: false
+
+
+scheduler:
+  enabled: true

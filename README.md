@@ -23,11 +23,12 @@ minikube start --driver=hyperkit
 # Get the lightdash helm charts (this repo)
 helm repo add lightdash https://lightdash.github.io/helm-charts
 
+
 # Pull a specific version of lightdash - (~5 minutes)
-minikube image pull lightdash/lightdash:0.433.1
+minikube image pull lightdash/lightdash:0.511.4
 
 # Use a locally built image of lightdash - (~5 minutes)
-minikube image load lightdash/lightdash:0.433.1-alpha
+minikube image load lightdash/lightdash:0.511.4-alpha
 
 ##########
 ### values.yaml
