@@ -108,7 +108,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | readinessProbe.timeoutSeconds | int | `5` |  |
 | replicaCount | int | `1` | Specify the number of lightdash instances. |
 | resources | object | `{}` |  |
-| scheduler.enabled | bool | `true` |  |
+| scheduler.enabled | bool | `false` |  |
 | scheduler.replicas | int | `1` |  |
 | scheduler.resources.requests.cpu | string | `"475m"` |  |
 | scheduler.resources.requests.ephemeral-storage | string | `"1Gi"` |  |
