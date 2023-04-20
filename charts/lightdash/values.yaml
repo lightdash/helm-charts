@@ -200,7 +200,7 @@ backendConfig:
   create: false
 
 scheduler:
-  enabled: true
+  enabled: false
   replicas: 1
   resources:
     requests:
