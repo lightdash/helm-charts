@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 0.7.3](https://img.shields.io/badge/Version-0.7.3-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.379.0](https://img.shields.io/badge/AppVersion-0.379.0-informational?style=flat-square)
+![Version: 0.7.3](https://img.shields.io/badge/Version-0.7.3-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.511.4](https://img.shields.io/badge/AppVersion-0.511.4-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -53,6 +53,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | autoscaling.targetCPUUtilizationPercentage | int | `80` |  |
 | backendConfig.create | bool | `false` |  |
 | browserless-chrome.enabled | bool | `true` |  |
+| browserless-chrome.env.CONNECTION_TIMEOUT | string | `"180000"` |  |
 | browserless-chrome.image.tag | string | `""` |  |
 | browserless-chrome.replicaCount | int | `1` |  |
 | browserless-chrome.resources.limits.cpu | string | `"500m"` |  |
@@ -107,6 +108,14 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | readinessProbe.timeoutSeconds | int | `5` |  |
 | replicaCount | int | `1` | Specify the number of lightdash instances. |
 | resources | object | `{}` |  |
+| scheduler.enabled | bool | `true` |  |
+| scheduler.replicas | int | `1` |  |
+| scheduler.resources.requests.cpu | string | `"475m"` |  |
+| scheduler.resources.requests.ephemeral-storage | string | `"1Gi"` |  |
+| scheduler.resources.requests.memory | string | `"725Mi"` |  |
+| scheduler.sqlProxy.resources.requests.cpu | string | `"25m"` |  |
+| scheduler.sqlProxy.resources.requests.ephemeral-storage | string | `"10Mi"` |  |
+| scheduler.sqlProxy.resources.requests.memory | string | `"25Mi"` |  |
 | secrets.LIGHTDASH_SECRET | string | `"changeme"` | This is the secret used to sign the session ID cookie and to encrypt sensitive information. Do not share this secret! |
 | securityContext | object | `{}` |  |
 | service.port | int | `8080` |  |
