@@ -198,3 +198,18 @@ serviceAccount:
 ## Customise backend configuration for GCP
 backendConfig:
   create: false
+
+scheduler:
+  enabled: false
+  replicas: 1
+  resources:
+    requests:
+      memory: 725Mi
+      cpu: 475m
+      ephemeral-storage: 1Gi
+  sqlProxy:
+    resources:
+      requests:
+        memory: 25Mi
+        cpu: 25m
+        ephemeral-storage: 10Mi

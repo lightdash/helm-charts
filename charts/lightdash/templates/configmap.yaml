@@ -12,5 +12,8 @@ data:
   PGDATABASE: {{ include "lightdash.database.name" . }}
   HEADLESS_BROWSER_HOST: {{ include "lightdash.headlessBrowser.host" . }}
   HEADLESS_BROWSER_PORT: {{ include "lightdash.headlessBrowser.port" .  | quote }}
+  {{- if .Values.scheduler.enabled }}
+  SCHEDULER_ENABLED: "false"
+  {{- end }}
   {{- toYaml .Values.configMap | nindent 2 }}
 {{- end }}
