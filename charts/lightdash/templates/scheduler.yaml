@@ -1,3 +1,4 @@
+{{- if .Values.scheduler.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -5,11 +6,7 @@ metadata:
   labels:
     {{- include "lightdash.labels" . | nindent 4 }}
 spec:
-  {{- if .Values.scheduler.enabled }}
   replicas: {{ .Values.scheduler.replicas }}
-  {{ else }}
-  replicas: 0 
-  {{- end }}
   selector:
     matchLabels:
       {{- include "lightdash.selectorLabels" . | nindent 6 }}
@@ -69,3 +66,4 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+{{- end }}
