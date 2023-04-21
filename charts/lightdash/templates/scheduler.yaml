@@ -40,6 +40,8 @@ spec:
                 secretKeyRef:
                   name: {{ (include "lightdash.database.secretName" .) }}
                   key: {{ (include "lightdash.database.secret.passwordKey" .) }}
+            - name: PORT
+              value: {{ .Values.scheduler.port | quote }}
           envFrom:
             - configMapRef:
                 name: {{ template "lightdash.fullname" $ }}
@@ -47,9 +49,20 @@ spec:
             - secretRef:
                 name: {{ template "lightdash.fullname" $ }}
             {{ end }}
-
-          #livenessProbe:
-          #readinessProbe:
+          livenessProbe:
+            initialDelaySeconds: 60
+            periodSeconds: 60
+            timeoutSeconds: 300
+            httpGet:
+              path: /api/v1/livez
+              port: {{ .Values.scheduler.port }}
+          readinessProbe:
+            initialDelaySeconds: 30
+            periodSeconds: 60
+            timeoutSeconds: 300
+            httpGet:
+              path: /api/v1/health
+              port: {{ .Values.scheduler.port }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
         {{- if .Values.extraContainers }}

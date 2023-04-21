@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 0.8.0](https://img.shields.io/badge/Version-0.8.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.511.4](https://img.shields.io/badge/AppVersion-0.511.4-informational?style=flat-square)
+![Version: 0.8.3](https://img.shields.io/badge/Version-0.8.3-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.511.4](https://img.shields.io/badge/AppVersion-0.511.4-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -109,6 +109,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | replicaCount | int | `1` | Specify the number of lightdash instances. |
 | resources | object | `{}` |  |
 | scheduler.enabled | bool | `false` |  |
+| scheduler.port | int | `8080` |  |
 | scheduler.replicas | int | `1` |  |
 | scheduler.resources.requests.cpu | string | `"475m"` |  |
 | scheduler.resources.requests.ephemeral-storage | string | `"1Gi"` |  |
