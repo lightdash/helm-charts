@@ -41,7 +41,7 @@ spec:
                   name: {{ (include "lightdash.database.secretName" .) }}
                   key: {{ (include "lightdash.database.secret.passwordKey" .) }}
             - name: PORT
-              value: {{ (include "lightdash.scheduler.port" .) }}
+              value: {{ .Values.scheduler.port | quote }}
           envFrom:
             - configMapRef:
                 name: {{ template "lightdash.fullname" $ }}
