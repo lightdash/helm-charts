@@ -54,7 +54,7 @@ spec:
             periodSeconds: 60
             timeoutSeconds: 300
             httpGet:
-              path: /api/v1/livez
+              path: /api/v1/health
               port: {{ .Values.scheduler.port }}
           readinessProbe:
             initialDelaySeconds: 30
