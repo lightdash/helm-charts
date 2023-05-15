@@ -104,8 +104,8 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | postgresql.commonAnnotations."helm.sh/hook-weight" | string | `"-1"` |  |
 | postgresql.enabled | bool | `true` |  |
 | readinessProbe.initialDelaySeconds | int | `30` |  |
-| readinessProbe.periodSeconds | int | `30` |  |
-| readinessProbe.timeoutSeconds | int | `60` |  |
+| readinessProbe.periodSeconds | int | `60` |  |
+| readinessProbe.timeoutSeconds | int | `30` |  |
 | replicaCount | int | `1` | Specify the number of lightdash instances. |
 | resources | object | `{}` |  |
 | scheduler.enabled | bool | `false` |  |
