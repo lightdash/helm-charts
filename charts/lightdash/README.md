@@ -88,9 +88,9 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | ingress.hosts[0].paths[0].path | string | `"/"` |  |
 | ingress.hosts[0].paths[0].pathType | string | `"ImplementationSpecific"` |  |
 | ingress.tls | list | `[]` |  |
-| livenessProbe.initialDelaySeconds | int | `20` |  |
-| livenessProbe.periodSeconds | int | `5` |  |
-| livenessProbe.timeoutSeconds | int | `2` |  |
+| livenessProbe.initialDelaySeconds | int | `30` |  |
+| livenessProbe.periodSeconds | int | `30` |  |
+| livenessProbe.timeoutSeconds | int | `60` |  |
 | nameOverride | string | `""` |  |
 | nodeSelector | object | `{}` |  |
 | podAnnotations | object | `{}` |  |
@@ -103,9 +103,9 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | postgresql.commonAnnotations."helm.sh/hook" | string | `"pre-install,pre-upgrade"` |  |
 | postgresql.commonAnnotations."helm.sh/hook-weight" | string | `"-1"` |  |
 | postgresql.enabled | bool | `true` |  |
-| readinessProbe.initialDelaySeconds | int | `60` |  |
-| readinessProbe.periodSeconds | int | `10` |  |
-| readinessProbe.timeoutSeconds | int | `5` |  |
+| readinessProbe.initialDelaySeconds | int | `30` |  |
+| readinessProbe.periodSeconds | int | `60` |  |
+| readinessProbe.timeoutSeconds | int | `30` |  |
 | replicaCount | int | `1` | Specify the number of lightdash instances. |
 | resources | object | `{}` |  |
 | scheduler.enabled | bool | `false` |  |

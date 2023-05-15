@@ -79,14 +79,14 @@ ingress:
   #      - chart-example.local
 
 livenessProbe:
-  initialDelaySeconds: 20
-  timeoutSeconds: 2
-  periodSeconds: 5
+  initialDelaySeconds: 30
+  timeoutSeconds: 60
+  periodSeconds: 30
 
 readinessProbe:
-  initialDelaySeconds: 60
-  periodSeconds: 10
-  timeoutSeconds: 5
+  initialDelaySeconds: 30
+  periodSeconds: 60
+  timeoutSeconds: 30
 
 resources:
   {}
