@@ -2,6 +2,38 @@ apiVersion: v1
 entries:
   lightdash:
   - apiVersion: v2
+    appVersion: 0.602.0
+    created: "2023-06-12T08:53:31.643132761Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 11.x.x
+    - condition: browserless-chrome.enabled
+      name: browserless-chrome
+      repository: https://charts.sagikazarmark.dev
+      version: 0.0.4
+    description: A Helm chart to deploy lightdash on kubernetes
+    digest: 87b9750271f2b95b5564bdde503dee31d3813773385f5539cb21104e6a627618
+    icon: https://docs.lightdash.com/img/logo.png
+    maintainers:
+    - email: oliver@lightdash.com
+      name: owlas
+      url: https://github.com/owlas
+    - email: jim@ramtank.com
+      name: jim80net
+      url: https://github.com/jim80net
+    name: lightdash
+    type: application
+    urls:
+    - https://github.com/lightdash/helm-charts/releases/download/lightdash-0.8.5/lightdash-0.8.5.tgz
+    version: 0.8.5
+  - apiVersion: v2
     appVersion: 0.511.4
     created: "2023-04-21T15:41:24.191078443Z"
     dependencies:
