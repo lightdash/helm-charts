@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 0.8.4](https://img.shields.io/badge/Version-0.8.4-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.511.4](https://img.shields.io/badge/AppVersion-0.511.4-informational?style=flat-square)
+![Version: 0.8.6](https://img.shields.io/badge/Version-0.8.6-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.602.0](https://img.shields.io/badge/AppVersion-0.602.0-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -74,6 +74,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | externalDatabase.secretKeys.passwordKey | string | `"postgresql-password"` |  |
 | externalDatabase.user | string | `"lightdash"` |  |
 | extraContainers | list | `[]` |  |
+| extraEnv | list | `[]` |  |
 | fullnameOverride | string | `""` |  |
 | global.imageRegistry | string | `""` |  |
 | global.storageClass | string | `""` |  |
