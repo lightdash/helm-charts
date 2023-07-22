@@ -41,6 +41,9 @@ spec:
                 secretKeyRef:
                   name: {{ (include "lightdash.database.secretName" .) }}
                   key: {{ (include "lightdash.database.secret.passwordKey" .) }}
+            {{- if .Values.extraEnv }}
+            {{- toYaml .Values.extraEnv | nindent 12 }}
+            {{- end }}
           envFrom:
             - configMapRef:
                 name: {{ template "lightdash.fullname" $ }}

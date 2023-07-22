@@ -32,6 +32,14 @@ secrets:
   # -- 	This is the secret used to sign the session ID cookie and to encrypt sensitive information. Do not share this secret!
   LIGHTDASH_SECRET: changeme
 
+extraEnv: []
+# extraEnv:
+#   - name: LIGHTDASH_SECRET
+#     valueFrom:
+#       secretKeyRef:
+#         name: lightdash
+#         key: LIGHTDASH_SECRET
+
 # -- Specify the number of lightdash instances.
 replicaCount: 1
 
