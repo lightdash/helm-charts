@@ -42,6 +42,9 @@ spec:
                   key: {{ (include "lightdash.database.secret.passwordKey" .) }}
             - name: PORT
               value: {{ .Values.scheduler.port | quote }}
+            {{- if .Values.extraEnv }}
+            {{- toYaml .Values.extraEnv | nindent 12 }}
+            {{- end }}
           envFrom:
             - configMapRef:
                 name: {{ template "lightdash.fullname" $ }}
