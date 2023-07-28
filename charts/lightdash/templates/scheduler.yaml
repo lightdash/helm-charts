@@ -45,6 +45,9 @@ spec:
             {{- if .Values.extraEnv }}
             {{- toYaml .Values.extraEnv | nindent 12 }}
             {{- end }}
+            {{- if .Values.schedulerExtraEnv }}
+            {{- toYaml .Values.schedulerExtraEnv | nindent 12 }}
+            {{- end }}
           envFrom:
             - configMapRef:
                 name: {{ template "lightdash.fullname" $ }}

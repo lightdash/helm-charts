@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 0.8.7](https://img.shields.io/badge/Version-0.8.7-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.686.0](https://img.shields.io/badge/AppVersion-0.686.0-informational?style=flat-square)
+![Version: 0.8.8](https://img.shields.io/badge/Version-0.8.8-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.686.0](https://img.shields.io/badge/AppVersion-0.686.0-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -118,6 +118,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | scheduler.sqlProxy.resources.requests.cpu | string | `"25m"` |  |
 | scheduler.sqlProxy.resources.requests.ephemeral-storage | string | `"10Mi"` |  |
 | scheduler.sqlProxy.resources.requests.memory | string | `"25Mi"` |  |
+| schedulerExtraEnv | list | `[]` |  |
 | secrets.LIGHTDASH_SECRET | string | `"changeme"` | This is the secret used to sign the session ID cookie and to encrypt sensitive information. Do not share this secret! |
 | securityContext | object | `{}` |  |
 | service.port | int | `8080` |  |
