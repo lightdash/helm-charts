@@ -39,6 +39,7 @@ extraEnv: []
 #       secretKeyRef:
 #         name: lightdash
 #         key: LIGHTDASH_SECRET
+schedulerExtraEnv: []
 
 # -- Specify the number of lightdash instances.
 replicaCount: 1
