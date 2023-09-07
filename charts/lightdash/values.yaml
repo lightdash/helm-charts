@@ -27,6 +27,8 @@ configMap:
   DBT_PROJECT_DIR: ""
   # -- Public URL of your instance including protocol e.g. https://lightdash.myorg.com
   SITE_URL: ""
+  ## -- Public key of the CA if you are using self-signed certs -- ##
+  ## NODE_EXTRA_CA_CERTS: "/mnt/extra-ca.crt"
 
 secrets:
   # -- 	This is the secret used to sign the session ID cookie and to encrypt sensitive information. Do not share this secret!
@@ -69,6 +71,10 @@ securityContext:
 service:
   type: ClusterIP
   port: 8080
+
+volumes:
+  - name: extra-ca
+    mountPath: /mnt
 
 ingress:
   enabled: false

@@ -27,6 +27,12 @@ spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       serviceAccountName: {{ include "lightdash.serviceAccountName" . }}
+      volumes:
+        {{- range .Values.volumes }}
+        - name: {{ .name }}
+          configMap:
+            name: {{ .name }}
+        {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
@@ -35,6 +41,11 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: {{ .Values.image.command }}
           args: {{ .Values.image.args }}
+          volumeMounts:
+            {{- range .Values.volumes }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+            {{- end }}
           env:
             - name: PGPASSWORD
               valueFrom:
