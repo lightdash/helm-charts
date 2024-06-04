@@ -16,4 +16,4 @@ spec:
       protocol: TCP
       name: http
   selector:
-    {{- include "lightdash.selectorLabels" . | nindent 6 }}
+    {{- include "lightdash.backendSelectorLabels" . | nindent 6 }}
