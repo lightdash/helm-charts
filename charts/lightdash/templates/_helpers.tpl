@@ -49,6 +49,15 @@ Selector labels
 app.kubernetes.io/name: {{ include "lightdash.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
+{{- define "lightdash.backendSelectorLabels" -}}
+{{ include "lightdash.selectorLabels" . }}
+app.kubernetes.io/component: backend
+{{- end }}
+{{- define "lightdash.schedulerSelectorLabels" -}}
+{{ include "lightdash.selectorLabels" . }}
+app.kubernetes.io/component: worker
+{{- end }}
+
 
 
 {{/*
