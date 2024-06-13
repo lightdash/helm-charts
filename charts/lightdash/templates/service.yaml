@@ -16,5 +16,5 @@ spec:
       protocol: TCP
       name: http
   selector:
-    {{- include "lightdash.selectorLabels" . | nindent 6 }}
+    {{- include "lightdash.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: backend
