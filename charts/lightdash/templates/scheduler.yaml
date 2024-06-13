@@ -9,7 +9,7 @@ spec:
   replicas: {{ .Values.scheduler.replicas }}
   selector:
     matchLabels:
-      {{- include "lightdash.schedulerSelectorLabels" . | nindent 6 }}
+      {{- include "lightdash.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -17,7 +17,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "lightdash.schedulerSelectorLabels" . | nindent 8 }}
+        {{- include "lightdash.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
