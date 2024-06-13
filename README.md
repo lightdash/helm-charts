@@ -1,5 +1,8 @@
 # Lightdash helm-charts
 
+# Migrating to 1.0.0
+
+The 1.0.0 release contains breaking changes. You **must first update your instance to 0.10.1** before updating to 1.0.0.
 
 # Development
 
@@ -7,12 +10,6 @@ It is recommended to work on this project with VS Code, as the development envir
 
 ## Linting
   `ct lint --all`
-
-## 🚧 WARNING 🚧
-
-Please be advised that these helm charts are under rapid development and will be refactored in the very near future.
-
-It is recommended that you use this repository to generate and customize your own manifests (possibly using [helm template](https://helm.sh/docs/helm/helm_template/) until the charts stabilize).
 
 ## Running with minikube
 
