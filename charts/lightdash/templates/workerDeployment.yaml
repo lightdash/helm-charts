@@ -1,18 +1,17 @@
+{{- if .Values.scheduler.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "lightdash.fullname" . }}-backend
+  name: {{ include "lightdash.fullname" . }}-worker
   labels:
     {{- include "lightdash.labels" . | nindent 4 }}
-    app.kubernetes.io/component: backend
+    app.kubernetes.io/component: worker
 spec:
-  {{- if not .Values.autoscaling.enabled }}
-  replicas: {{ .Values.replicaCount }}
-  {{- end }}
+  replicas: {{ .Values.scheduler.replicas }}
   selector:
     matchLabels:
       {{- include "lightdash.selectorLabels" . | nindent 6 }}
-      app.kubernetes.io/component: backend
+      app.kubernetes.io/component: worker
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -21,7 +20,7 @@ spec:
       {{- end }}
       labels:
         {{- include "lightdash.selectorLabels" . | nindent 8 }}
-        app.kubernetes.io/component: backend
+        app.kubernetes.io/component: worker
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -36,7 +35,7 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: {{ .Values.image.command }}
+          command: ["yarn", "workspace", "backend", "scheduler"]
           args: {{ .Values.image.args }}
           env:
             - name: PGPASSWORD
@@ -44,8 +43,13 @@ spec:
                 secretKeyRef:
                   name: {{ (include "lightdash.database.secretName" .) }}
                   key: {{ (include "lightdash.database.secret.passwordKey" .) }}
+            - name: PORT
+              value: {{ .Values.scheduler.port | quote }}
             {{- if .Values.extraEnv }}
             {{- toYaml .Values.extraEnv | nindent 12 }}
+            {{- end }}
+            {{- if .Values.schedulerExtraEnv }}
+            {{- toYaml .Values.schedulerExtraEnv | nindent 12 }}
             {{- end }}
           envFrom:
             - configMapRef:
@@ -54,28 +58,24 @@ spec:
             - secretRef:
                 name: {{ template "lightdash.fullname" $ }}
             {{ end }}
-          ports:
-            - name: http
-              containerPort: {{ .Values.service.port }}
-              protocol: TCP
           livenessProbe:
-            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
-            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
-            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
-            httpGet:
-              path: /api/v1/livez
-              port: {{ .Values.service.port }}
-          readinessProbe:
-            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
-            timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+            initialDelaySeconds: 60
+            periodSeconds: 60
+            timeoutSeconds: 300
             httpGet:
               path: /api/v1/health
-              port: {{ .Values.service.port }}
+              port: {{ .Values.scheduler.port }}
+          readinessProbe:
+            initialDelaySeconds: 30
+            periodSeconds: 60
+            timeoutSeconds: 300
+            httpGet:
+              path: /api/v1/health
+              port: {{ .Values.scheduler.port }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
         {{- if .Values.extraContainers }}
-        {{- toYaml .Values.extraContainers | nindent 8 }}
+          {{- toYaml .Values.extraContainers | nindent 8 }}
         {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
@@ -89,3 +89,4 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+{{- end }}
