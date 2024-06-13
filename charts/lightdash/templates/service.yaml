@@ -17,3 +17,4 @@ spec:
       name: http
   selector:
     {{- include "lightdash.selectorLabels" . | nindent 6 }}
+    app.kubernetes.io/component: backend
