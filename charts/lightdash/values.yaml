@@ -195,6 +195,9 @@ externalDatabase:
 ## @param additional sidecar containers for the lightdash image
 extraContainers: []
 
+## @param additional k8s manifests to deploy with the helm chart
+extraObjects: []
+
 ## Create service account for workload identity
 ## @param serviceAccount.create create a service account for workload identity
 ## @param serviceAccount.name name for the created service account
