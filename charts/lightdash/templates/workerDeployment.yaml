@@ -29,6 +29,7 @@ spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       serviceAccountName: {{ include "lightdash.serviceAccountName" . }}
+      terminationGracePeriodSeconds: 300 # 5 minutes
       containers:
         {{- if .Values.extraContainers }}
           {{- toYaml .Values.extraContainers | nindent 8 }}
@@ -38,7 +39,7 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["yarn", "workspace", "backend", "scheduler"]
+          command: ["dumb-init", "yarn", "workspace", "backend", "scheduler"]
           args: {{ .Values.image.args }}
           env:
             - name: PGPASSWORD
