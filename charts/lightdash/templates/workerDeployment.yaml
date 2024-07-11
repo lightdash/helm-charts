@@ -38,7 +38,7 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["node", "packages/backend/dist/scheduler.js"]
+          command: ["node", "dist/scheduler.js"]
           args: {{ .Values.image.args }}
           env:
             - name: PGPASSWORD
