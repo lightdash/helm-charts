@@ -52,6 +52,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | autoscaling.minReplicas | int | `1` |  |
 | autoscaling.targetCPUUtilizationPercentage | int | `80` |  |
 | backendConfig.create | bool | `false` |  |
+| backendConfig.terminationGracePeriodSeconds | int | `90` |  |
 | browserless-chrome.enabled | bool | `true` |  |
 | browserless-chrome.env.CONNECTION_TIMEOUT | string | `"180000"` |  |
 | browserless-chrome.image.tag | string | `""` |  |
@@ -120,6 +121,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | scheduler.sqlProxy.resources.requests.cpu | string | `"25m"` |  |
 | scheduler.sqlProxy.resources.requests.ephemeral-storage | string | `"10Mi"` |  |
 | scheduler.sqlProxy.resources.requests.memory | string | `"25Mi"` |  |
+| scheduler.terminationGracePeriodSeconds | int | `90` |  |
 | schedulerExtraEnv | list | `[]` |  |
 | secrets.LIGHTDASH_SECRET | string | `"changeme"` | This is the secret used to sign the session ID cookie and to encrypt sensitive information. Do not share this secret! |
 | securityContext | object | `{}` |  |
@@ -128,7 +130,6 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | serviceAccount.annotations | object | `{}` |  |
 | serviceAccount.create | bool | `true` |  |
 | serviceAccount.name | string | `""` |  |
-| terminationGracePeriodSeconds | int | `90` |  |
 | tolerations | list | `[]` |  |
 
 ----------------------------------------------
