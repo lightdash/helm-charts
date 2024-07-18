@@ -52,7 +52,6 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | autoscaling.minReplicas | int | `1` |  |
 | autoscaling.targetCPUUtilizationPercentage | int | `80` |  |
 | backendConfig.create | bool | `false` |  |
-| backendConfig.terminationGracePeriodSeconds | int | `90` |  |
 | browserless-chrome.enabled | bool | `true` |  |
 | browserless-chrome.env.CONNECTION_TIMEOUT | string | `"180000"` |  |
 | browserless-chrome.image.tag | string | `""` |  |
@@ -92,6 +91,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | ingress.hosts[0].paths[0].pathType | string | `"ImplementationSpecific"` |  |
 | ingress.tls | list | `[]` |  |
 | initContainers | list | `[]` |  |
+| lightdashBackend.terminationGracePeriodSeconds | int | `90` |  |
 | livenessProbe.initialDelaySeconds | int | `30` |  |
 | livenessProbe.periodSeconds | int | `30` |  |
 | livenessProbe.timeoutSeconds | int | `60` |  |
