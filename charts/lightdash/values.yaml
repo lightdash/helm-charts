@@ -213,6 +213,8 @@ serviceAccount:
 ## Customise backend configuration for GCP
 backendConfig:
   create: false
+
+lightdashBackend:
   terminationGracePeriodSeconds: 90
 
 scheduler:
