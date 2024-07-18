@@ -192,8 +192,11 @@ externalDatabase:
   database: lightdash
   port: 5432
 
-## @param additional sidecar containers for the lightdash image
+## @param additional main containers for the backend and worker deployments
 extraContainers: []
+
+## @param initContainers for the backend and worker deployments- these can be normal initContainers or side containers are just init containers with Always restart policy - docs: https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/
+initContainers: []
 
 ## @param additional k8s manifests to deploy with the helm chart
 extraObjects: []

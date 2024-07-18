@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 1.3.1](https://img.shields.io/badge/Version-1.3.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1121.0](https://img.shields.io/badge/AppVersion-0.1121.0-informational?style=flat-square)
+![Version: 1.4.0](https://img.shields.io/badge/Version-1.4.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1121.0](https://img.shields.io/badge/AppVersion-0.1121.0-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -90,6 +90,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | ingress.hosts[0].paths[0].path | string | `"/"` |  |
 | ingress.hosts[0].paths[0].pathType | string | `"ImplementationSpecific"` |  |
 | ingress.tls | list | `[]` |  |
+| initContainers | list | `[]` |  |
 | livenessProbe.initialDelaySeconds | int | `30` |  |
 | livenessProbe.periodSeconds | int | `30` |  |
 | livenessProbe.timeoutSeconds | int | `60` |  |

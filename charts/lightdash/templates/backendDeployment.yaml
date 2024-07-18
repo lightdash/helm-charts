@@ -77,6 +77,10 @@ spec:
               port: {{ .Values.service.port }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+      {{- if .Values.initContainers }}
+      initContainers:
+        {{- toYaml .Values.initContainers | nindent 8 }}
+      {{- end }} 
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
