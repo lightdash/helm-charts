@@ -229,3 +229,5 @@ scheduler:
         memory: 25Mi
         cpu: 25m
         ephemeral-storage: 10Mi
+
+terminationGracePeriodSeconds: 90
