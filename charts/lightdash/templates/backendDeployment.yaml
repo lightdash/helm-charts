@@ -93,3 +93,4 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.lightdashBackend.terminationGracePeriodSeconds | default 90 }}

@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 1.4.0](https://img.shields.io/badge/Version-1.4.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1121.0](https://img.shields.io/badge/AppVersion-0.1121.0-informational?style=flat-square)
+![Version: 1.4.1](https://img.shields.io/badge/Version-1.4.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1121.0](https://img.shields.io/badge/AppVersion-0.1121.0-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -91,6 +91,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | ingress.hosts[0].paths[0].pathType | string | `"ImplementationSpecific"` |  |
 | ingress.tls | list | `[]` |  |
 | initContainers | list | `[]` |  |
+| lightdashBackend.terminationGracePeriodSeconds | int | `90` |  |
 | livenessProbe.initialDelaySeconds | int | `30` |  |
 | livenessProbe.periodSeconds | int | `30` |  |
 | livenessProbe.timeoutSeconds | int | `60` |  |
@@ -120,6 +121,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | scheduler.sqlProxy.resources.requests.cpu | string | `"25m"` |  |
 | scheduler.sqlProxy.resources.requests.ephemeral-storage | string | `"10Mi"` |  |
 | scheduler.sqlProxy.resources.requests.memory | string | `"25Mi"` |  |
+| scheduler.terminationGracePeriodSeconds | int | `90` |  |
 | schedulerExtraEnv | list | `[]` |  |
 | secrets.LIGHTDASH_SECRET | string | `"changeme"` | This is the secret used to sign the session ID cookie and to encrypt sensitive information. Do not share this secret! |
 | securityContext | object | `{}` |  |

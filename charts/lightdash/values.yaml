@@ -214,6 +214,11 @@ serviceAccount:
 backendConfig:
   create: false
 
+## Backend deployment specific configuration
+lightdashBackend:
+  terminationGracePeriodSeconds: 90
+
+## Scheduler deployment specific configuration
 scheduler:
   port: 8080
   enabled: false
@@ -229,3 +234,5 @@ scheduler:
         memory: 25Mi
         cpu: 25m
         ephemeral-storage: 10Mi
+  terminationGracePeriodSeconds: 90
+
