@@ -214,9 +214,11 @@ serviceAccount:
 backendConfig:
   create: false
 
+## Backend deployment specific configuration
 lightdashBackend:
   terminationGracePeriodSeconds: 90
 
+## Scheduler deployment specific configuration
 scheduler:
   port: 8080
   enabled: false
