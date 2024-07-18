@@ -213,6 +213,7 @@ serviceAccount:
 ## Customise backend configuration for GCP
 backendConfig:
   create: false
+  terminationGracePeriodSeconds: 90
 
 scheduler:
   port: 8080
@@ -229,5 +230,5 @@ scheduler:
         memory: 25Mi
         cpu: 25m
         ephemeral-storage: 10Mi
+  terminationGracePeriodSeconds: 90
 
-terminationGracePeriodSeconds: 90
