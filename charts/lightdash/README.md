@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 1.4.1](https://img.shields.io/badge/Version-1.4.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1121.0](https://img.shields.io/badge/AppVersion-0.1121.0-informational?style=flat-square)
+![Version: 1.5.0](https://img.shields.io/badge/Version-1.5.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1121.0](https://img.shields.io/badge/AppVersion-0.1121.0-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -33,104 +33,105 @@ helm install lightdash lightdash/lightdash \
 
 ## Requirements
 
-| Repository | Name | Version |
-|------------|------|---------|
-| https://charts.bitnami.com/bitnami | common | 1.x.x |
-| https://charts.bitnami.com/bitnami | postgresql | 11.x.x |
-| https://charts.sagikazarmark.dev | browserless-chrome | 0.0.4 |
+| Repository                         | Name               | Version |
+| ---------------------------------- | ------------------ | ------- |
+| https://charts.bitnami.com/bitnami | common             | 1.x.x   |
+| https://charts.bitnami.com/bitnami | postgresql         | 11.x.x  |
+| https://charts.sagikazarmark.dev   | browserless-chrome | 0.0.4   |
 
 ## Values
 
 Note The `secret.*` values are used to create [kubernetes secrets](https://kubernetes.io/docs/concepts/configuration/secret/).
 If you don't want helm to manage this, you may wish to separately create a secret named `<release-name>-lightdash`.
 
-| Key | Type | Default | Description |
-|-----|------|---------|-------------|
-| affinity | object | `{}` |  |
-| autoscaling.enabled | bool | `false` |  |
-| autoscaling.maxReplicas | int | `100` |  |
-| autoscaling.minReplicas | int | `1` |  |
-| autoscaling.targetCPUUtilizationPercentage | int | `80` |  |
-| backendConfig.create | bool | `false` |  |
-| browserless-chrome.enabled | bool | `true` |  |
-| browserless-chrome.env.CONNECTION_TIMEOUT | string | `"180000"` |  |
-| browserless-chrome.image.tag | string | `""` |  |
-| browserless-chrome.replicaCount | int | `1` |  |
-| browserless-chrome.resources.limits.cpu | string | `"500m"` |  |
-| browserless-chrome.resources.limits.memory | string | `"512Mi"` |  |
-| browserless-chrome.resources.requests.cpu | string | `"500m"` |  |
-| browserless-chrome.resources.requests.memory | string | `"512Mi"` |  |
-| browserless-chrome.service.port | int | `80` |  |
-| configMap.DBT_PROJECT_DIR | string | `""` | Path to your local dbt project. Only set this value if you are mounting a DBT project |
-| configMap.PORT | string | `"8080"` | Port for lightdash |
-| configMap.SECURE_COOKIES | string | `"false"` | Secure Cookies |
-| configMap.SITE_URL | string | `""` | Public URL of your instance including protocol e.g. https://lightdash.myorg.com |
-| configMap.TRUST_PROXY | string | `"false"` | Trust the reverse proxy when setting secure cookies (via the "X-Forwarded-Proto" header) |
-| externalDatabase.database | string | `"lightdash"` |  |
-| externalDatabase.existingSecret | string | `""` |  |
-| externalDatabase.host | string | `"localhost"` |  |
-| externalDatabase.password | string | `""` |  |
-| externalDatabase.port | int | `5432` |  |
-| externalDatabase.secretKeys.passwordKey | string | `"postgresql-password"` |  |
-| externalDatabase.user | string | `"lightdash"` |  |
-| extraContainers | list | `[]` |  |
-| extraEnv | list | `[]` |  |
-| extraObjects | list | `[]` |  |
-| fullnameOverride | string | `""` |  |
-| global.imageRegistry | string | `""` |  |
-| global.storageClass | string | `""` |  |
-| image.pullPolicy | string | `"IfNotPresent"` |  |
-| image.repository | string | `"lightdash/lightdash"` |  |
-| image.tag | string | `""` |  |
-| imagePullSecrets | list | `[]` |  |
-| ingress.annotations | object | `{}` |  |
-| ingress.className | string | `""` |  |
-| ingress.enabled | bool | `false` |  |
-| ingress.hosts[0].host | string | `"chart-example.local"` |  |
-| ingress.hosts[0].paths[0].path | string | `"/"` |  |
-| ingress.hosts[0].paths[0].pathType | string | `"ImplementationSpecific"` |  |
-| ingress.tls | list | `[]` |  |
-| initContainers | list | `[]` |  |
-| lightdashBackend.terminationGracePeriodSeconds | int | `90` |  |
-| livenessProbe.initialDelaySeconds | int | `30` |  |
-| livenessProbe.periodSeconds | int | `30` |  |
-| livenessProbe.timeoutSeconds | int | `60` |  |
-| nameOverride | string | `""` |  |
-| nodeSelector | object | `{}` |  |
-| podAnnotations | object | `{}` |  |
-| podSecurityContext | object | `{}` |  |
-| postgresql.auth.database | string | `"lightdash"` |  |
-| postgresql.auth.existingSecret | string | `""` |  |
-| postgresql.auth.password | string | `""` |  |
-| postgresql.auth.secretKeys.userPasswordKey | string | `"password"` |  |
-| postgresql.auth.username | string | `"lightdash"` |  |
-| postgresql.commonAnnotations."helm.sh/hook" | string | `"pre-install,pre-upgrade"` |  |
-| postgresql.commonAnnotations."helm.sh/hook-weight" | string | `"-1"` |  |
-| postgresql.enabled | bool | `true` |  |
-| readinessProbe.initialDelaySeconds | int | `30` |  |
-| readinessProbe.periodSeconds | int | `60` |  |
-| readinessProbe.timeoutSeconds | int | `30` |  |
-| replicaCount | int | `1` | Specify the number of lightdash instances. |
-| resources | object | `{}` |  |
-| scheduler.enabled | bool | `false` |  |
-| scheduler.port | int | `8080` |  |
-| scheduler.replicas | int | `1` |  |
-| scheduler.resources.requests.cpu | string | `"475m"` |  |
-| scheduler.resources.requests.ephemeral-storage | string | `"1Gi"` |  |
-| scheduler.resources.requests.memory | string | `"725Mi"` |  |
-| scheduler.sqlProxy.resources.requests.cpu | string | `"25m"` |  |
-| scheduler.sqlProxy.resources.requests.ephemeral-storage | string | `"10Mi"` |  |
-| scheduler.sqlProxy.resources.requests.memory | string | `"25Mi"` |  |
-| scheduler.terminationGracePeriodSeconds | int | `90` |  |
-| schedulerExtraEnv | list | `[]` |  |
-| secrets.LIGHTDASH_SECRET | string | `"changeme"` | This is the secret used to sign the session ID cookie and to encrypt sensitive information. Do not share this secret! |
-| securityContext | object | `{}` |  |
-| service.port | int | `8080` |  |
-| service.type | string | `"ClusterIP"` |  |
-| serviceAccount.annotations | object | `{}` |  |
-| serviceAccount.create | bool | `true` |  |
-| serviceAccount.name | string | `""` |  |
-| tolerations | list | `[]` |  |
+| Key                                                     | Type   | Default                     | Description                                                                                                           |
+| ------------------------------------------------------- | ------ | --------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| affinity                                                | object | `{}`                        |                                                                                                                       |
+| autoscaling.enabled                                     | bool   | `false`                     |                                                                                                                       |
+| autoscaling.maxReplicas                                 | int    | `100`                       |                                                                                                                       |
+| autoscaling.minReplicas                                 | int    | `1`                         |                                                                                                                       |
+| autoscaling.targetCPUUtilizationPercentage              | int    | `80`                        |                                                                                                                       |
+| backendConfig.create                                    | bool   | `false`                     |                                                                                                                       |
+| browserless-chrome.enabled                              | bool   | `true`                      |                                                                                                                       |
+| browserless-chrome.env.CONNECTION_TIMEOUT               | string | `"180000"`                  |                                                                                                                       |
+| browserless-chrome.image.tag                            | string | `""`                        |                                                                                                                       |
+| browserless-chrome.replicaCount                         | int    | `1`                         |                                                                                                                       |
+| browserless-chrome.resources.limits.cpu                 | string | `"500m"`                    |                                                                                                                       |
+| browserless-chrome.resources.limits.memory              | string | `"512Mi"`                   |                                                                                                                       |
+| browserless-chrome.resources.requests.cpu               | string | `"500m"`                    |                                                                                                                       |
+| browserless-chrome.resources.requests.memory            | string | `"512Mi"`                   |                                                                                                                       |
+| browserless-chrome.service.port                         | int    | `80`                        |                                                                                                                       |
+| configMap.DBT_PROJECT_DIR                               | string | `""`                        | Path to your local dbt project. Only set this value if you are mounting a DBT project                                 |
+| configMap.PORT                                          | string | `"8080"`                    | Port for lightdash                                                                                                    |
+| configMap.SECURE_COOKIES                                | string | `"false"`                   | Secure Cookies                                                                                                        |
+| configMap.SITE_URL                                      | string | `""`                        | Public URL of your instance including protocol e.g. https://lightdash.myorg.com                                       |
+| configMap.TRUST_PROXY                                   | string | `"false"`                   | Trust the reverse proxy when setting secure cookies (via the "X-Forwarded-Proto" header)                              |
+| externalDatabase.database                               | string | `"lightdash"`               |                                                                                                                       |
+| externalDatabase.existingSecret                         | string | `""`                        |                                                                                                                       |
+| externalDatabase.host                                   | string | `"localhost"`               |                                                                                                                       |
+| externalDatabase.password                               | string | `""`                        |                                                                                                                       |
+| externalDatabase.port                                   | int    | `5432`                      |                                                                                                                       |
+| externalDatabase.secretKeys.passwordKey                 | string | `"postgresql-password"`     |                                                                                                                       |
+| externalDatabase.user                                   | string | `"lightdash"`               |                                                                                                                       |
+| extraContainers                                         | list   | `[]`                        |                                                                                                                       |
+| extraEnv                                                | list   | `[]`                        |                                                                                                                       |
+| extraObjects                                            | list   | `[]`                        |                                                                                                                       |
+| fullnameOverride                                        | string | `""`                        |                                                                                                                       |
+| global.imageRegistry                                    | string | `""`                        |                                                                                                                       |
+| global.storageClass                                     | string | `""`                        |                                                                                                                       |
+| image.pullPolicy                                        | string | `"IfNotPresent"`            |                                                                                                                       |
+| image.repository                                        | string | `"lightdash/lightdash"`     |                                                                                                                       |
+| image.tag                                               | string | `""`                        |                                                                                                                       |
+| imagePullSecrets                                        | list   | `[]`                        |                                                                                                                       |
+| ingress.annotations                                     | object | `{}`                        |                                                                                                                       |
+| ingress.className                                       | string | `""`                        |                                                                                                                       |
+| ingress.enabled                                         | bool   | `false`                     |                                                                                                                       |
+| ingress.hosts[0].host                                   | string | `"chart-example.local"`     |                                                                                                                       |
+| ingress.hosts[0].paths[0].path                          | string | `"/"`                       |                                                                                                                       |
+| ingress.hosts[0].paths[0].pathType                      | string | `"ImplementationSpecific"`  |                                                                                                                       |
+| ingress.tls                                             | list   | `[]`                        |                                                                                                                       |
+| initContainers                                          | list   | `[]`                        |                                                                                                                       |
+| lightdashBackend.terminationGracePeriodSeconds          | int    | `90`                        |                                                                                                                       |
+| livenessProbe.initialDelaySeconds                       | int    | `30`                        |                                                                                                                       |
+| livenessProbe.periodSeconds                             | int    | `30`                        |                                                                                                                       |
+| livenessProbe.timeoutSeconds                            | int    | `60`                        |                                                                                                                       |
+| nameOverride                                            | string | `""`                        |                                                                                                                       |
+| nodeSelector                                            | object | `{}`                        |                                                                                                                       |
+| podAnnotations                                          | object | `{}`                        |                                                                                                                       |
+| podSecurityContext                                      | object | `{}`                        |                                                                                                                       |
+| postgresql.auth.database                                | string | `"lightdash"`               |                                                                                                                       |
+| postgresql.auth.existingSecret                          | string | `""`                        |                                                                                                                       |
+| postgresql.auth.password                                | string | `""`                        |                                                                                                                       |
+| postgresql.auth.secretKeys.userPasswordKey              | string | `"password"`                |                                                                                                                       |
+| postgresql.auth.username                                | string | `"lightdash"`               |                                                                                                                       |
+| postgresql.commonAnnotations."helm.sh/hook"             | string | `"pre-install,pre-upgrade"` |                                                                                                                       |
+| postgresql.commonAnnotations."helm.sh/hook-weight"      | string | `"-1"`                      |                                                                                                                       |
+| postgresql.enabled                                      | bool   | `true`                      |                                                                                                                       |
+| readinessProbe.initialDelaySeconds                      | int    | `30`                        |                                                                                                                       |
+| readinessProbe.periodSeconds                            | int    | `60`                        |                                                                                                                       |
+| readinessProbe.timeoutSeconds                           | int    | `30`                        |                                                                                                                       |
+| replicaCount                                            | int    | `1`                         | Specify the number of lightdash instances.                                                                            |
+| resources                                               | object | `{}`                        |                                                                                                                       |
+| scheduler.enabled                                       | bool   | `false`                     |                                                                                                                       |
+| scheduler.port                                          | int    | `8080`                      |                                                                                                                       |
+| scheduler.replicas                                      | int    | `1`                         |                                                                                                                       |
+| scheduler.resources.requests.cpu                        | string | `"475m"`                    |                                                                                                                       |
+| scheduler.resources.requests.ephemeral-storage          | string | `"1Gi"`                     |                                                                                                                       |
+| scheduler.resources.requests.memory                     | string | `"725Mi"`                   |                                                                                                                       |
+| scheduler.sqlProxy.resources.requests.cpu               | string | `"25m"`                     |                                                                                                                       |
+| scheduler.sqlProxy.resources.requests.ephemeral-storage | string | `"10Mi"`                    |                                                                                                                       |
+| scheduler.sqlProxy.resources.requests.memory            | string | `"25Mi"`                    |                                                                                                                       |
+| scheduler.terminationGracePeriodSeconds                 | int    | `90`                        |                                                                                                                       |
+| schedulerExtraEnv                                       | list   | `[]`                        |                                                                                                                       |
+| secrets.LIGHTDASH_SECRET                                | string | `"changeme"`                | This is the secret used to sign the session ID cookie and to encrypt sensitive information. Do not share this secret! |
+| securityContext                                         | object | `{}`                        |                                                                                                                       |
+| service.port                                            | int    | `8080`                      |                                                                                                                       |
+| service.type                                            | string | `"ClusterIP"`               |                                                                                                                       |
+| serviceAccount.annotations                              | object | `{}`                        |                                                                                                                       |
+| serviceAccount.create                                   | bool   | `true`                      |                                                                                                                       |
+| serviceAccount.name                                     | string | `""`                        |                                                                                                                       |
+| tolerations                                             | list   | `[]`                        |                                                                                                                       |
 
-----------------------------------------------
+---
+
 Autogenerated from chart metadata using [helm-docs v1.7.0](https://github.com/norwoodj/helm-docs/releases/v1.7.0)

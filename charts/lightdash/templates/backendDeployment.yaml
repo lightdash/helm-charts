@@ -62,16 +62,16 @@ spec:
               containerPort: {{ .Values.service.port }}
               protocol: TCP
           livenessProbe:
-            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
-            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
-            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+            initialDelaySeconds: {{ .Values.lightdashBackend.livenessProbe.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.lightdashBackend.livenessProbe.timeoutSeconds }}
+            periodSeconds: {{ .Values.lightdashBackend.livenessProbe.periodSeconds }}
             httpGet:
               path: /api/v1/livez
               port: {{ .Values.service.port }}
           readinessProbe:
-            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
-            timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+            initialDelaySeconds: {{ .Values.lightdashBackend.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.lightdashBackend.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.lightdashBackend.readinessProbe.timeoutSeconds }}
             httpGet:
               path: /api/v1/health
               port: {{ .Values.service.port }}

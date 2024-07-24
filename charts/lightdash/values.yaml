@@ -87,16 +87,6 @@ ingress:
   #    hosts:
   #      - chart-example.local
 
-livenessProbe:
-  initialDelaySeconds: 30
-  timeoutSeconds: 60
-  periodSeconds: 30
-
-readinessProbe:
-  initialDelaySeconds: 30
-  periodSeconds: 60
-  timeoutSeconds: 30
-
 resources:
   {}
   # We usually recommend not to specify default resources and to leave this as a conscious
@@ -214,9 +204,18 @@ serviceAccount:
 backendConfig:
   create: false
 
+
 ## Backend deployment specific configuration
 lightdashBackend:
   terminationGracePeriodSeconds: 90
+  livenessProbe:
+    initialDelaySeconds: 30
+    timeoutSeconds: 60
+    periodSeconds: 30
+  readinessProbe:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 120
 
 ## Scheduler deployment specific configuration
 scheduler:
@@ -235,4 +234,12 @@ scheduler:
         cpu: 25m
         ephemeral-storage: 10Mi
   terminationGracePeriodSeconds: 90
+  livenessProbe:
+    initialDelaySeconds: 30
+    timeoutSeconds: 60
+    periodSeconds: 30
+  readinessProbe:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 120
 
