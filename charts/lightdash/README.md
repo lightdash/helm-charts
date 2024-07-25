@@ -91,12 +91,12 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | ingress.hosts[0].paths[0].pathType | string | `"ImplementationSpecific"` |  |
 | ingress.tls | list | `[]` |  |
 | initContainers | list | `[]` |  |
-| lightdashBackend.livenessProbe.initialDelaySeconds | int | `30` |  |
-| lightdashBackend.livenessProbe.periodSeconds | int | `30` |  |
-| lightdashBackend.livenessProbe.timeoutSeconds | int | `60` |  |
+| lightdashBackend.livenessProbe.initialDelaySeconds | int | `10` |  |
+| lightdashBackend.livenessProbe.periodSeconds | int | `10` |  |
+| lightdashBackend.livenessProbe.timeoutSeconds | int | `5` |  |
 | lightdashBackend.readinessProbe.initialDelaySeconds | int | `10` |  |
-| lightdashBackend.readinessProbe.periodSeconds | int | `10` |  |
-| lightdashBackend.readinessProbe.timeoutSeconds | int | `120` |  |
+| lightdashBackend.readinessProbe.periodSeconds | int | `60` |  |
+| lightdashBackend.readinessProbe.timeoutSeconds | int | `30` |  |
 | lightdashBackend.terminationGracePeriodSeconds | int | `90` |  |
 | nameOverride | string | `""` |  |
 | nodeSelector | object | `{}` |  |
@@ -113,13 +113,13 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | replicaCount | int | `1` | Specify the number of lightdash instances. |
 | resources | object | `{}` |  |
 | scheduler.enabled | bool | `false` |  |
-| scheduler.livenessProbe.initialDelaySeconds | int | `30` |  |
-| scheduler.livenessProbe.periodSeconds | int | `30` |  |
-| scheduler.livenessProbe.timeoutSeconds | int | `60` |  |
+| scheduler.livenessProbe.initialDelaySeconds | int | `10` |  |
+| scheduler.livenessProbe.periodSeconds | int | `10` |  |
+| scheduler.livenessProbe.timeoutSeconds | int | `5` |  |
 | scheduler.port | int | `8080` |  |
 | scheduler.readinessProbe.initialDelaySeconds | int | `10` |  |
-| scheduler.readinessProbe.periodSeconds | int | `10` |  |
-| scheduler.readinessProbe.timeoutSeconds | int | `120` |  |
+| scheduler.readinessProbe.periodSeconds | int | `60` |  |
+| scheduler.readinessProbe.timeoutSeconds | int | `30` |  |
 | scheduler.replicas | int | `1` |  |
 | scheduler.resources.requests.cpu | string | `"475m"` |  |
 | scheduler.resources.requests.ephemeral-storage | string | `"1Gi"` |  |
