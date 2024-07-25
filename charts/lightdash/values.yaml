@@ -209,13 +209,13 @@ backendConfig:
 lightdashBackend:
   terminationGracePeriodSeconds: 90
   livenessProbe:
-    initialDelaySeconds: 30
-    timeoutSeconds: 60
-    periodSeconds: 30
+    initialDelaySeconds: 10
+    timeoutSeconds: 5
+    periodSeconds: 10
   readinessProbe:
     initialDelaySeconds: 10
-    periodSeconds: 10
-    timeoutSeconds: 120
+    timeoutSeconds: 30
+    periodSeconds: 60
 
 ## Scheduler deployment specific configuration
 scheduler:
@@ -235,11 +235,11 @@ scheduler:
         ephemeral-storage: 10Mi
   terminationGracePeriodSeconds: 90
   livenessProbe:
-    initialDelaySeconds: 30
-    timeoutSeconds: 60
-    periodSeconds: 30
+    initialDelaySeconds: 10
+    timeoutSeconds: 5
+    periodSeconds: 10
   readinessProbe:
     initialDelaySeconds: 10
-    periodSeconds: 10
-    timeoutSeconds: 120
+    timeoutSeconds: 30
+    periodSeconds: 60
 
