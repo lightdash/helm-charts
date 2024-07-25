@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 1.4.1](https://img.shields.io/badge/Version-1.4.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1121.0](https://img.shields.io/badge/AppVersion-0.1121.0-informational?style=flat-square)
+![Version: 1.5.0](https://img.shields.io/badge/Version-1.5.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1121.0](https://img.shields.io/badge/AppVersion-0.1121.0-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -91,10 +91,13 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | ingress.hosts[0].paths[0].pathType | string | `"ImplementationSpecific"` |  |
 | ingress.tls | list | `[]` |  |
 | initContainers | list | `[]` |  |
+| lightdashBackend.livenessProbe.initialDelaySeconds | int | `10` |  |
+| lightdashBackend.livenessProbe.periodSeconds | int | `10` |  |
+| lightdashBackend.livenessProbe.timeoutSeconds | int | `5` |  |
+| lightdashBackend.readinessProbe.initialDelaySeconds | int | `35` |  |
+| lightdashBackend.readinessProbe.periodSeconds | int | `35` |  |
+| lightdashBackend.readinessProbe.timeoutSeconds | int | `30` |  |
 | lightdashBackend.terminationGracePeriodSeconds | int | `90` |  |
-| livenessProbe.initialDelaySeconds | int | `30` |  |
-| livenessProbe.periodSeconds | int | `30` |  |
-| livenessProbe.timeoutSeconds | int | `60` |  |
 | nameOverride | string | `""` |  |
 | nodeSelector | object | `{}` |  |
 | podAnnotations | object | `{}` |  |
@@ -107,13 +110,16 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | postgresql.commonAnnotations."helm.sh/hook" | string | `"pre-install,pre-upgrade"` |  |
 | postgresql.commonAnnotations."helm.sh/hook-weight" | string | `"-1"` |  |
 | postgresql.enabled | bool | `true` |  |
-| readinessProbe.initialDelaySeconds | int | `30` |  |
-| readinessProbe.periodSeconds | int | `60` |  |
-| readinessProbe.timeoutSeconds | int | `30` |  |
 | replicaCount | int | `1` | Specify the number of lightdash instances. |
 | resources | object | `{}` |  |
 | scheduler.enabled | bool | `false` |  |
+| scheduler.livenessProbe.initialDelaySeconds | int | `10` |  |
+| scheduler.livenessProbe.periodSeconds | int | `10` |  |
+| scheduler.livenessProbe.timeoutSeconds | int | `5` |  |
 | scheduler.port | int | `8080` |  |
+| scheduler.readinessProbe.initialDelaySeconds | int | `35` |  |
+| scheduler.readinessProbe.periodSeconds | int | `35` |  |
+| scheduler.readinessProbe.timeoutSeconds | int | `30` |  |
 | scheduler.replicas | int | `1` |  |
 | scheduler.resources.requests.cpu | string | `"475m"` |  |
 | scheduler.resources.requests.ephemeral-storage | string | `"1Gi"` |  |

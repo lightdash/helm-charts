@@ -62,16 +62,16 @@ spec:
                 name: {{ template "lightdash.fullname" $ }}
             {{ end }}
           livenessProbe:
-            initialDelaySeconds: 60
-            periodSeconds: 60
-            timeoutSeconds: 300
+            initialDelaySeconds: {{ .Values.scheduler.livenessProbe.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.scheduler.livenessProbe.timeoutSeconds }}
+            periodSeconds: {{ .Values.scheduler.livenessProbe.periodSeconds }}
             httpGet:
               path: /api/v1/health
               port: {{ .Values.scheduler.port }}
           readinessProbe:
-            initialDelaySeconds: 30
-            periodSeconds: 60
-            timeoutSeconds: 300
+            initialDelaySeconds: {{ .Values.scheduler.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.scheduler.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.scheduler.readinessProbe.timeoutSeconds }}
             httpGet:
               path: /api/v1/health
               port: {{ .Values.scheduler.port }}
