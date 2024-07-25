@@ -94,8 +94,8 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | lightdashBackend.livenessProbe.initialDelaySeconds | int | `10` |  |
 | lightdashBackend.livenessProbe.periodSeconds | int | `10` |  |
 | lightdashBackend.livenessProbe.timeoutSeconds | int | `5` |  |
-| lightdashBackend.readinessProbe.initialDelaySeconds | int | `10` |  |
-| lightdashBackend.readinessProbe.periodSeconds | int | `60` |  |
+| lightdashBackend.readinessProbe.initialDelaySeconds | int | `35` |  |
+| lightdashBackend.readinessProbe.periodSeconds | int | `35` |  |
 | lightdashBackend.readinessProbe.timeoutSeconds | int | `30` |  |
 | lightdashBackend.terminationGracePeriodSeconds | int | `90` |  |
 | nameOverride | string | `""` |  |
@@ -117,8 +117,8 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | scheduler.livenessProbe.periodSeconds | int | `10` |  |
 | scheduler.livenessProbe.timeoutSeconds | int | `5` |  |
 | scheduler.port | int | `8080` |  |
-| scheduler.readinessProbe.initialDelaySeconds | int | `10` |  |
-| scheduler.readinessProbe.periodSeconds | int | `60` |  |
+| scheduler.readinessProbe.initialDelaySeconds | int | `35` |  |
+| scheduler.readinessProbe.periodSeconds | int | `35` |  |
 | scheduler.readinessProbe.timeoutSeconds | int | `30` |  |
 | scheduler.replicas | int | `1` |  |
 | scheduler.resources.requests.cpu | string | `"475m"` |  |
