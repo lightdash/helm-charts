@@ -65,6 +65,7 @@ spec:
             initialDelaySeconds: {{ .Values.scheduler.livenessProbe.initialDelaySeconds }}
             timeoutSeconds: {{ .Values.scheduler.livenessProbe.timeoutSeconds }}
             periodSeconds: {{ .Values.scheduler.livenessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.scheduler.livenessProbe.failureThreshold }}
             httpGet:
               path: /api/v1/health
               port: {{ .Values.scheduler.port }}
@@ -72,6 +73,7 @@ spec:
             initialDelaySeconds: {{ .Values.scheduler.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.scheduler.readinessProbe.periodSeconds }}
             timeoutSeconds: {{ .Values.scheduler.readinessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.scheduler.readinessProbe.failureThreshold }}
             httpGet:
               path: /api/v1/health
               port: {{ .Values.scheduler.port }}
