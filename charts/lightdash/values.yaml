@@ -212,12 +212,14 @@ lightdashBackend:
     initialDelaySeconds: 10
     timeoutSeconds: 5
     periodSeconds: 10
+    failureThreshold: 10
   readinessProbe:
     ## If the value of periodSeconds is greater than initialDelaySeconds then the initialDelaySeconds would be ignored
     ## https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
-    initialDelaySeconds: 35
-    timeoutSeconds: 30
-    periodSeconds: 35
+    initialDelaySeconds: 10
+    timeoutSeconds: 5
+    periodSeconds: 10
+    failureThreshold: 30
 
 ## Scheduler deployment specific configuration
 scheduler:
@@ -240,8 +242,10 @@ scheduler:
     initialDelaySeconds: 10
     timeoutSeconds: 5
     periodSeconds: 10
+    failureThreshold: 10
   readinessProbe:
-    initialDelaySeconds: 35
-    timeoutSeconds: 30
-    periodSeconds: 35
+    initialDelaySeconds: 10
+    timeoutSeconds: 5
+    periodSeconds: 10
+    failureThreshold: 30
 

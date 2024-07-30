@@ -65,6 +65,7 @@ spec:
             initialDelaySeconds: {{ .Values.lightdashBackend.livenessProbe.initialDelaySeconds }}
             timeoutSeconds: {{ .Values.lightdashBackend.livenessProbe.timeoutSeconds }}
             periodSeconds: {{ .Values.lightdashBackend.livenessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.lightdashBackend.livenessProbe.failureThreshold }}
             httpGet:
               path: /api/v1/livez
               port: {{ .Values.service.port }}
@@ -72,6 +73,7 @@ spec:
             initialDelaySeconds: {{ .Values.lightdashBackend.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.lightdashBackend.readinessProbe.periodSeconds }}
             timeoutSeconds: {{ .Values.lightdashBackend.readinessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.lightdashBackend.readinessProbe.failureThreshold }}
             httpGet:
               path: /api/v1/health
               port: {{ .Values.service.port }}
