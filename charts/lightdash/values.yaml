@@ -244,4 +244,3 @@ scheduler:
     initialDelaySeconds: 35
     timeoutSeconds: 30
     periodSeconds: 35
-
