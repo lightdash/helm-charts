@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "lightdash.fullname" . }}-migrations
+  name: {{ include "lightdash.fullname" . }}-run-migrations
   annotations:
     helm.sh/hook: pre-install,pre-upgrade
     helm.sh/hook-weight: "-5"
@@ -16,7 +16,7 @@ spec:
       serviceAccountName: {{ include "lightdash.serviceAccountName" . }}
       restartPolicy: Never
       containers:
-        - name: migrations
+        - name: run-migrations
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["echo", "'Migrations completed'"]
