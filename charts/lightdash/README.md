@@ -54,7 +54,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | backendConfig.create | bool | `false` |  |
 | browserless-chrome.enabled | bool | `true` |  |
 | browserless-chrome.env.CONNECTION_TIMEOUT | string | `"180000"` |  |
-| browserless-chrome.image.tag | string | `""` |  |
+| browserless-chrome.image.tag | string | `"1.61.1-chrome-stable"` |  |
 | browserless-chrome.replicaCount | int | `1` |  |
 | browserless-chrome.resources.limits.cpu | string | `"500m"` |  |
 | browserless-chrome.resources.limits.memory | string | `"512Mi"` |  |
