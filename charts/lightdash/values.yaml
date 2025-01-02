@@ -131,7 +131,7 @@ browserless-chrome:
       memory: '512Mi'
       cpu: '500m'
   image:
-    tag: ""
+    tag: "1.61.1-chrome-stable"
   service:
     port: 80
   env:
