@@ -78,7 +78,7 @@ spec:
               path: /api/v1/health
               port: {{ .Values.scheduler.port }}
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
+            {{- toYaml .Values.scheduler.resources | nindent 12 }}
       {{- if .Values.initContainers }}
       initContainers:
         {{- toYaml .Values.initContainers | nindent 8 }}
