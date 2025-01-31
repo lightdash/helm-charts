@@ -5,7 +5,7 @@ on: pull_request
 
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v2.2.0
@@ -32,7 +32,7 @@ jobs:
         run: ct lint --all
 
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         # When changing versions here, check that the version exists at: https://hub.docker.com/r/kindest/node/tags?page=1&ordering=last_updated
@@ -76,7 +76,7 @@ jobs:
   automerge:
     needs: [lint, test]
     if: ${{ contains(github.event.pull_request.labels, 'merge after testing') }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: automerge
         uses: "pascalgn/automerge-action@v0.14.3"
