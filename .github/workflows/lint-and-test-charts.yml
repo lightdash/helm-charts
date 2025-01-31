@@ -76,7 +76,7 @@ jobs:
   automerge:
     needs: [lint, test]
     if: ${{ contains(github.event.pull_request.labels, 'merge after testing') }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: automerge
         uses: "pascalgn/automerge-action@v0.14.3"
