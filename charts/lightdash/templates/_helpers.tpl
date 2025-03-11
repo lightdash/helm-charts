@@ -157,3 +157,28 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{- define "lightdash.headlessBrowser.port" -}}
     {{- printf ((index .Values "browserless-chrome").service.port | toString) -}}
 {{- end -}}
+
+
+{{/* 
+Generate checksum using both standard and encrypted secret file types
+Usage: {{ include "checksums.secrets" . }}
+*/}}
+{{- define "checksums.secrets" -}}
+{{- $files := list -}}
+{{- $path := $.Template.BasePath -}}
+
+{{/* Add standard secrets */}}
+{{- $files = append $files (print $path "/secrets.yaml") -}}
+
+{{/* Add encrypted secret files if they exist */}}
+{{- $encryptedFiles := concat (.Files.Glob "*secrets.yaml.encrypted") (.Files.Glob "*secrets.enc.yaml") -}}
+{{- if $encryptedFiles -}}
+    {{- range $encryptedFiles -}}
+        {{- $files = append $files . -}}
+    {{- end -}}
+{{- end -}}
+
+{{/* Generate combined checksum from secret file(s) */}}
+{{- range $files }}
+{{- include . $ | sha256sum -}}
+{{- end -}}

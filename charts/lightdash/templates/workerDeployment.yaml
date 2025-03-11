@@ -19,7 +19,7 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
-        checksum/secrets: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
+        checksum/secrets: {{ include "checksums.secrets" . }}
       labels:
         {{- include "lightdash.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: worker
