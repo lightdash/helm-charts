@@ -7,6 +7,6 @@ dependencies:
   version: 11.9.13
 - name: browserless-chrome
   repository: https://charts.sagikazarmark.dev
-  version: 0.0.4
-digest: sha256:e67eebb04f4ad84367593b74cf5dd71a4ee8e5daede54549be6dfea396419064
-generated: "2023-04-20T09:03:19.268333258+02:00"
+  version: 0.0.5
+digest: sha256:98ec6d83bf6a41d9ca5e7eedd7b6565d6a28ab9f3bce5441621b640dd53350e4
+generated: "2025-07-13T18:48:36.997151-07:00"
