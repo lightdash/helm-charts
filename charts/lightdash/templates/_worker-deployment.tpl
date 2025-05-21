@@ -29,6 +29,9 @@ spec:
         checksum/config: {{ include (print $root.Template.BasePath "/configmap.yaml") $root | sha256sum }}
         checksum/secrets: {{ include (print $root.Template.BasePath "/secrets.yaml") $root | sha256sum }}
       labels:
+        {{- with $root.Values.podLabels }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
         {{- include "lightdash.selectorLabels" $root | nindent 8 }}
         app.kubernetes.io/component: {{ $component }}
     spec:
