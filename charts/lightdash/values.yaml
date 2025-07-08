@@ -246,7 +246,7 @@ scheduler:
     periodSeconds: 35
   tasks:
     exclude: "runAsyncWarehouseQuery"
-    include:
+    include: ""
 
 ## Query worker deployment specific configuration
 queryWorker:
@@ -275,4 +275,4 @@ queryWorker:
     periodSeconds: 35
   tasks:
     include: "runAsyncWarehouseQuery"
-    exclude:
+    exclude: ""

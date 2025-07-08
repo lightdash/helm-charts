@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 1.5.5](https://img.shields.io/badge/Version-1.5.5-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1121.0](https://img.shields.io/badge/AppVersion-0.1121.0-informational?style=flat-square)
+![Version: 1.6.0](https://img.shields.io/badge/Version-1.6.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1121.0](https://img.shields.io/badge/AppVersion-0.1121.0-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -111,6 +111,24 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | postgresql.commonAnnotations."helm.sh/hook" | string | `"pre-install,pre-upgrade"` |  |
 | postgresql.commonAnnotations."helm.sh/hook-weight" | string | `"-1"` |  |
 | postgresql.enabled | bool | `true` |  |
+| queryWorker.enabled | bool | `false` |  |
+| queryWorker.livenessProbe.initialDelaySeconds | int | `10` |  |
+| queryWorker.livenessProbe.periodSeconds | int | `10` |  |
+| queryWorker.livenessProbe.timeoutSeconds | int | `5` |  |
+| queryWorker.port | int | `8080` |  |
+| queryWorker.readinessProbe.initialDelaySeconds | int | `35` |  |
+| queryWorker.readinessProbe.periodSeconds | int | `35` |  |
+| queryWorker.readinessProbe.timeoutSeconds | int | `30` |  |
+| queryWorker.replicas | int | `1` |  |
+| queryWorker.resources.requests.cpu | string | `"475m"` |  |
+| queryWorker.resources.requests.ephemeral-storage | string | `"1Gi"` |  |
+| queryWorker.resources.requests.memory | string | `"725Mi"` |  |
+| queryWorker.sqlProxy.resources.requests.cpu | string | `"25m"` |  |
+| queryWorker.sqlProxy.resources.requests.ephemeral-storage | string | `"10Mi"` |  |
+| queryWorker.sqlProxy.resources.requests.memory | string | `"25Mi"` |  |
+| queryWorker.tasks.exclude | string | `nil` |  |
+| queryWorker.tasks.include | string | `"runAsyncWarehouseQuery"` |  |
+| queryWorker.terminationGracePeriodSeconds | int | `90` |  |
 | replicaCount | int | `1` | Specify the number of lightdash instances. |
 | resources | object | `{}` |  |
 | scheduler.enabled | bool | `false` |  |
@@ -128,6 +146,8 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | scheduler.sqlProxy.resources.requests.cpu | string | `"25m"` |  |
 | scheduler.sqlProxy.resources.requests.ephemeral-storage | string | `"10Mi"` |  |
 | scheduler.sqlProxy.resources.requests.memory | string | `"25Mi"` |  |
+| scheduler.tasks.exclude | string | `"runAsyncWarehouseQuery"` |  |
+| scheduler.tasks.include | string | `nil` |  |
 | scheduler.terminationGracePeriodSeconds | int | `90` |  |
 | schedulerExtraEnv | list | `[]` |  |
 | secrets.LIGHTDASH_SECRET | string | `"changeme"` | This is the secret used to sign the session ID cookie and to encrypt sensitive information. Do not share this secret! |
