@@ -1,28 +1,28 @@
-{{- if .Values.scheduler.enabled }}
+{{- if .Values.queryWorker.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "lightdash.fullname" . }}-worker
+  name: {{ include "lightdash.fullname" . }}-query-worker
   labels:
     {{- include "lightdash.labels" . | nindent 4 }}
-    app.kubernetes.io/component: worker
+    app.kubernetes.io/component: query-worker
 spec:
-  replicas: {{ .Values.scheduler.replicas }}
+  replicas: {{ .Values.queryWorker.replicas }}
   selector:
     matchLabels:
       {{- include "lightdash.selectorLabels" . | nindent 6 }}
-      app.kubernetes.io/component: worker
+      app.kubernetes.io/component: query-worker
   template:
     metadata:
       annotations:
         {{- with .Values.podAnnotations }}
-          {{- toYaml . | nindent 8 }}
+          {{- toYaml . | nindent 10 }}
         {{- end }}
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
         checksum/secrets: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
       labels:
         {{- include "lightdash.selectorLabels" . | nindent 8 }}
-        app.kubernetes.io/component: worker
+        app.kubernetes.io/component: query-worker
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -40,7 +40,7 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["node", "dist/scheduler.js"]
+          command: ["node", "dist/queryWorker.js"]
           args: {{ .Values.image.args }}
           env:
             - name: PGPASSWORD
@@ -49,11 +49,11 @@ spec:
                   name: {{ (include "lightdash.database.secretName" .) }}
                   key: {{ (include "lightdash.database.secret.passwordKey" .) }}
             - name: PORT
-              value: {{ .Values.scheduler.port | quote }}
+              value: {{ .Values.queryWorker.port | quote }}
             - name: SCHEDULER_INCLUDE_TASKS
-              value: "{{ .Values.scheduler.tasks.include }}"
+              value: "{{ .Values.queryWorker.tasks.include }}"
             - name: SCHEDULER_EXCLUDE_TASKS
-              value: "{{ .Values.scheduler.tasks.exclude }}"
+              value: "{{ .Values.queryWorker.tasks.exclude }}"
             {{- if .Values.extraEnv }}
             {{- toYaml .Values.extraEnv | nindent 12 }}
             {{- end }}
@@ -68,21 +68,21 @@ spec:
                 name: {{ template "lightdash.fullname" $ }}
             {{ end }}
           livenessProbe:
-            initialDelaySeconds: {{ .Values.scheduler.livenessProbe.initialDelaySeconds }}
-            timeoutSeconds: {{ .Values.scheduler.livenessProbe.timeoutSeconds }}
-            periodSeconds: {{ .Values.scheduler.livenessProbe.periodSeconds }}
+            initialDelaySeconds: {{ .Values.queryWorker.livenessProbe.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.queryWorker.livenessProbe.timeoutSeconds }}
+            periodSeconds: {{ .Values.queryWorker.livenessProbe.periodSeconds }}
             httpGet:
               path: /api/v1/health
-              port: {{ .Values.scheduler.port }}
+              port: {{ .Values.queryWorker.port }}
           readinessProbe:
-            initialDelaySeconds: {{ .Values.scheduler.readinessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.scheduler.readinessProbe.periodSeconds }}
-            timeoutSeconds: {{ .Values.scheduler.readinessProbe.timeoutSeconds }}
+            initialDelaySeconds: {{ .Values.queryWorker.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.queryWorker.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.queryWorker.readinessProbe.timeoutSeconds }}
             httpGet:
               path: /api/v1/health
-              port: {{ .Values.scheduler.port }}
+              port: {{ .Values.queryWorker.port }}
           resources:
-            {{- toYaml .Values.scheduler.resources | nindent 12 }}
+            {{- toYaml .Values.queryWorker.resources | nindent 12 }}
       {{- if .Values.initContainers }}
       initContainers:
         {{- toYaml .Values.initContainers | nindent 8 }}
@@ -99,5 +99,5 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      terminationGracePeriodSeconds: {{ .Values.scheduler.terminationGracePeriodSeconds | default 90 }}
+      terminationGracePeriodSeconds: {{ .Values.queryWorker.terminationGracePeriodSeconds | default 90 }}
 {{- end }}
