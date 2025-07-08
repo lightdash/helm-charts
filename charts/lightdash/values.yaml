@@ -224,17 +224,12 @@ scheduler:
   port: 8080
   enabled: false
   replicas: 1
+  concurrency: 3
   resources:
     requests:
       memory: 725Mi
       cpu: 475m
       ephemeral-storage: 1Gi
-  sqlProxy:
-    resources:
-      requests:
-        memory: 25Mi
-        cpu: 25m
-        ephemeral-storage: 10Mi
   terminationGracePeriodSeconds: 90
   livenessProbe:
     initialDelaySeconds: 10
@@ -246,24 +241,19 @@ scheduler:
     periodSeconds: 35
   tasks:
     exclude: "runAsyncWarehouseQuery"
-    include: ""
+    include:
 
 ## Query worker deployment specific configuration
 queryWorker:
   port: 8080
   enabled: false
   replicas: 1
+  concurrency: 3
   resources:
     requests:
       memory: 725Mi
       cpu: 475m
       ephemeral-storage: 1Gi
-  sqlProxy:
-    resources:
-      requests:
-        memory: 25Mi
-        cpu: 25m
-        ephemeral-storage: 10Mi
   terminationGracePeriodSeconds: 90
   livenessProbe:
     initialDelaySeconds: 10
@@ -275,4 +265,4 @@ queryWorker:
     periodSeconds: 35
   tasks:
     include: "runAsyncWarehouseQuery"
-    exclude: ""
+    exclude:

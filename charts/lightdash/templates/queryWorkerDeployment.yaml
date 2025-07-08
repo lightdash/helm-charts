@@ -50,10 +50,16 @@ spec:
                   key: {{ (include "lightdash.database.secret.passwordKey" .) }}
             - name: PORT
               value: {{ .Values.queryWorker.port | quote }}
+            {{- if .Values.queryWorker.tasks.include }}
             - name: SCHEDULER_INCLUDE_TASKS
               value: "{{ .Values.queryWorker.tasks.include }}"
+            {{- end }}
+            {{- if .Values.queryWorker.tasks.exclude }}
             - name: SCHEDULER_EXCLUDE_TASKS
               value: "{{ .Values.queryWorker.tasks.exclude }}"
+            {{- end }}
+            - name: SCHEDULER_CONCURRENCY
+              value: {{ .Values.queryWorker.concurrency | default 3 }}
             {{- if .Values.extraEnv }}
             {{- toYaml .Values.extraEnv | nindent 12 }}
             {{- end }}

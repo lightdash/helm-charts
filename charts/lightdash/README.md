@@ -126,7 +126,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | queryWorker.sqlProxy.resources.requests.cpu | string | `"25m"` |  |
 | queryWorker.sqlProxy.resources.requests.ephemeral-storage | string | `"10Mi"` |  |
 | queryWorker.sqlProxy.resources.requests.memory | string | `"25Mi"` |  |
-| queryWorker.tasks.exclude | string | `nil` |  |
+| queryWorker.tasks.exclude | string | `""` |  |
 | queryWorker.tasks.include | string | `"runAsyncWarehouseQuery"` |  |
 | queryWorker.terminationGracePeriodSeconds | int | `90` |  |
 | replicaCount | int | `1` | Specify the number of lightdash instances. |
@@ -147,7 +147,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | scheduler.sqlProxy.resources.requests.ephemeral-storage | string | `"10Mi"` |  |
 | scheduler.sqlProxy.resources.requests.memory | string | `"25Mi"` |  |
 | scheduler.tasks.exclude | string | `"runAsyncWarehouseQuery"` |  |
-| scheduler.tasks.include | string | `nil` |  |
+| scheduler.tasks.include | string | `""` |  |
 | scheduler.terminationGracePeriodSeconds | int | `90` |  |
 | schedulerExtraEnv | list | `[]` |  |
 | secrets.LIGHTDASH_SECRET | string | `"changeme"` | This is the secret used to sign the session ID cookie and to encrypt sensitive information. Do not share this secret! |
