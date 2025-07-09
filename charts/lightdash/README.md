@@ -111,6 +111,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | postgresql.commonAnnotations."helm.sh/hook" | string | `"pre-install,pre-upgrade"` |  |
 | postgresql.commonAnnotations."helm.sh/hook-weight" | string | `"-1"` |  |
 | postgresql.enabled | bool | `true` |  |
+| queryWorker.concurrency | int | `3` |  |
 | queryWorker.enabled | bool | `false` |  |
 | queryWorker.livenessProbe.initialDelaySeconds | int | `10` |  |
 | queryWorker.livenessProbe.periodSeconds | int | `10` |  |
@@ -123,14 +124,12 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | queryWorker.resources.requests.cpu | string | `"475m"` |  |
 | queryWorker.resources.requests.ephemeral-storage | string | `"1Gi"` |  |
 | queryWorker.resources.requests.memory | string | `"725Mi"` |  |
-| queryWorker.sqlProxy.resources.requests.cpu | string | `"25m"` |  |
-| queryWorker.sqlProxy.resources.requests.ephemeral-storage | string | `"10Mi"` |  |
-| queryWorker.sqlProxy.resources.requests.memory | string | `"25Mi"` |  |
-| queryWorker.tasks.exclude | string | `""` |  |
+| queryWorker.tasks.exclude | string | `nil` |  |
 | queryWorker.tasks.include | string | `"runAsyncWarehouseQuery"` |  |
 | queryWorker.terminationGracePeriodSeconds | int | `90` |  |
 | replicaCount | int | `1` | Specify the number of lightdash instances. |
 | resources | object | `{}` |  |
+| scheduler.concurrency | int | `3` |  |
 | scheduler.enabled | bool | `false` |  |
 | scheduler.livenessProbe.initialDelaySeconds | int | `10` |  |
 | scheduler.livenessProbe.periodSeconds | int | `10` |  |
@@ -143,11 +142,8 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | scheduler.resources.requests.cpu | string | `"475m"` |  |
 | scheduler.resources.requests.ephemeral-storage | string | `"1Gi"` |  |
 | scheduler.resources.requests.memory | string | `"725Mi"` |  |
-| scheduler.sqlProxy.resources.requests.cpu | string | `"25m"` |  |
-| scheduler.sqlProxy.resources.requests.ephemeral-storage | string | `"10Mi"` |  |
-| scheduler.sqlProxy.resources.requests.memory | string | `"25Mi"` |  |
 | scheduler.tasks.exclude | string | `"runAsyncWarehouseQuery"` |  |
-| scheduler.tasks.include | string | `""` |  |
+| scheduler.tasks.include | string | `nil` |  |
 | scheduler.terminationGracePeriodSeconds | int | `90` |  |
 | schedulerExtraEnv | list | `[]` |  |
 | secrets.LIGHTDASH_SECRET | string | `"changeme"` | This is the secret used to sign the session ID cookie and to encrypt sensitive information. Do not share this secret! |
