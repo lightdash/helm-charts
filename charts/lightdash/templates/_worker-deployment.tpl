@@ -1,6 +1,6 @@
 {{/*
 Worker deployment template that can be reused for different scheduler components
-Usage: {{- include "lightdash.workerDeployment" (dict "root" . "component" "scheduler" "workerConfig" .Values.scheduler) }}
+Usage: {{- include "lightdash.workerDeployment" (dict "root" . "component" "worker" "workerConfig" .Values.scheduler) }}
 */}}
 {{- define "lightdash.workerDeployment" -}}
 {{- $root := .root -}}
