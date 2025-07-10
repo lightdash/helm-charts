@@ -115,4 +115,4 @@ spec:
       {{- end }}
       terminationGracePeriodSeconds: {{ $workerConfig.terminationGracePeriodSeconds | default 90 }}
 {{- end }}
-{{- end }} 
+{{- end }}
