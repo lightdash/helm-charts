@@ -125,11 +125,11 @@ browserless-chrome:
   replicaCount: 1
   resources:
     limits:
-      memory: '512Mi'
-      cpu: '500m'
+      memory: "512Mi"
+      cpu: "500m"
     requests:
-      memory: '512Mi'
-      cpu: '500m'
+      memory: "512Mi"
+      cpu: "500m"
   image:
     repository: "ghcr.io/browserless/chromium"
     tag: "v2.24.3"
@@ -205,7 +205,6 @@ serviceAccount:
 backendConfig:
   create: false
 
-
 ## Backend deployment specific configuration
 lightdashBackend:
   terminationGracePeriodSeconds: 90
@@ -225,17 +224,12 @@ scheduler:
   port: 8080
   enabled: false
   replicas: 1
+  concurrency: 3
   resources:
     requests:
       memory: 725Mi
       cpu: 475m
       ephemeral-storage: 1Gi
-  sqlProxy:
-    resources:
-      requests:
-        memory: 25Mi
-        cpu: 25m
-        ephemeral-storage: 10Mi
   terminationGracePeriodSeconds: 90
   livenessProbe:
     initialDelaySeconds: 10
@@ -245,3 +239,30 @@ scheduler:
     initialDelaySeconds: 35
     timeoutSeconds: 30
     periodSeconds: 35
+  tasks:
+    exclude: "runAsyncWarehouseQuery"
+    include:
+
+## Query worker deployment specific configuration
+queryWorker:
+  port: 8080
+  enabled: false
+  replicas: 1
+  concurrency: 3
+  resources:
+    requests:
+      memory: 725Mi
+      cpu: 475m
+      ephemeral-storage: 1Gi
+  terminationGracePeriodSeconds: 90
+  livenessProbe:
+    initialDelaySeconds: 10
+    timeoutSeconds: 5
+    periodSeconds: 10
+  readinessProbe:
+    initialDelaySeconds: 35
+    timeoutSeconds: 30
+    periodSeconds: 35
+  tasks:
+    include: "runAsyncWarehouseQuery"
+    exclude:

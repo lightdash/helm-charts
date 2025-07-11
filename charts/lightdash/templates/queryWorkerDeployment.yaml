@@ -1,0 +1,2 @@
+{{- /* Query worker deployment using reusable template - DO NOT REMOVE THIS COMMENT OTHERWISE FORMATTING WILL BREAK */ -}}
+{{- include "lightdash.workerDeployment" (dict "root" . "component" "query-worker" "workerConfig" .Values.queryWorker) -}}
