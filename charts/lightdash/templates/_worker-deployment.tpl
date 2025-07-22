@@ -67,7 +67,7 @@ spec:
               value: "{{ $workerConfig.tasks.exclude }}"
             {{- end }}
             - name: SCHEDULER_CONCURRENCY
-              value: {{ $workerConfig.concurrency | default 3 }}
+              value: {{ $workerConfig.concurrency | default 3 | quote }}
             {{- if $root.Values.extraEnv }}
             {{- toYaml $root.Values.extraEnv | nindent 12 }}
             {{- end }}
