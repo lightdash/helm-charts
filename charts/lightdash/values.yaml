@@ -225,6 +225,8 @@ scheduler:
   enabled: false
   replicas: 1
   concurrency: 3
+  db:
+    maxConnections:
   resources:
     requests:
       memory: 725Mi
@@ -249,6 +251,8 @@ queryWorker:
   enabled: false
   replicas: 1
   concurrency: 3
+  db:
+    maxConnections:
   resources:
     requests:
       memory: 725Mi
