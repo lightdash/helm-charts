@@ -68,6 +68,10 @@ spec:
             {{- end }}
             - name: SCHEDULER_CONCURRENCY
               value: {{ $workerConfig.concurrency | default 3 | quote }}
+            {{- if $workerConfig.db.maxConnections }}
+            - name: PGMAXCONNECTIONS
+              value: {{ $workerConfig.db.maxConnections | quote }}
+            {{- end }}
             {{- if $root.Values.extraEnv }}
             {{- toYaml $root.Values.extraEnv | nindent 12 }}
             {{- end }}

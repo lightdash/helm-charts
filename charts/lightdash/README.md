@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 1.6.1](https://img.shields.io/badge/Version-1.6.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1121.0](https://img.shields.io/badge/AppVersion-0.1121.0-informational?style=flat-square)
+![Version: 1.6.2](https://img.shields.io/badge/Version-1.6.2-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1121.0](https://img.shields.io/badge/AppVersion-0.1121.0-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -112,6 +112,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | postgresql.commonAnnotations."helm.sh/hook-weight" | string | `"-1"` |  |
 | postgresql.enabled | bool | `true` |  |
 | queryWorker.concurrency | int | `3` |  |
+| queryWorker.db.maxConnections | string | `nil` |  |
 | queryWorker.enabled | bool | `false` |  |
 | queryWorker.livenessProbe.initialDelaySeconds | int | `10` |  |
 | queryWorker.livenessProbe.periodSeconds | int | `10` |  |
@@ -130,6 +131,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | replicaCount | int | `1` | Specify the number of lightdash instances. |
 | resources | object | `{}` |  |
 | scheduler.concurrency | int | `3` |  |
+| scheduler.db.maxConnections | string | `nil` |  |
 | scheduler.enabled | bool | `false` |  |
 | scheduler.livenessProbe.initialDelaySeconds | int | `10` |  |
 | scheduler.livenessProbe.periodSeconds | int | `10` |  |
