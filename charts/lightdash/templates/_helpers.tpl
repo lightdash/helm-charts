@@ -157,3 +157,41 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{- define "lightdash.headlessBrowser.port" -}}
     {{- printf ((index .Values "browserless-chrome").service.port | toString) -}}
 {{- end -}}
+
+{{/*
+Renders environment variables for SSL if enabled.
+*/}}
+{{- define "lightdash.sslEnvs" -}}
+{{- if .Values.ssl.enabled -}}
+- name: PGSSLMODE
+  value: verify-full
+- name: NODE_EXTRA_CA_CERTS
+  value: {{ .Values.ssl.mountPath }}/{{ .Values.ssl.certFileName }}
+{{- end }}
+{{- end }}
+
+{{/*
+Renders a volume for the SSL certificate ConfigMap if ssl.enabled is true.
+*/}}
+{{- define "lightdash.sslConfigMapVolume" -}}
+{{- if .Values.ssl.enabled -}}
+- name: ssl-cert
+  configMap:
+    name: {{ .Values.ssl.configMapName | default (printf "%s-ssl-cert" (include "lightdash.fullname" .)) }}
+    items:
+      - key: {{ .Values.ssl.certFileName }}
+        path: {{ .Values.ssl.certFileName }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Renders a volumeMount for the SSL certificate if ssl.enabled is true.
+*/}}
+{{- define "lightdash.sslConfigMapVolumeMount" -}}
+{{- if .Values.ssl.enabled -}}
+- name: ssl-cert
+  mountPath: {{ .Values.ssl.mountPath }}
+  subPath: {{ .Values.ssl.certFileName }}
+  readOnly: true
+{{- end -}}
+{{- end -}}

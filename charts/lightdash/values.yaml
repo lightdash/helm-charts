@@ -183,6 +183,16 @@ externalDatabase:
   database: lightdash
   port: 5432
 
+## SSL configuration
+## @param ssl.enabled Enable SSL/TLS for the Lightdash Database connection
+## @param ssl.mountPath Path to mount the SSL certificate
+## @param ssl.certFileName Name of the certificate file
+ssl:
+  enabled: false
+  mountPath: "/etc/ssl/certs"
+  certFileName: ""
+  configMapName: ""
+
 ## @param additional main containers for the backend and worker deployments
 extraContainers: []
 
