@@ -228,6 +228,8 @@ lightdashBackend:
     initialDelaySeconds: 35
     timeoutSeconds: 30
     periodSeconds: 35
+  extraVolumeMounts: []
+  extraVolumes: []
 
 ## Scheduler deployment specific configuration
 scheduler:

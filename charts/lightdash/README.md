@@ -99,6 +99,8 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | lightdashBackend.readinessProbe.periodSeconds | int | `35` |  |
 | lightdashBackend.readinessProbe.timeoutSeconds | int | `30` |  |
 | lightdashBackend.terminationGracePeriodSeconds | int | `90` |  |
+| lightdashBackend.extraVolumes | list | `[]` | Additional volumes to add to the backend pod. |
+| lightdashBackend.extraVolumeMounts | list | `[]` | Additional volume mounts to add to the backend container. |
 | nameOverride | string | `""` |  |
 | nodeSelector | object | `{}` |  |
 | podAnnotations | object | `{}` |  |
