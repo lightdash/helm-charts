@@ -1,3 +1,5 @@
+{{- $volumes := .Values.lightdashBackend.extraVolumes }}
+{{- $volumeMounts := .Values.lightdashBackend.extraVolumeMounts }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -79,6 +81,10 @@ spec:
               port: {{ .Values.service.port }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        {{- if .Values.extraVolumes }}
+          {{- toYaml .Values.extraVolumes | nindent 8 }}
+        {{- end }}
       {{- if .Values.initContainers }}
       initContainers:
         {{- toYaml .Values.initContainers | nindent 8 }}
