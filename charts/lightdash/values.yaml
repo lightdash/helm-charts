@@ -216,7 +216,6 @@ serviceAccount:
 backendConfig:
   create: false
 
-
 ## Backend deployment specific configuration
 lightdashBackend:
   terminationGracePeriodSeconds: 90
@@ -230,6 +229,8 @@ lightdashBackend:
     initialDelaySeconds: 35
     timeoutSeconds: 30
     periodSeconds: 35
+  extraVolumeMounts: []
+  extraVolumes: []
 
 ## Scheduler deployment specific configuration
 scheduler:
@@ -256,3 +257,5 @@ scheduler:
     initialDelaySeconds: 35
     timeoutSeconds: 30
     periodSeconds: 35
+  extraVolumeMounts: []
+  extraVolumes: []
