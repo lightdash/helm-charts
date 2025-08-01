@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 1.6.2](https://img.shields.io/badge/Version-1.6.2-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1121.0](https://img.shields.io/badge/AppVersion-0.1121.0-informational?style=flat-square)
+![Version: 1.6.3](https://img.shields.io/badge/Version-1.6.3-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1121.0](https://img.shields.io/badge/AppVersion-0.1121.0-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -111,23 +111,6 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | postgresql.commonAnnotations."helm.sh/hook" | string | `"pre-install,pre-upgrade"` |  |
 | postgresql.commonAnnotations."helm.sh/hook-weight" | string | `"-1"` |  |
 | postgresql.enabled | bool | `true` |  |
-| queryWorker.concurrency | int | `3` |  |
-| queryWorker.db.maxConnections | string | `nil` |  |
-| queryWorker.enabled | bool | `false` |  |
-| queryWorker.livenessProbe.initialDelaySeconds | int | `10` |  |
-| queryWorker.livenessProbe.periodSeconds | int | `10` |  |
-| queryWorker.livenessProbe.timeoutSeconds | int | `5` |  |
-| queryWorker.port | int | `8080` |  |
-| queryWorker.readinessProbe.initialDelaySeconds | int | `35` |  |
-| queryWorker.readinessProbe.periodSeconds | int | `35` |  |
-| queryWorker.readinessProbe.timeoutSeconds | int | `30` |  |
-| queryWorker.replicas | int | `1` |  |
-| queryWorker.resources.requests.cpu | string | `"475m"` |  |
-| queryWorker.resources.requests.ephemeral-storage | string | `"1Gi"` |  |
-| queryWorker.resources.requests.memory | string | `"725Mi"` |  |
-| queryWorker.tasks.exclude | string | `nil` |  |
-| queryWorker.tasks.include | string | `"runAsyncWarehouseQuery"` |  |
-| queryWorker.terminationGracePeriodSeconds | int | `90` |  |
 | replicaCount | int | `1` | Specify the number of lightdash instances. |
 | resources | object | `{}` |  |
 | scheduler.concurrency | int | `3` |  |
@@ -144,7 +127,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | scheduler.resources.requests.cpu | string | `"475m"` |  |
 | scheduler.resources.requests.ephemeral-storage | string | `"1Gi"` |  |
 | scheduler.resources.requests.memory | string | `"725Mi"` |  |
-| scheduler.tasks.exclude | string | `"runAsyncWarehouseQuery"` |  |
+| scheduler.tasks.exclude | string | `nil` |  |
 | scheduler.tasks.include | string | `nil` |  |
 | scheduler.terminationGracePeriodSeconds | int | `90` |  |
 | schedulerExtraEnv | list | `[]` |  |
