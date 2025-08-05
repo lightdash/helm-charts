@@ -116,6 +116,8 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | queryWorker.concurrency | int | `3` |  |
 | queryWorker.db.maxConnections | string | `nil` |  |
 | queryWorker.enabled | bool | `false` |  |
+| queryWorker.extraVolumes | list | `[]` | Additional volumes to add to the query worker pod. |
+| queryWorker.extraVolumeMounts | list | `[]` | Additional volume mounts to add to the query worker container. |
 | queryWorker.livenessProbe.initialDelaySeconds | int | `10` |  |
 | queryWorker.livenessProbe.periodSeconds | int | `10` |  |
 | queryWorker.livenessProbe.timeoutSeconds | int | `5` |  |
@@ -135,6 +137,8 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | scheduler.concurrency | int | `3` |  |
 | scheduler.db.maxConnections | string | `nil` |  |
 | scheduler.enabled | bool | `false` |  |
+| scheduler.extraVolumes | list | `[]` | Additional volumes to add to the scheduler pod. |
+| scheduler.extraVolumeMounts | list | `[]` | Additional volume mounts to add to the scheduler container. |
 | scheduler.livenessProbe.initialDelaySeconds | int | `10` |  |
 | scheduler.livenessProbe.periodSeconds | int | `10` |  |
 | scheduler.livenessProbe.timeoutSeconds | int | `5` |  |

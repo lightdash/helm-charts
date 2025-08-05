@@ -256,6 +256,8 @@ scheduler:
   tasks:
     exclude: "runAsyncWarehouseQuery"
     include:
+  extraVolumeMounts: []
+  extraVolumes: []
 
 ## Query worker deployment specific configuration
 queryWorker:
@@ -282,3 +284,5 @@ queryWorker:
   tasks:
     include: "runAsyncWarehouseQuery"
     exclude:
+  extraVolumeMounts: []
+  extraVolumes: []

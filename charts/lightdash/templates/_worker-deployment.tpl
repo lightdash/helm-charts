@@ -6,6 +6,8 @@ Usage: {{- include "lightdash.workerDeployment" (dict "root" . "component" "work
 {{- $root := .root -}}
 {{- $component := .component -}}
 {{- $workerConfig := .workerConfig -}}
+{{- $volumes := $workerConfig.extraVolumes }}
+{{- $volumeMounts := $workerConfig.extraVolumeMounts }}
 {{- if $workerConfig.enabled }}
 apiVersion: apps/v1
 kind: Deployment
@@ -101,6 +103,20 @@ spec:
               port: {{ $workerConfig.port }}
           resources:
             {{- toYaml $workerConfig.resources | nindent 12 }}
+          {{- if or $volumeMounts $root.Values.ssl.enabled }}
+          volumeMounts:
+            {{- if $volumeMounts }}
+            {{- toYaml $volumeMounts | nindent 12 }}
+            {{- end }}
+            {{- include "lightdash.sslConfigMapVolumeMount" $root | nindent 12 }}
+          {{- end }}
+      {{- if or $volumes $root.Values.ssl.enabled }}
+      volumes:
+        {{- if $volumes }}
+        {{- toYaml $volumes | nindent 8 }}
+        {{- end }}
+        {{- include "lightdash.sslConfigMapVolume" $root | nindent 8 }}
+      {{- end }}
       {{- if $root.Values.initContainers }}
       initContainers:
         {{- toYaml $root.Values.initContainers | nindent 8 }}
