@@ -81,10 +81,10 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ template "lightdash.fullname" $root }}
-            {{ if $root.Values.secrets }}
+            {{- if $root.Values.secrets }}
             - secretRef:
                 name: {{ template "lightdash.fullname" $root }}
-            {{ end }}
+            {{- end }}
           livenessProbe:
             initialDelaySeconds: {{ $workerConfig.livenessProbe.initialDelaySeconds }}
             timeoutSeconds: {{ $workerConfig.livenessProbe.timeoutSeconds }}

@@ -167,8 +167,8 @@ Renders environment variables for SSL if enabled.
   value: verify-full
 - name: NODE_EXTRA_CA_CERTS
   value: {{ .Values.ssl.mountPath }}/{{ .Values.ssl.certFileName }}
-{{- end }}
-{{- end }}
+{{- end -}}
+{{- end -}}
 
 {{/*
 Renders a volume for the SSL certificate ConfigMap if ssl.enabled is true.
