@@ -256,35 +256,7 @@ scheduler:
     timeoutSeconds: 30
     periodSeconds: 35
   tasks:
-    exclude: "runAsyncWarehouseQuery"
-    include:
-  extraVolumeMounts: []
-  extraVolumes: []
-
-## Query worker deployment specific configuration
-queryWorker:
-  port: 8080
-  enabled: false
-  replicas: 1
-  concurrency: 3
-  db:
-    maxConnections:
-  resources:
-    requests:
-      memory: 725Mi
-      cpu: 475m
-      ephemeral-storage: 1Gi
-  terminationGracePeriodSeconds: 90
-  livenessProbe:
-    initialDelaySeconds: 10
-    timeoutSeconds: 5
-    periodSeconds: 10
-  readinessProbe:
-    initialDelaySeconds: 35
-    timeoutSeconds: 30
-    periodSeconds: 35
-  tasks:
-    include: "runAsyncWarehouseQuery"
     exclude:
+    include:
   extraVolumeMounts: []
   extraVolumes: []
