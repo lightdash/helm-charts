@@ -183,6 +183,16 @@ externalDatabase:
   database: lightdash
   port: 5432
 
+## SSL configuration
+## @param ssl.enabled Enable SSL/TLS for the Lightdash Database connection
+## @param ssl.mountPath Path to mount the SSL certificate
+## @param ssl.certFileName Name of the certificate file
+ssl:
+  enabled: false
+  mountPath: "/etc/ssl/certs"
+  certFileName: ""
+  configMapName: ""
+
 ## @param additional main containers for the backend and worker deployments
 extraContainers: []
 
@@ -218,6 +228,8 @@ lightdashBackend:
     initialDelaySeconds: 35
     timeoutSeconds: 30
     periodSeconds: 35
+  extraVolumeMounts: []
+  extraVolumes: []
 
 ## Scheduler deployment specific configuration
 scheduler:
@@ -225,6 +237,8 @@ scheduler:
   enabled: false
   replicas: 1
   concurrency: 3
+  db:
+    maxConnections:
   resources:
     requests:
       memory: 725Mi
@@ -242,6 +256,8 @@ scheduler:
   tasks:
     exclude: "runAsyncWarehouseQuery"
     include:
+  extraVolumeMounts: []
+  extraVolumes: []
 
 ## Query worker deployment specific configuration
 queryWorker:
@@ -249,6 +265,8 @@ queryWorker:
   enabled: false
   replicas: 1
   concurrency: 3
+  db:
+    maxConnections:
   resources:
     requests:
       memory: 725Mi
@@ -266,3 +284,5 @@ queryWorker:
   tasks:
     include: "runAsyncWarehouseQuery"
     exclude:
+  extraVolumeMounts: []
+  extraVolumes: []
