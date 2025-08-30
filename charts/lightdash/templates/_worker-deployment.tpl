@@ -137,5 +137,12 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       terminationGracePeriodSeconds: {{ $workerConfig.terminationGracePeriodSeconds | default 90 }}
+      {{- with $root.Values.dnsConfig }}
+      dnsConfig:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $root.Values.dnsPolicy }}
+      dnsPolicy: {{ . }}
+      {{- end }}
 {{- end }}
 {{- end }}
