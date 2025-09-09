@@ -2,3 +2,5 @@ minikube.log
 node_modules
 package-lock.json
 *.tgz
+.envrc
+.direnv/

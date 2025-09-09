@@ -190,7 +190,7 @@ Renders a volumeMount for the SSL certificate if ssl.enabled is true.
 {{- define "lightdash.sslConfigMapVolumeMount" -}}
 {{- if .Values.ssl.enabled -}}
 - name: ssl-cert
-  mountPath: {{ .Values.ssl.mountPath }}
+  mountPath: {{ .Values.ssl.mountPath }}/{{ .Values.ssl.certFileName }}
   subPath: {{ .Values.ssl.certFileName }}
   readOnly: true
 {{- end -}}

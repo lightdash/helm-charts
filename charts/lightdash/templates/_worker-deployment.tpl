@@ -31,6 +31,9 @@ spec:
         checksum/config: {{ include (print $root.Template.BasePath "/configmap.yaml") $root | sha256sum }}
         checksum/secrets: {{ include (print $root.Template.BasePath "/secrets.yaml") $root | sha256sum }}
       labels:
+        {{- with $root.Values.podLabels }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
         {{- include "lightdash.selectorLabels" $root | nindent 8 }}
         app.kubernetes.io/component: {{ $component }}
     spec:
@@ -134,5 +137,12 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       terminationGracePeriodSeconds: {{ $workerConfig.terminationGracePeriodSeconds | default 90 }}
+      {{- with $root.Values.dnsConfig }}
+      dnsConfig:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $root.Values.dnsPolicy }}
+      dnsPolicy: {{ . }}
+      {{- end }}
 {{- end }}
 {{- end }}

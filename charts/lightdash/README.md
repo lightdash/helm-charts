@@ -2,11 +2,19 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 1.6.2](https://img.shields.io/badge/Version-1.6.2-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1121.0](https://img.shields.io/badge/AppVersion-0.1121.0-informational?style=flat-square)
+![Version: 1.7.4](https://img.shields.io/badge/Version-1.7.4-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1121.0](https://img.shields.io/badge/AppVersion-0.1121.0-informational?style=flat-square)
 
 ## Prerequisites
 
 ### Backend Database
+
+#### PostgreSQL with Vector Extension Support
+
+**Important**: Lightdash now requires PostgreSQL with the `vector` extension for embedding and advanced search functionality. This chart automatically uses the `pgvector/pgvector` Docker image which includes the required extension.
+
+#### Using External PostgreSQL
+
+If you want to use your own PostgreSQL instance, ensure it has the vector extension available!
 
 #### Using the Bitnami PostgreSQL chart
 
@@ -37,7 +45,7 @@ helm install lightdash lightdash/lightdash \
 |------------|------|---------|
 | https://charts.bitnami.com/bitnami | common | 1.x.x |
 | https://charts.bitnami.com/bitnami | postgresql | 11.x.x |
-| https://charts.sagikazarmark.dev | browserless-chrome | 0.0.4 |
+| https://charts.sagikazarmark.dev | browserless-chrome | 0.0.5 |
 
 ## Values
 
@@ -92,6 +100,8 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | ingress.hosts[0].paths[0].pathType | string | `"ImplementationSpecific"` |  |
 | ingress.tls | list | `[]` |  |
 | initContainers | list | `[]` |  |
+| lightdashBackend.extraVolumeMounts | list | `[]` |  |
+| lightdashBackend.extraVolumes | list | `[]` |  |
 | lightdashBackend.livenessProbe.initialDelaySeconds | int | `10` |  |
 | lightdashBackend.livenessProbe.periodSeconds | int | `10` |  |
 | lightdashBackend.livenessProbe.timeoutSeconds | int | `5` |  |
@@ -99,11 +109,10 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | lightdashBackend.readinessProbe.periodSeconds | int | `35` |  |
 | lightdashBackend.readinessProbe.timeoutSeconds | int | `30` |  |
 | lightdashBackend.terminationGracePeriodSeconds | int | `90` |  |
-| lightdashBackend.extraVolumes | list | `[]` | Additional volumes to add to the backend pod. |
-| lightdashBackend.extraVolumeMounts | list | `[]` | Additional volume mounts to add to the backend container. |
 | nameOverride | string | `""` |  |
 | nodeSelector | object | `{}` |  |
 | podAnnotations | object | `{}` |  |
+| podLabels | object | `{}` |  |
 | podSecurityContext | object | `{}` |  |
 | postgresql.auth.database | string | `"lightdash"` |  |
 | postgresql.auth.existingSecret | string | `""` |  |
@@ -113,32 +122,16 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | postgresql.commonAnnotations."helm.sh/hook" | string | `"pre-install,pre-upgrade"` |  |
 | postgresql.commonAnnotations."helm.sh/hook-weight" | string | `"-1"` |  |
 | postgresql.enabled | bool | `true` |  |
-| queryWorker.concurrency | int | `3` |  |
-| queryWorker.db.maxConnections | string | `nil` |  |
-| queryWorker.enabled | bool | `false` |  |
-| queryWorker.extraVolumes | list | `[]` | Additional volumes to add to the query worker pod. |
-| queryWorker.extraVolumeMounts | list | `[]` | Additional volume mounts to add to the query worker container. |
-| queryWorker.livenessProbe.initialDelaySeconds | int | `10` |  |
-| queryWorker.livenessProbe.periodSeconds | int | `10` |  |
-| queryWorker.livenessProbe.timeoutSeconds | int | `5` |  |
-| queryWorker.port | int | `8080` |  |
-| queryWorker.readinessProbe.initialDelaySeconds | int | `35` |  |
-| queryWorker.readinessProbe.periodSeconds | int | `35` |  |
-| queryWorker.readinessProbe.timeoutSeconds | int | `30` |  |
-| queryWorker.replicas | int | `1` |  |
-| queryWorker.resources.requests.cpu | string | `"475m"` |  |
-| queryWorker.resources.requests.ephemeral-storage | string | `"1Gi"` |  |
-| queryWorker.resources.requests.memory | string | `"725Mi"` |  |
-| queryWorker.tasks.exclude | string | `nil` |  |
-| queryWorker.tasks.include | string | `"runAsyncWarehouseQuery"` |  |
-| queryWorker.terminationGracePeriodSeconds | int | `90` |  |
+| postgresql.image.registry | string | `"docker.io"` |  |
+| postgresql.image.repository | string | `"pgvector/pgvector"` |  |
+| postgresql.image.tag | string | `"pg16"` |  |
 | replicaCount | int | `1` | Specify the number of lightdash instances. |
 | resources | object | `{}` |  |
 | scheduler.concurrency | int | `3` |  |
 | scheduler.db.maxConnections | string | `nil` |  |
 | scheduler.enabled | bool | `false` |  |
-| scheduler.extraVolumes | list | `[]` | Additional volumes to add to the scheduler pod. |
-| scheduler.extraVolumeMounts | list | `[]` | Additional volume mounts to add to the scheduler container. |
+| scheduler.extraVolumeMounts | list | `[]` |  |
+| scheduler.extraVolumes | list | `[]` |  |
 | scheduler.livenessProbe.initialDelaySeconds | int | `10` |  |
 | scheduler.livenessProbe.periodSeconds | int | `10` |  |
 | scheduler.livenessProbe.timeoutSeconds | int | `5` |  |
@@ -150,7 +143,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | scheduler.resources.requests.cpu | string | `"475m"` |  |
 | scheduler.resources.requests.ephemeral-storage | string | `"1Gi"` |  |
 | scheduler.resources.requests.memory | string | `"725Mi"` |  |
-| scheduler.tasks.exclude | string | `"runAsyncWarehouseQuery"` |  |
+| scheduler.tasks.exclude | string | `nil` |  |
 | scheduler.tasks.include | string | `nil` |  |
 | scheduler.terminationGracePeriodSeconds | int | `90` |  |
 | schedulerExtraEnv | list | `[]` |  |
@@ -161,10 +154,11 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | serviceAccount.annotations | object | `{}` |  |
 | serviceAccount.create | bool | `true` |  |
 | serviceAccount.name | string | `""` |  |
+| ssl.certFileName | string | `""` |  |
+| ssl.configMapName | string | `""` |  |
+| ssl.enabled | bool | `false` |  |
+| ssl.mountPath | string | `"/etc/ssl/certs"` |  |
 | tolerations | list | `[]` |  |
-| ssl.enabled | bool | `false` | Enable SSL/TLS for the Lightdash Database connection |
-| ssl.mountPath | string | "/etc/ssl/certs" | Path to mount the SSL certificate |
-| ssl.certFileName | string | "" | Name of the certificate file |
 
 ----------------------------------------------
 Autogenerated from chart metadata using [helm-docs v1.7.0](https://github.com/norwoodj/helm-docs/releases/v1.7.0)

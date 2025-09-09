@@ -53,6 +53,8 @@ imagePullSecrets: []
 
 podAnnotations: {}
 
+podLabels: {}
+
 podSecurityContext:
   {}
   # fsGroup: 2000
@@ -113,6 +115,13 @@ tolerations: []
 
 affinity: {}
 
+# Overrides for deployment DNS configuration
+# dnsPolicy: ClusterFirst
+# dnsConfig:
+#   options:
+#     - name: ndots
+#       value: "1"
+
 ## Browserless Chrome chart configuration
 ## ref: https://github.com/sagikazarmark/helm-charts/tree/master/charts/browserless-chrome
 ## @param browserless-chrome.enabled default true - whether to enable headless browser
@@ -142,6 +151,9 @@ browserless-chrome:
 ## PostgreSQL chart configuration
 ## ref: https://github.com/bitnami/charts/blob/master/bitnami/postgresql/values.yaml
 ## @param postgresql.enabled Switch to enable or disable the PostgreSQL helm chart (i.e. deploy postgres in k8s)
+## @param postgresql.image.registry Docker registry for PostgreSQL image
+## @param postgresql.image.repository PostgreSQL image repository (defaults to pgvector/pgvector for vector extension support)
+## @param postgresql.image.tag PostgreSQL image tag
 ## @param postgresql.auth.username Lightdash Postgresql username (creates non-admin user)
 ## @param postgresql.auth.password Lightdash Postgresql password (creates non-admin user)
 ## @param postgresql.auth.database Lightdash Postgresql database (creates new database)
@@ -152,6 +164,11 @@ browserless-chrome:
 ##
 postgresql:
   enabled: true
+  ## Use pgvector image to support vector extension required for embedding functionality
+  image:
+    registry: docker.io
+    repository: pgvector/pgvector
+    tag: pg16
   ## with Postgres 10 helm chart, user "postgres" has superuser privileges (fixing lightdash uuid)
   auth:
     username: lightdash
@@ -254,35 +271,7 @@ scheduler:
     timeoutSeconds: 30
     periodSeconds: 35
   tasks:
-    exclude: "runAsyncWarehouseQuery"
-    include:
-  extraVolumeMounts: []
-  extraVolumes: []
-
-## Query worker deployment specific configuration
-queryWorker:
-  port: 8080
-  enabled: false
-  replicas: 1
-  concurrency: 3
-  db:
-    maxConnections:
-  resources:
-    requests:
-      memory: 725Mi
-      cpu: 475m
-      ephemeral-storage: 1Gi
-  terminationGracePeriodSeconds: 90
-  livenessProbe:
-    initialDelaySeconds: 10
-    timeoutSeconds: 5
-    periodSeconds: 10
-  readinessProbe:
-    initialDelaySeconds: 35
-    timeoutSeconds: 30
-    periodSeconds: 35
-  tasks:
-    include: "runAsyncWarehouseQuery"
     exclude:
+    include:
   extraVolumeMounts: []
   extraVolumes: []
