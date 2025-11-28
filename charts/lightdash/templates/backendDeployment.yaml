@@ -69,6 +69,27 @@ spec:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
+          {{- if .Values.lightdashBackend.startupProbe }}
+          startupProbe:
+            {{- if .Values.lightdashBackend.startupProbe.initialDelaySeconds }}
+            initialDelaySeconds: {{ .Values.lightdashBackend.startupProbe.initialDelaySeconds }}
+            {{- end }}
+            {{- if .Values.lightdashBackend.startupProbe.timeoutSeconds }}
+            timeoutSeconds: {{ .Values.lightdashBackend.startupProbe.timeoutSeconds }}
+            {{- end }}
+            {{- if .Values.lightdashBackend.startupProbe.periodSeconds }}
+            periodSeconds: {{ .Values.lightdashBackend.startupProbe.periodSeconds }}
+            {{- end }}
+            {{- if .Values.lightdashBackend.startupProbe.failureThreshold }}
+            failureThreshold: {{ .Values.lightdashBackend.startupProbe.failureThreshold }}
+            {{- end }}
+            {{- if .Values.lightdashBackend.startupProbe.successThreshold }}
+            successThreshold: {{ .Values.lightdashBackend.startupProbe.successThreshold }}
+            {{- end }}
+            httpGet:
+              path: {{ .Values.lightdashBackend.startupProbe.path | default "/api/v1/livez" }}
+              port: {{ .Values.service.port }}
+          {{- end }}
           livenessProbe:
             initialDelaySeconds: {{ .Values.lightdashBackend.livenessProbe.initialDelaySeconds }}
             timeoutSeconds: {{ .Values.lightdashBackend.livenessProbe.timeoutSeconds }}
