@@ -69,10 +69,37 @@ spec:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
+          {{- if .Values.lightdashBackend.startupProbe }}
+          startupProbe:
+            {{- if .Values.lightdashBackend.startupProbe.initialDelaySeconds }}
+            initialDelaySeconds: {{ .Values.lightdashBackend.startupProbe.initialDelaySeconds }}
+            {{- end }}
+            {{- if .Values.lightdashBackend.startupProbe.timeoutSeconds }}
+            timeoutSeconds: {{ .Values.lightdashBackend.startupProbe.timeoutSeconds }}
+            {{- end }}
+            {{- if .Values.lightdashBackend.startupProbe.periodSeconds }}
+            periodSeconds: {{ .Values.lightdashBackend.startupProbe.periodSeconds }}
+            {{- end }}
+            {{- if .Values.lightdashBackend.startupProbe.failureThreshold }}
+            failureThreshold: {{ .Values.lightdashBackend.startupProbe.failureThreshold }}
+            {{- end }}
+            {{- if .Values.lightdashBackend.startupProbe.successThreshold }}
+            successThreshold: {{ .Values.lightdashBackend.startupProbe.successThreshold }}
+            {{- end }}
+            httpGet:
+              path: {{ .Values.lightdashBackend.startupProbe.path | default "/api/v1/livez" }}
+              port: {{ .Values.service.port }}
+          {{- end }}
           livenessProbe:
             initialDelaySeconds: {{ .Values.lightdashBackend.livenessProbe.initialDelaySeconds }}
             timeoutSeconds: {{ .Values.lightdashBackend.livenessProbe.timeoutSeconds }}
             periodSeconds: {{ .Values.lightdashBackend.livenessProbe.periodSeconds }}
+            {{- if .Values.lightdashBackend.livenessProbe.failureThreshold }}
+            failureThreshold: {{ .Values.lightdashBackend.livenessProbe.failureThreshold }}
+            {{- end }}
+            {{- if .Values.lightdashBackend.livenessProbe.successThreshold }}
+            successThreshold: {{ .Values.lightdashBackend.livenessProbe.successThreshold }}
+            {{- end }}
             httpGet:
               path: /api/v1/livez
               port: {{ .Values.service.port }}
@@ -80,6 +107,12 @@ spec:
             initialDelaySeconds: {{ .Values.lightdashBackend.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.lightdashBackend.readinessProbe.periodSeconds }}
             timeoutSeconds: {{ .Values.lightdashBackend.readinessProbe.timeoutSeconds }}
+            {{- if .Values.lightdashBackend.readinessProbe.failureThreshold }}
+            failureThreshold: {{ .Values.lightdashBackend.readinessProbe.failureThreshold }}
+            {{- end }}
+            {{- if .Values.lightdashBackend.readinessProbe.successThreshold }}
+            successThreshold: {{ .Values.lightdashBackend.readinessProbe.successThreshold }}
+            {{- end }}
             httpGet:
               path: /api/v1/health
               port: {{ .Values.service.port }}
