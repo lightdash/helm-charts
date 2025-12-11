@@ -1,0 +1,43 @@
+{{- if .Values.podDisruptionBudget.enabled }}
+{{- if not .Values.autoscaling.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "lightdash.fullname" . }}-backend
+  labels:
+    {{- include "lightdash.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+spec:
+  {{- if .Values.podDisruptionBudget.minAvailable }}
+  minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
+  {{- end }}
+  {{- if .Values.podDisruptionBudget.maxUnavailable }}
+  maxUnavailable: {{ .Values.podDisruptionBudget.maxUnavailable }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "lightdash.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: backend
+---
+{{- end }}
+{{- if .Values.scheduler.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "lightdash.fullname" . }}-worker
+  labels:
+    {{- include "lightdash.labels" . | nindent 4 }}
+    app.kubernetes.io/component: worker
+spec:
+  {{- if .Values.podDisruptionBudget.minAvailable }}
+  minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
+  {{- end }}
+  {{- if .Values.podDisruptionBudget.maxUnavailable }}
+  maxUnavailable: {{ .Values.podDisruptionBudget.maxUnavailable }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "lightdash.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: worker
+{{- end }}
+{{- end }}
