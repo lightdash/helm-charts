@@ -1,0 +1,2 @@
+{{- /* Backend Pod Disruption Budget using reusable template - DO NOT REMOVE THIS COMMENT OTHERWISE FORMATTING WILL BREAK */ -}}
+{{- include "lightdash.podDisruptionBudget" (dict "root" . "component" "backend" "pdbConfig" .Values.podDisruptionBudget) -}}

@@ -195,3 +195,33 @@ Renders a volumeMount for the SSL certificate if ssl.enabled is true.
   readOnly: true
 {{- end -}}
 {{- end -}}
+
+{{/*
+Pod Disruption Budget template that can be reused for different components
+Usage: {{- include "lightdash.podDisruptionBudget" (dict "root" . "component" "backend" "pdbConfig" .Values.podDisruptionBudget) }}
+*/}}
+{{- define "lightdash.podDisruptionBudget" -}}
+{{- $root := .root -}}
+{{- $component := .component -}}
+{{- $pdbConfig := .pdbConfig -}}
+{{- if $pdbConfig.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "lightdash.fullname" $root }}-{{ $component }}
+  labels:
+    {{- include "lightdash.labels" $root | nindent 4 }}
+    app.kubernetes.io/component: {{ $component }}
+spec:
+  {{- if $pdbConfig.minAvailable }}
+  minAvailable: {{ $pdbConfig.minAvailable }}
+  {{- end }}
+  {{- if $pdbConfig.maxUnavailable }}
+  maxUnavailable: {{ $pdbConfig.maxUnavailable }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "lightdash.selectorLabels" $root | nindent 6 }}
+      app.kubernetes.io/component: {{ $component }}
+{{- end }}
+{{- end }}

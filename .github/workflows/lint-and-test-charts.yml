@@ -37,7 +37,6 @@ jobs:
       matrix:
         # When changing versions here, check that the version exists at: https://hub.docker.com/r/kindest/node/tags?page=1&ordering=last_updated
         k8s:
-          - v1.20.2
           - v1.21.2
           - v1.22.5
           - v1.23.3
