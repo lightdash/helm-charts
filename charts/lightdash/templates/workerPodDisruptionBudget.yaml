@@ -1,0 +1,4 @@
+{{- /* Worker Pod Disruption Budget using reusable template - DO NOT REMOVE THIS COMMENT OTHERWISE FORMATTING WILL BREAK */ -}}
+{{- if .Values.scheduler.enabled -}}
+{{- include "lightdash.podDisruptionBudget" (dict "root" . "component" "worker" "pdbConfig" .Values.podDisruptionBudget) -}}
+{{- end -}}
