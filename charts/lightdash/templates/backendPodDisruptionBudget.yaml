@@ -1,4 +1,2 @@
 {{- /* Backend Pod Disruption Budget using reusable template - DO NOT REMOVE THIS COMMENT OTHERWISE FORMATTING WILL BREAK */ -}}
-{{- if not .Values.autoscaling.enabled -}}
 {{- include "lightdash.podDisruptionBudget" (dict "root" . "component" "backend" "pdbConfig" .Values.podDisruptionBudget) -}}
-{{- end -}}
