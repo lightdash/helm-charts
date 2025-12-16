@@ -1,5 +1,5 @@
 {{- if .Values.backendConfig.create }}
-apiVersion: cloud.google.com/v1beta1
+apiVersion: cloud.google.com/v1
 kind: BackendConfig
 metadata:
   name: {{ include "lightdash.backendConfigName" . }}
