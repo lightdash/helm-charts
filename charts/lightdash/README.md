@@ -63,7 +63,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | browserless-chrome.enabled | bool | `true` |  |
 | browserless-chrome.env.CONNECTION_TIMEOUT | string | `"180000"` |  |
 | browserless-chrome.image.repository | string | `"ghcr.io/browserless/chromium"` |  |
-| browserless-chrome.image.tag | string | `"v2.24.3"` |  |
+| browserless-chrome.image.tag | string | `"v2.38.2"` |  |
 | browserless-chrome.replicaCount | int | `1` |  |
 | browserless-chrome.resources.limits.cpu | string | `"500m"` |  |
 | browserless-chrome.resources.limits.memory | string | `"512Mi"` |  |
