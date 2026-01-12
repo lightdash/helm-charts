@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 2.0.2](https://img.shields.io/badge/Version-2.0.2-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.2248.0](https://img.shields.io/badge/AppVersion-0.2248.0-informational?style=flat-square)
+![Version: 2.1.0](https://img.shields.io/badge/Version-2.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.2248.0](https://img.shields.io/badge/AppVersion-0.2248.0-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -102,12 +102,18 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | initContainers | list | `[]` |  |
 | lightdashBackend.extraVolumeMounts | list | `[]` |  |
 | lightdashBackend.extraVolumes | list | `[]` |  |
-| lightdashBackend.livenessProbe.initialDelaySeconds | int | `10` |  |
-| lightdashBackend.livenessProbe.periodSeconds | int | `10` |  |
-| lightdashBackend.livenessProbe.timeoutSeconds | int | `5` |  |
-| lightdashBackend.readinessProbe.initialDelaySeconds | int | `35` |  |
-| lightdashBackend.readinessProbe.periodSeconds | int | `35` |  |
-| lightdashBackend.readinessProbe.timeoutSeconds | int | `30` |  |
+| lightdashBackend.livenessProbe.failureThreshold | int | `6` |  |
+| lightdashBackend.livenessProbe.initialDelaySeconds | int | `5` |  |
+| lightdashBackend.livenessProbe.periodSeconds | int | `15` |  |
+| lightdashBackend.livenessProbe.timeoutSeconds | int | `15` |  |
+| lightdashBackend.readinessProbe.failureThreshold | int | `2` |  |
+| lightdashBackend.readinessProbe.initialDelaySeconds | int | `5` |  |
+| lightdashBackend.readinessProbe.periodSeconds | int | `5` |  |
+| lightdashBackend.readinessProbe.timeoutSeconds | int | `5` |  |
+| lightdashBackend.startupProbe.failureThreshold | int | `18` |  |
+| lightdashBackend.startupProbe.initialDelaySeconds | int | `5` |  |
+| lightdashBackend.startupProbe.periodSeconds | int | `10` |  |
+| lightdashBackend.startupProbe.timeoutSeconds | int | `10` |  |
 | lightdashBackend.terminationGracePeriodSeconds | int | `90` |  |
 | nameOverride | string | `""` |  |
 | nodeSelector | object | `{}` |  |
@@ -134,17 +140,23 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | scheduler.enabled | bool | `false` |  |
 | scheduler.extraVolumeMounts | list | `[]` |  |
 | scheduler.extraVolumes | list | `[]` |  |
-| scheduler.livenessProbe.initialDelaySeconds | int | `10` |  |
-| scheduler.livenessProbe.periodSeconds | int | `10` |  |
-| scheduler.livenessProbe.timeoutSeconds | int | `5` |  |
+| scheduler.livenessProbe.failureThreshold | int | `20` |  |
+| scheduler.livenessProbe.initialDelaySeconds | int | `5` |  |
+| scheduler.livenessProbe.periodSeconds | int | `15` |  |
+| scheduler.livenessProbe.timeoutSeconds | int | `15` |  |
 | scheduler.port | int | `8080` |  |
-| scheduler.readinessProbe.initialDelaySeconds | int | `35` |  |
-| scheduler.readinessProbe.periodSeconds | int | `35` |  |
-| scheduler.readinessProbe.timeoutSeconds | int | `30` |  |
+| scheduler.readinessProbe.failureThreshold | int | `2` |  |
+| scheduler.readinessProbe.initialDelaySeconds | int | `5` |  |
+| scheduler.readinessProbe.periodSeconds | int | `5` |  |
+| scheduler.readinessProbe.timeoutSeconds | int | `5` |  |
 | scheduler.replicas | int | `1` |  |
 | scheduler.resources.requests.cpu | string | `"475m"` |  |
 | scheduler.resources.requests.ephemeral-storage | string | `"1Gi"` |  |
 | scheduler.resources.requests.memory | string | `"725Mi"` |  |
+| scheduler.startupProbe.failureThreshold | int | `18` |  |
+| scheduler.startupProbe.initialDelaySeconds | int | `5` |  |
+| scheduler.startupProbe.periodSeconds | int | `10` |  |
+| scheduler.startupProbe.timeoutSeconds | int | `10` |  |
 | scheduler.tasks.exclude | string | `nil` |  |
 | scheduler.tasks.include | string | `nil` |  |
 | scheduler.terminationGracePeriodSeconds | int | `90` |  |
