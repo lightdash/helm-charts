@@ -140,7 +140,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | scheduler.enabled | bool | `false` |  |
 | scheduler.extraVolumeMounts | list | `[]` |  |
 | scheduler.extraVolumes | list | `[]` |  |
-| scheduler.livenessProbe.failureThreshold | int | `6` |  |
+| scheduler.livenessProbe.failureThreshold | int | `20` |  |
 | scheduler.livenessProbe.initialDelaySeconds | int | `5` |  |
 | scheduler.livenessProbe.periodSeconds | int | `15` |  |
 | scheduler.livenessProbe.timeoutSeconds | int | `15` |  |
