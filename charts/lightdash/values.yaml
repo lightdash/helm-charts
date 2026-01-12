@@ -55,12 +55,10 @@ podAnnotations: {}
 
 podLabels: {}
 
-podSecurityContext:
-  {}
+podSecurityContext: {}
   # fsGroup: 2000
 
-securityContext:
-  {}
+securityContext: {}
   # capabilities:
   #   drop:
   #   - ALL
@@ -75,8 +73,7 @@ service:
 ingress:
   enabled: false
   className: ""
-  annotations:
-    {}
+  annotations: {}
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
   hosts:
@@ -89,8 +86,7 @@ ingress:
   #    hosts:
   #      - chart-example.local
 
-resources:
-  {}
+resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
@@ -240,16 +236,27 @@ backendConfig:
 ## Backend deployment specific configuration
 lightdashBackend:
   terminationGracePeriodSeconds: 90
-  livenessProbe:
-    initialDelaySeconds: 10
-    timeoutSeconds: 5
+  ## In some older Kubernetes versions, the initialDelaySeconds might be ignored if periodSeconds was set to a value higher than initialDelaySeconds.
+  ## However, in current versions, initialDelaySeconds is always honored and the probe will not start until after this initial delay.
+  ## https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
+  startupProbe:
+    ## 5 + (10 * 18) = ~185s max startup
+    initialDelaySeconds: 5
+    timeoutSeconds: 10
     periodSeconds: 10
+    failureThreshold: 18
+  livenessProbe:
+    ## 5 + (15 * 6) = ~95s to restart
+    initialDelaySeconds: 5
+    timeoutSeconds: 15
+    periodSeconds: 15
+    failureThreshold: 6
   readinessProbe:
-    ## If the value of periodSeconds is greater than initialDelaySeconds then the initialDelaySeconds would be ignored
-    ## https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
-    initialDelaySeconds: 35
-    timeoutSeconds: 30
-    periodSeconds: 35
+    ## 5 + (5 * 2) = ~15s to remove from LB
+    initialDelaySeconds: 5
+    timeoutSeconds: 5
+    periodSeconds: 5
+    failureThreshold: 2
   extraVolumeMounts: []
   extraVolumes: []
 
@@ -267,14 +274,27 @@ scheduler:
       cpu: 475m
       ephemeral-storage: 1Gi
   terminationGracePeriodSeconds: 90
-  livenessProbe:
-    initialDelaySeconds: 10
-    timeoutSeconds: 5
+  ## In some older Kubernetes versions, the initialDelaySeconds might be ignored if periodSeconds was set to a value higher than initialDelaySeconds.
+  ## However, in current versions, initialDelaySeconds is always honored and the probe will not start until after this initial delay.
+  ## https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
+  startupProbe:
+    ## 5 + (10 * 18) = ~185s max startup
+    initialDelaySeconds: 5
+    timeoutSeconds: 10
     periodSeconds: 10
+    failureThreshold: 18
+  livenessProbe:
+    ## 5 + (15 * 20) = ~305s to restart
+    initialDelaySeconds: 5
+    timeoutSeconds: 15
+    periodSeconds: 15
+    failureThreshold: 20
   readinessProbe:
-    initialDelaySeconds: 35
-    timeoutSeconds: 30
-    periodSeconds: 35
+    ## 5 + (5 * 2) = ~15s to remove from LB
+    initialDelaySeconds: 5
+    timeoutSeconds: 5
+    periodSeconds: 5
+    failureThreshold: 2
   tasks:
     exclude:
     include:

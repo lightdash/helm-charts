@@ -90,19 +90,64 @@ spec:
             - secretRef:
                 name: {{ template "lightdash.fullname" $root }}
             {{- end }}
-          livenessProbe:
-            initialDelaySeconds: {{ $workerConfig.livenessProbe.initialDelaySeconds }}
-            timeoutSeconds: {{ $workerConfig.livenessProbe.timeoutSeconds }}
-            periodSeconds: {{ $workerConfig.livenessProbe.periodSeconds }}
+          {{- if $workerConfig.startupProbe }}
+          startupProbe:
+            {{- if $workerConfig.startupProbe.initialDelaySeconds }}
+            initialDelaySeconds: {{ $workerConfig.startupProbe.initialDelaySeconds }}
+            {{- end }}
+            {{- if $workerConfig.startupProbe.timeoutSeconds }}
+            timeoutSeconds: {{ $workerConfig.startupProbe.timeoutSeconds }}
+            {{- end }}
+            {{- if $workerConfig.startupProbe.periodSeconds }}
+            periodSeconds: {{ $workerConfig.startupProbe.periodSeconds }}
+            {{- end }}
+            {{- if $workerConfig.startupProbe.failureThreshold }}
+            failureThreshold: {{ $workerConfig.startupProbe.failureThreshold }}
+            {{- end }}
+            {{- if $workerConfig.startupProbe.successThreshold }}
+            successThreshold: {{ $workerConfig.startupProbe.successThreshold }}
+            {{- end }}
             httpGet:
-              path: /api/v1/health
+              path: {{ $workerConfig.startupProbe.path | default "/api/v1/livez" }}
+              port: {{ $workerConfig.port }}
+          {{- end }}
+          livenessProbe:
+            {{- if $workerConfig.livenessProbe.initialDelaySeconds }}
+            initialDelaySeconds: {{ $workerConfig.livenessProbe.initialDelaySeconds }}
+            {{- end }}
+            {{- if $workerConfig.livenessProbe.timeoutSeconds }}
+            timeoutSeconds: {{ $workerConfig.livenessProbe.timeoutSeconds }}
+            {{- end }}
+            {{- if $workerConfig.livenessProbe.periodSeconds }}
+            periodSeconds: {{ $workerConfig.livenessProbe.periodSeconds }}
+            {{- end }}
+            {{- if $workerConfig.livenessProbe.failureThreshold }}
+            failureThreshold: {{ $workerConfig.livenessProbe.failureThreshold }}
+            {{- end }}
+            {{- if $workerConfig.livenessProbe.successThreshold }}
+            successThreshold: {{ $workerConfig.livenessProbe.successThreshold }}
+            {{- end }}
+            httpGet:
+              path: {{ $workerConfig.livenessProbe.path | default "/api/v1/health" }}
               port: {{ $workerConfig.port }}
           readinessProbe:
+            {{- if $workerConfig.readinessProbe.initialDelaySeconds }}
             initialDelaySeconds: {{ $workerConfig.readinessProbe.initialDelaySeconds }}
-            periodSeconds: {{ $workerConfig.readinessProbe.periodSeconds }}
+            {{- end }}
+            {{- if $workerConfig.readinessProbe.timeoutSeconds }}
             timeoutSeconds: {{ $workerConfig.readinessProbe.timeoutSeconds }}
+            {{- end }}
+            {{- if $workerConfig.readinessProbe.periodSeconds }}
+            periodSeconds: {{ $workerConfig.readinessProbe.periodSeconds }}
+            {{- end }}
+            {{- if $workerConfig.readinessProbe.failureThreshold }}
+            failureThreshold: {{ $workerConfig.readinessProbe.failureThreshold }}
+            {{- end }}
+            {{- if $workerConfig.readinessProbe.successThreshold }}
+            successThreshold: {{ $workerConfig.readinessProbe.successThreshold }}
+            {{- end }}
             httpGet:
-              path: /api/v1/health
+              path: {{ $workerConfig.readinessProbe.path | default "/api/v1/health" }}
               port: {{ $workerConfig.port }}
           resources:
             {{- toYaml $workerConfig.resources | nindent 12 }}
