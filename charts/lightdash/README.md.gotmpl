@@ -42,6 +42,42 @@ helm install lightdash lightdash/lightdash \
 
 {{ template "chart.requirementsSection" . }}
 
+## High Availability
+
+### Pod Anti-Affinity
+
+To ensure high availability during node maintenance or failures, you can enable pod anti-affinity rules that spread pods across different nodes and availability zones.
+
+```yaml
+podAntiAffinity:
+  enabled: true
+  node: hard  # Pods MUST be on different nodes
+  zone: soft  # Pods PREFER different zones (but won't fail scheduling if unavailable)
+```
+
+**Options:**
+- `hard`: Required constraint - scheduling will fail if it cannot be satisfied
+- `soft`: Preferred constraint - scheduler will try but won't fail if unsatisfied
+- `none`: Disable the constraint
+
+**Recommended configuration:**
+- `node: hard` + `zone: soft` - Guarantees node separation, prefers zone separation
+- This prevents downtime during GKE node maintenance while avoiding scheduling failures when zones are limited
+
+**Note:** Anti-affinity is namespace-scoped by default, so pods from different namespaces can share nodes.
+
+### Pod Disruption Budget
+
+A Pod Disruption Budget is enabled by default to prevent all pods from being evicted simultaneously during voluntary disruptions:
+
+```yaml
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+```
+
+**Important:** PDBs only work effectively when combined with multiple replicas. With `replicaCount: 1`, the PDB cannot prevent downtime.
+
 ## Values
 
 Note The `secret.*` values are used to create [kubernetes secrets](https://kubernetes.io/docs/concepts/configuration/secret/).
