@@ -24,6 +24,57 @@ If release name contains chart name it will be used as a full name.
 {{- end }}
 
 {{/*
+Pod Anti-Affinity template that can be reused for different components
+Provides hard node anti-affinity and soft zone anti-affinity for high availability
+Usage: {{- include "lightdash.podAntiAffinity" (dict "root" . "component" "backend") }}
+*/}}
+{{- define "lightdash.podAntiAffinity" -}}
+{{- $root := .root -}}
+{{- $component := .component -}}
+{{- if $root.Values.podAntiAffinity.enabled }}
+podAntiAffinity:
+  {{- if or (eq $root.Values.podAntiAffinity.node "hard") (eq $root.Values.podAntiAffinity.zone "hard") }}
+  requiredDuringSchedulingIgnoredDuringExecution:
+    {{- if eq $root.Values.podAntiAffinity.node "hard" }}
+    - labelSelector:
+        matchLabels:
+          {{- include "lightdash.selectorLabels" $root | nindent 10 }}
+          app.kubernetes.io/component: {{ $component }}
+      topologyKey: kubernetes.io/hostname
+    {{- end }}
+    {{- if eq $root.Values.podAntiAffinity.zone "hard" }}
+    - labelSelector:
+        matchLabels:
+          {{- include "lightdash.selectorLabels" $root | nindent 10 }}
+          app.kubernetes.io/component: {{ $component }}
+      topologyKey: topology.kubernetes.io/zone
+    {{- end }}
+  {{- end }}
+  {{- if or (eq $root.Values.podAntiAffinity.node "soft") (eq $root.Values.podAntiAffinity.zone "soft") }}
+  preferredDuringSchedulingIgnoredDuringExecution:
+    {{- if eq $root.Values.podAntiAffinity.node "soft" }}
+    - weight: 100
+      podAffinityTerm:
+        labelSelector:
+          matchLabels:
+            {{- include "lightdash.selectorLabels" $root | nindent 12 }}
+            app.kubernetes.io/component: {{ $component }}
+        topologyKey: kubernetes.io/hostname
+    {{- end }}
+    {{- if eq $root.Values.podAntiAffinity.zone "soft" }}
+    - weight: 50
+      podAffinityTerm:
+        labelSelector:
+          matchLabels:
+            {{- include "lightdash.selectorLabels" $root | nindent 12 }}
+            app.kubernetes.io/component: {{ $component }}
+        topologyKey: topology.kubernetes.io/zone
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
 Create chart name and version as used by the chart label.
 */}}
 {{- define "lightdash.chart" -}}

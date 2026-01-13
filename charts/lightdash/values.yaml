@@ -114,7 +114,18 @@ nodeSelector: {}
 
 tolerations: []
 
+## Custom affinity configuration for the deployment
 affinity: {}
+
+## Managed by helm chart Pod Anti-Affinity configuration for high availability
+## Ensures pods are spread across nodes and zones to prevent downtime during node maintenance
+## @param podAntiAffinity.enabled -- Enable pod anti-affinity rules for backend and worker deployments
+## @param podAntiAffinity.node -- Node-level anti-affinity: "hard" (required), "soft" (preferred), or "none"
+## @param podAntiAffinity.zone -- Zone-level anti-affinity: "hard" (required), "soft" (preferred), or "none"
+podAntiAffinity:
+  enabled: false
+  node: hard
+  zone: soft
 
 # Overrides for deployment DNS configuration
 # dnsPolicy: ClusterFirst

@@ -173,9 +173,12 @@ spec:
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with $root.Values.affinity }}
+      {{- if or $root.Values.podAntiAffinity.enabled $root.Values.affinity }}
       affinity:
+        {{- include "lightdash.podAntiAffinity" (dict "root" $root "component" $component) | nindent 8 }}
+        {{- with $root.Values.affinity }}
         {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- end }}
       {{- with $root.Values.tolerations }}
       tolerations:
