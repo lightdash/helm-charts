@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 2.1.0](https://img.shields.io/badge/Version-2.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.2248.0](https://img.shields.io/badge/AppVersion-0.2248.0-informational?style=flat-square)
+![Version: 2.2.0](https://img.shields.io/badge/Version-2.2.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.2248.0](https://img.shields.io/badge/AppVersion-0.2248.0-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -46,6 +46,42 @@ helm install lightdash lightdash/lightdash \
 | https://charts.bitnami.com/bitnami | common | 1.x.x |
 | https://charts.bitnami.com/bitnami | postgresql | 11.x.x |
 | https://charts.sagikazarmark.dev | browserless-chrome | 0.0.5 |
+
+## High Availability
+
+### Pod Anti-Affinity
+
+To ensure high availability during node maintenance or failures, you can enable pod anti-affinity rules that spread pods across different nodes and availability zones.
+
+```yaml
+podAntiAffinity:
+  enabled: true
+  node: hard  # Pods MUST be on different nodes
+  zone: soft  # Pods PREFER different zones (but won't fail scheduling if unavailable)
+```
+
+**Options:**
+- `hard`: Required constraint - scheduling will fail if it cannot be satisfied
+- `soft`: Preferred constraint - scheduler will try but won't fail if unsatisfied
+- `none`: Disable the constraint
+
+**Recommended configuration:**
+- `node: hard` + `zone: soft` - Guarantees node separation, prefers zone separation
+- This prevents downtime during GKE node maintenance while avoiding scheduling failures when zones are limited
+
+**Note:** Anti-affinity is namespace-scoped by default, so pods from different namespaces can share nodes.
+
+### Pod Disruption Budget
+
+A Pod Disruption Budget is enabled by default to prevent all pods from being evicted simultaneously during voluntary disruptions:
+
+```yaml
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+```
+
+**Important:** PDBs only work effectively when combined with multiple replicas. With `replicaCount: 1`, the PDB cannot prevent downtime.
 
 ## Values
 
@@ -118,6 +154,9 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | nameOverride | string | `""` |  |
 | nodeSelector | object | `{}` |  |
 | podAnnotations | object | `{}` |  |
+| podAntiAffinity.enabled | bool | `false` |  |
+| podAntiAffinity.node | string | `"hard"` |  |
+| podAntiAffinity.zone | string | `"soft"` |  |
 | podDisruptionBudget.enabled | bool | `true` |  |
 | podDisruptionBudget.minAvailable | int | `1` |  |
 | podLabels | object | `{}` |  |
