@@ -277,7 +277,6 @@ scheduler:
   enabled: false
   replicas: 1
   concurrency: 3
-  pollInterval:
   db:
     maxConnections:
   resources:
