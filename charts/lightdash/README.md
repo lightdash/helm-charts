@@ -209,7 +209,6 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | scheduler.livenessProbe.initialDelaySeconds | int | `5` |  |
 | scheduler.livenessProbe.periodSeconds | int | `15` |  |
 | scheduler.livenessProbe.timeoutSeconds | int | `15` |  |
-| scheduler.pollInterval | string | `nil` |  |
 | scheduler.port | int | `8080` |  |
 | scheduler.readinessProbe.failureThreshold | int | `2` |  |
 | scheduler.readinessProbe.initialDelaySeconds | int | `5` |  |
