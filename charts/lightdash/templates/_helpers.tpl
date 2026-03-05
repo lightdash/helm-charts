@@ -210,6 +210,89 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{- end -}}
 
 {{/*
+Create a default fully qualified nats name.
+*/}}
+{{- define "lightdash.nats.fullname" -}}
+{{- if .Values.nats.fullnameOverride -}}
+{{- .Values.nats.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- $name := default "nats" .Values.nats.nameOverride -}}
+{{- if contains $name .Release.Name -}}
+{{- .Release.Name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Compute NATS connection URL for Lightdash.
+*/}}
+{{- define "lightdash.nats.url" -}}
+{{- if .Values.natsJetstream.connection.url -}}
+{{- .Values.natsJetstream.connection.url -}}
+{{- else if .Values.nats.enabled -}}
+{{- printf "nats://%s:4222" (include "lightdash.nats.fullname" .) -}}
+{{- else -}}
+{{- "" -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "lightdash.nats.url.required" -}}
+{{- required "natsJetstream.connection.url must be set when natsJetstream.enabled=true and nats.enabled=false" (include "lightdash.nats.url" .) -}}
+{{- end -}}
+
+{{/*
+Get NATS auth secret and key names.
+*/}}
+{{- define "lightdash.nats.auth.secretName" -}}
+{{- if .Values.natsJetstream.connection.existingSecret -}}
+{{- .Values.natsJetstream.connection.existingSecret -}}
+{{- else -}}
+{{- include "lightdash.fullname" . -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "lightdash.nats.auth.userKey" -}}
+{{- .Values.natsJetstream.connection.secretKeys.user -}}
+{{- end -}}
+
+{{- define "lightdash.nats.auth.passwordKey" -}}
+{{- .Values.natsJetstream.connection.secretKeys.password -}}
+{{- end -}}
+
+{{- define "lightdash.nats.auth.tokenKey" -}}
+{{- .Values.natsJetstream.connection.secretKeys.token -}}
+{{- end -}}
+
+{{- define "lightdash.nats.auth.createSecret" -}}
+{{- if and (not .Values.natsJetstream.connection.existingSecret) (or .Values.natsJetstream.connection.user .Values.natsJetstream.connection.password .Values.natsJetstream.connection.token) -}}
+true
+{{- else -}}
+false
+{{- end -}}
+{{- end -}}
+
+{{/*
+Get the first configured JetStream subject for Lightdash runtime env vars.
+*/}}
+{{- define "lightdash.nats.jetstream.subject" -}}
+{{- if gt (len .Values.natsJetstream.stream.subjects) 0 -}}
+{{- index .Values.natsJetstream.stream.subjects 0 -}}
+{{- else -}}
+{{- "" -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "lightdash.nats.customerId" -}}
+{{- if .Values.natsJetstream.app.customerId -}}
+{{- .Values.natsJetstream.app.customerId -}}
+{{- else -}}
+{{- .Release.Name -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Renders environment variables for SSL if enabled.
 */}}
 {{- define "lightdash.sslEnvs" -}}

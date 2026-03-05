@@ -54,6 +54,50 @@ spec:
                 secretKeyRef:
                   name: {{ (include "lightdash.database.secretName" .) }}
                   key: {{ (include "lightdash.database.secret.passwordKey" .) }}
+            {{- if .Values.natsJetstream.enabled }}
+            - name: NATS_URL
+              value: {{ include "lightdash.nats.url.required" . | quote }}
+            - name: NATS_JETSTREAM_STREAM
+              value: {{ .Values.natsJetstream.stream.name | quote }}
+            - name: NATS_JETSTREAM_SUBJECT
+              value: {{ include "lightdash.nats.jetstream.subject" . | quote }}
+            - name: NATS_JETSTREAM_DURABLE
+              value: {{ .Values.natsJetstream.consumer.durableName | quote }}
+            - name: NATS_JETSTREAM_MAX_ACK_PENDING
+              value: {{ .Values.natsJetstream.consumer.maxAckPending | quote }}
+            - name: ASYNC_QUERY_NATS_URL
+              value: {{ include "lightdash.nats.url.required" . | quote }}
+            - name: ASYNC_QUERY_NATS_CUSTOMER_ID
+              value: {{ include "lightdash.nats.customerId" . | quote }}
+            - name: ASYNC_QUERY_NATS_WAREHOUSE_STREAM_NAME
+              value: {{ .Values.natsJetstream.app.warehouseStreamName | quote }}
+            - name: ASYNC_QUERY_NATS_PRE_AGGREGATE_STREAM_NAME
+              value: {{ .Values.natsJetstream.app.preAggregateStreamName | quote }}
+            {{- if or .Values.natsJetstream.connection.existingSecret .Values.natsJetstream.connection.user }}
+            - name: NATS_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "lightdash.nats.auth.secretName" . }}
+                  key: {{ include "lightdash.nats.auth.userKey" . }}
+                  optional: true
+            {{- end }}
+            {{- if or .Values.natsJetstream.connection.existingSecret .Values.natsJetstream.connection.password }}
+            - name: NATS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "lightdash.nats.auth.secretName" . }}
+                  key: {{ include "lightdash.nats.auth.passwordKey" . }}
+                  optional: true
+            {{- end }}
+            {{- if or .Values.natsJetstream.connection.existingSecret .Values.natsJetstream.connection.token }}
+            - name: NATS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "lightdash.nats.auth.secretName" . }}
+                  key: {{ include "lightdash.nats.auth.tokenKey" . }}
+                  optional: true
+            {{- end }}
+            {{- end }}
               {{- include "lightdash.sslEnvs" . | nindent 12 -}}
               {{- if .Values.extraEnv }}
               {{- toYaml .Values.extraEnv | nindent 12 }}

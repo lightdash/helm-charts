@@ -158,6 +158,101 @@ browserless-chrome:
     port: 80
   env:
     CONNECTION_TIMEOUT: "180000"
+
+## NATS chart configuration (per-release dependency)
+## ref: https://github.com/nats-io/k8s/tree/main/helm/charts/nats
+## @param nats.enabled Enable or disable the NATS subchart
+## @param nats.config.cluster.enabled Enable NATS clustering (required for replicated JetStream)
+## @param nats.config.cluster.replicas Number of NATS replicas
+## @param nats.config.jetstream.enabled Enable JetStream
+## @param nats.config.jetstream.fileStore.enabled Disable file store when using memory mode
+## @param nats.config.jetstream.memoryStore.enabled Enable memory-mode JetStream storage
+## @param nats.config.jetstream.memoryStore.maxSize Maximum memory store size
+## @param nats.container.resources NATS resource requests/limits
+nats:
+  enabled: false
+  config:
+    cluster:
+      enabled: true
+      replicas: 3
+    jetstream:
+      enabled: true
+      fileStore:
+        enabled: false
+      memoryStore:
+        enabled: true
+        maxSize: 1Gi
+  container:
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        cpu: "500m"
+        memory: "1Gi"
+
+## JetStream bootstrap and app configuration
+## @param natsJetstream.enabled Enable Lightdash NATS JetStream integration
+## @param natsJetstream.connection.url Explicit NATS URL. When empty with nats.enabled=true, local service URL is computed
+## @param natsJetstream.connection.user Static NATS username to write into chart-managed secret
+## @param natsJetstream.connection.password Static NATS password to write into chart-managed secret
+## @param natsJetstream.connection.token Static NATS token to write into chart-managed secret
+## @param natsJetstream.connection.existingSecret Existing secret containing NATS auth keys
+## @param natsJetstream.connection.secretKeys.user Secret key for username
+## @param natsJetstream.connection.secretKeys.password Secret key for password
+## @param natsJetstream.connection.secretKeys.token Secret key for token
+## @param natsJetstream.stream.name JetStream stream name
+## @param natsJetstream.stream.subjects JetStream subjects attached to the stream
+## @param natsJetstream.stream.retention JetStream retention policy
+## @param natsJetstream.stream.replicas JetStream stream replicas
+## @param natsJetstream.consumer.durableName JetStream durable consumer name
+## @param natsJetstream.consumer.filterSubject Consumer filter subject
+## @param natsJetstream.consumer.ackWait Consumer ack wait duration
+## @param natsJetstream.consumer.maxDeliver Consumer max redelivery attempts
+## @param natsJetstream.consumer.maxAckPending Consumer max in-flight unacked messages
+## @param natsJetstream.app.customerId Customer identifier for app durable naming. Defaults to Helm release name when empty
+## @param natsJetstream.app.warehouseStreamName Warehouse query stream name exposed to the app
+## @param natsJetstream.app.preAggregateStreamName Pre-aggregate query stream name exposed to the app
+## @param natsJetstream.bootstrap.enabled Enable bootstrap Job creation/update for stream and consumer
+## @param natsJetstream.bootstrap.image Bootstrap job image
+## @param natsJetstream.bootstrap.backoffLimit Bootstrap job backoff limit
+## @param natsJetstream.bootstrap.hook.enabled Run bootstrap as Helm post-install/post-upgrade hook
+## @param natsJetstream.bootstrap.hook.deletePolicy Helm hook delete policy
+natsJetstream:
+  enabled: false
+  connection:
+    url: ""
+    user: ""
+    password: ""
+    token: ""
+    existingSecret: ""
+    secretKeys:
+      user: "user"
+      password: "password"
+      token: "token"
+  stream:
+    name: "QUERY_JOBS"
+    subjects:
+      - "query.jobs"
+    retention: "workqueue"
+    replicas: 3
+  consumer:
+    durableName: "async-query-workers"
+    filterSubject: "query.jobs"
+    ackWait: "30s"
+    maxDeliver: 5
+    maxAckPending: 50
+  app:
+    customerId: ""
+    warehouseStreamName: "QUERY_JOBS"
+    preAggregateStreamName: "QUERY_JOBS"
+  bootstrap:
+    enabled: true
+    image: "natsio/nats-box:latest"
+    backoffLimit: 3
+    hook:
+      enabled: true
+      deletePolicy: "before-hook-creation,hook-succeeded"
 ## @section Lightdash Database parameters
 
 ## PostgreSQL chart configuration

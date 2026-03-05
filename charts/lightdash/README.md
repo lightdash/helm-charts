@@ -44,6 +44,7 @@ helm install lightdash lightdash/lightdash \
 | Repository | Name | Version |
 |------------|------|---------|
 | https://charts.bitnami.com/bitnami | common | 1.x.x |
+| https://nats-io.github.io/k8s/helm/charts/ | nats | 2.12.4 |
 | https://charts.bitnami.com/bitnami | postgresql | 11.x.x |
 | https://charts.sagikazarmark.dev | browserless-chrome | 0.0.5 |
 
@@ -82,6 +83,32 @@ podDisruptionBudget:
 ```
 
 **Important:** PDBs only work effectively when combined with multiple replicas. With `replicaCount: 1`, the PDB cannot prevent downtime.
+
+## NATS JetStream (Optional)
+
+You can deploy a per-release NATS dependency and bootstrap JetStream resources directly from this chart.
+
+Minimal enablement:
+
+```yaml
+nats:
+  enabled: true
+
+natsJetstream:
+  enabled: true
+```
+
+By default, the chart configures:
+- Stream: `QUERY_JOBS` on subject `query.jobs`
+- Durable consumer: `async-query-workers`
+- Bootstrap Job: post-install/post-upgrade Helm hook (idempotent create/update)
+- JetStream memory store mode (no persistence)
+
+If `natsJetstream.connection.url` is empty and `nats.enabled=true`, the chart computes a local URL in the same namespace.
+
+You can configure authentication using either:
+- Static values (`natsJetstream.connection.user/password/token`), stored in chart-managed Secret
+- Existing Secret (`natsJetstream.connection.existingSecret` + `secretKeys`)
 
 ## Values
 

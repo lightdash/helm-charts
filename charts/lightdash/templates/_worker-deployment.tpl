@@ -63,6 +63,50 @@ spec:
                   key: {{ (include "lightdash.database.secret.passwordKey" $root) }}
             - name: PORT
               value: {{ $workerConfig.port | quote }}
+            {{- if $root.Values.natsJetstream.enabled }}
+            - name: NATS_URL
+              value: {{ include "lightdash.nats.url.required" $root | quote }}
+            - name: NATS_JETSTREAM_STREAM
+              value: {{ $root.Values.natsJetstream.stream.name | quote }}
+            - name: NATS_JETSTREAM_SUBJECT
+              value: {{ include "lightdash.nats.jetstream.subject" $root | quote }}
+            - name: NATS_JETSTREAM_DURABLE
+              value: {{ $root.Values.natsJetstream.consumer.durableName | quote }}
+            - name: NATS_JETSTREAM_MAX_ACK_PENDING
+              value: {{ $root.Values.natsJetstream.consumer.maxAckPending | quote }}
+            - name: ASYNC_QUERY_NATS_URL
+              value: {{ include "lightdash.nats.url.required" $root | quote }}
+            - name: ASYNC_QUERY_NATS_CUSTOMER_ID
+              value: {{ include "lightdash.nats.customerId" $root | quote }}
+            - name: ASYNC_QUERY_NATS_WAREHOUSE_STREAM_NAME
+              value: {{ $root.Values.natsJetstream.app.warehouseStreamName | quote }}
+            - name: ASYNC_QUERY_NATS_PRE_AGGREGATE_STREAM_NAME
+              value: {{ $root.Values.natsJetstream.app.preAggregateStreamName | quote }}
+            {{- if or $root.Values.natsJetstream.connection.existingSecret $root.Values.natsJetstream.connection.user }}
+            - name: NATS_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "lightdash.nats.auth.secretName" $root }}
+                  key: {{ include "lightdash.nats.auth.userKey" $root }}
+                  optional: true
+            {{- end }}
+            {{- if or $root.Values.natsJetstream.connection.existingSecret $root.Values.natsJetstream.connection.password }}
+            - name: NATS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "lightdash.nats.auth.secretName" $root }}
+                  key: {{ include "lightdash.nats.auth.passwordKey" $root }}
+                  optional: true
+            {{- end }}
+            {{- if or $root.Values.natsJetstream.connection.existingSecret $root.Values.natsJetstream.connection.token }}
+            - name: NATS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "lightdash.nats.auth.secretName" $root }}
+                  key: {{ include "lightdash.nats.auth.tokenKey" $root }}
+                  optional: true
+            {{- end }}
+            {{- end }}
             {{- if $workerConfig.tasks.include }}
             - name: SCHEDULER_INCLUDE_TASKS
               value: "{{ $workerConfig.tasks.include }}"

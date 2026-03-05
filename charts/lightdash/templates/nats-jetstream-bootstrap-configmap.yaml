@@ -1,0 +1,58 @@
+{{- if and .Values.natsJetstream.enabled .Values.natsJetstream.bootstrap.enabled }}
+{{- $streamConfig := dict "name" .Values.natsJetstream.stream.name "subjects" .Values.natsJetstream.stream.subjects "retention" .Values.natsJetstream.stream.retention "storage" "memory" "num_replicas" .Values.natsJetstream.stream.replicas -}}
+{{- $consumerConfig := dict "durable_name" .Values.natsJetstream.consumer.durableName "filter_subject" .Values.natsJetstream.consumer.filterSubject "ack_policy" "explicit" "ack_wait" .Values.natsJetstream.consumer.ackWait "max_deliver" .Values.natsJetstream.consumer.maxDeliver "max_ack_pending" .Values.natsJetstream.consumer.maxAckPending -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "lightdash.fullname" . }}-nats-jetstream-bootstrap
+  labels:
+    {{- include "lightdash.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nats-jetstream-bootstrap
+data:
+  bootstrap.sh: |
+    #!/bin/sh
+    set -eu
+
+    run_nats() {
+      if [ -n "${NATS_TOKEN:-}" ]; then
+        nats --server "${NATS_URL}" --token "${NATS_TOKEN}" "$@"
+        return
+      fi
+
+      if [ -n "${NATS_USER:-}" ] && [ -n "${NATS_PASSWORD:-}" ]; then
+        nats --server "${NATS_URL}" --user "${NATS_USER}" --password "${NATS_PASSWORD}" "$@"
+        return
+      fi
+
+      nats --server "${NATS_URL}" "$@"
+    }
+
+    echo "Waiting for NATS JetStream connectivity at ${NATS_URL}"
+    attempts=0
+    until run_nats stream ls >/dev/null 2>&1; do
+      attempts=$((attempts + 1))
+      if [ "${attempts}" -ge 30 ]; then
+        echo "Timed out waiting for NATS JetStream readiness"
+        exit 1
+      fi
+      sleep 2
+    done
+
+    echo "Ensuring stream ${NATS_JETSTREAM_STREAM}"
+    if run_nats stream info "${NATS_JETSTREAM_STREAM}" >/dev/null 2>&1; then
+      run_nats stream update "${NATS_JETSTREAM_STREAM}" --yes --config /bootstrap/stream.json
+    else
+      run_nats stream add "${NATS_JETSTREAM_STREAM}" --yes --config /bootstrap/stream.json
+    fi
+
+    echo "Ensuring durable consumer ${NATS_JETSTREAM_DURABLE}"
+    if run_nats consumer info "${NATS_JETSTREAM_STREAM}" "${NATS_JETSTREAM_DURABLE}" >/dev/null 2>&1; then
+      run_nats consumer update "${NATS_JETSTREAM_STREAM}" "${NATS_JETSTREAM_DURABLE}" --yes --config /bootstrap/consumer.json
+    else
+      run_nats consumer add "${NATS_JETSTREAM_STREAM}" "${NATS_JETSTREAM_DURABLE}" --yes --config /bootstrap/consumer.json
+    fi
+  stream.json: |
+    {{- $streamConfig | toPrettyJson | nindent 4 }}
+  consumer.json: |
+    {{- $consumerConfig | toPrettyJson | nindent 4 }}
+{{- end }}

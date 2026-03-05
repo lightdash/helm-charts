@@ -1,0 +1,71 @@
+{{- if and .Values.natsJetstream.enabled .Values.natsJetstream.bootstrap.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "lightdash.fullname" . }}-nats-jetstream-bootstrap
+  labels:
+    {{- include "lightdash.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nats-jetstream-bootstrap
+  {{- if .Values.natsJetstream.bootstrap.hook.enabled }}
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-delete-policy: {{ .Values.natsJetstream.bootstrap.hook.deletePolicy | quote }}
+  {{- end }}
+spec:
+  backoffLimit: {{ .Values.natsJetstream.bootstrap.backoffLimit }}
+  template:
+    metadata:
+      labels:
+        {{- include "lightdash.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: nats-jetstream-bootstrap
+    spec:
+      serviceAccountName: {{ include "lightdash.serviceAccountName" . }}
+      restartPolicy: OnFailure
+      containers:
+        - name: nats-jetstream-bootstrap
+          image: {{ .Values.natsJetstream.bootstrap.image | quote }}
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - /bootstrap/bootstrap.sh
+          env:
+            - name: NATS_URL
+              value: {{ include "lightdash.nats.url.required" . | quote }}
+            - name: NATS_JETSTREAM_STREAM
+              value: {{ .Values.natsJetstream.stream.name | quote }}
+            - name: NATS_JETSTREAM_DURABLE
+              value: {{ .Values.natsJetstream.consumer.durableName | quote }}
+            {{- if or .Values.natsJetstream.connection.existingSecret .Values.natsJetstream.connection.user }}
+            - name: NATS_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "lightdash.nats.auth.secretName" . }}
+                  key: {{ include "lightdash.nats.auth.userKey" . }}
+                  optional: true
+            {{- end }}
+            {{- if or .Values.natsJetstream.connection.existingSecret .Values.natsJetstream.connection.password }}
+            - name: NATS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "lightdash.nats.auth.secretName" . }}
+                  key: {{ include "lightdash.nats.auth.passwordKey" . }}
+                  optional: true
+            {{- end }}
+            {{- if or .Values.natsJetstream.connection.existingSecret .Values.natsJetstream.connection.token }}
+            - name: NATS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "lightdash.nats.auth.secretName" . }}
+                  key: {{ include "lightdash.nats.auth.tokenKey" . }}
+                  optional: true
+            {{- end }}
+          volumeMounts:
+            - name: bootstrap
+              mountPath: /bootstrap
+              readOnly: true
+      volumes:
+        - name: bootstrap
+          configMap:
+            name: {{ include "lightdash.fullname" . }}-nats-jetstream-bootstrap
+            defaultMode: 0555
+{{- end }}

@@ -2,11 +2,14 @@ dependencies:
 - name: common
   repository: https://charts.bitnami.com/bitnami
   version: 1.17.1
+- name: nats
+  repository: https://nats-io.github.io/k8s/helm/charts/
+  version: 2.12.4
 - name: postgresql
   repository: https://charts.bitnami.com/bitnami
   version: 11.9.13
 - name: browserless-chrome
   repository: https://charts.sagikazarmark.dev
   version: 0.0.5
-digest: sha256:98ec6d83bf6a41d9ca5e7eedd7b6565d6a28ab9f3bce5441621b640dd53350e4
-generated: "2025-07-13T18:48:36.997151-07:00"
+digest: sha256:bc2e8bf47e0bf103e626c98f758b5ef23d481ec974b5483f8beead708df2e149
+generated: "2026-03-05T19:04:01.446776+04:00"
