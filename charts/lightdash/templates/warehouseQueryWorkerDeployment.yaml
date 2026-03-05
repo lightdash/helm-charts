@@ -1,2 +1,0 @@
-{{- /* WarehouseQueryWorker deployment using reusable template - DO NOT REMOVE THIS COMMENT OTHERWISE FORMATTING WILL BREAK */ -}}
-{{- include "lightdash.workerDeployment" (dict "root" . "component" "warehouse-query-worker" "workerConfig" .Values.warehouseQueryWorker) -}}

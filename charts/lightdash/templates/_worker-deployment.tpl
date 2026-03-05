@@ -73,10 +73,6 @@ spec:
             {{- end }}
             - name: SCHEDULER_CONCURRENCY
               value: {{ $workerConfig.concurrency | default 3 | quote }}
-            {{- if $workerConfig.pollInterval }}
-            - name: SCHEDULER_POLL_INTERVAL
-              value: {{ $workerConfig.pollInterval | quote }}
-            {{- end }}
             {{- if $workerConfig.db.maxConnections }}
             - name: PGMAXCONNECTIONS
               value: {{ $workerConfig.db.maxConnections | quote }}
