@@ -200,6 +200,9 @@ nats:
         enabled: true
         maxSize: 1Gi
 
+  natsBox:
+    enabled: false
+
   container:
     merge:
       resources:
