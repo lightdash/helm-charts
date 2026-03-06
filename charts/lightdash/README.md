@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 2.3.0](https://img.shields.io/badge/Version-2.3.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.2248.0](https://img.shields.io/badge/AppVersion-0.2248.0-informational?style=flat-square)
+![Version: 2.4.0](https://img.shields.io/badge/Version-2.4.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.2248.0](https://img.shields.io/badge/AppVersion-0.2248.0-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -46,6 +46,7 @@ helm install lightdash lightdash/lightdash \
 | https://charts.bitnami.com/bitnami | common | 1.x.x |
 | https://charts.bitnami.com/bitnami | postgresql | 11.x.x |
 | https://charts.sagikazarmark.dev | browserless-chrome | 0.0.5 |
+| https://nats-io.github.io/k8s/helm/charts/ | nats | 2.12.4 |
 
 ## High Availability
 
@@ -152,6 +153,22 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | lightdashBackend.startupProbe.timeoutSeconds | int | `10` |  |
 | lightdashBackend.terminationGracePeriodSeconds | int | `90` |  |
 | nameOverride | string | `""` |  |
+| nats.config.cluster.enabled | bool | `false` |  |
+| nats.config.jetstream.enabled | bool | `true` |  |
+| nats.config.jetstream.fileStore.enabled | bool | `false` |  |
+| nats.config.jetstream.memoryStore.enabled | bool | `true` |  |
+| nats.config.jetstream.memoryStore.maxSize | string | `"1Gi"` |  |
+| nats.container.merge.resources.limits.memory | string | `"1Gi"` |  |
+| nats.container.merge.resources.requests.cpu | string | `"100m"` |  |
+| nats.container.merge.resources.requests.memory | string | `"256Mi"` |  |
+| nats.enabled | bool | `false` |  |
+| nats.monitor.enabled | bool | `true` |  |
+| nats.monitor.port | int | `8222` |  |
+| nats.nameOverride | string | `""` |  |
+| nats.networkPolicy.additionalIngress | list | `[]` |  |
+| nats.networkPolicy.enabled | bool | `true` |  |
+| nats.promExporter.enabled | bool | `false` |  |
+| nats.promExporter.port | int | `7777` |  |
 | nodeSelector | object | `{}` |  |
 | podAnnotations | object | `{}` |  |
 | podAntiAffinity.enabled | bool | `false` |  |
