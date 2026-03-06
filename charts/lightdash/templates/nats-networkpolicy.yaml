@@ -1,0 +1,26 @@
+{{- if and .Values.nats.enabled .Values.nats.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "lightdash.fullname" . }}-nats
+  labels:
+    {{- include "lightdash.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: nats
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              {{- include "lightdash.selectorLabels" . | nindent 14 }}
+      ports:
+        - protocol: TCP
+          port: 4222
+    {{- with .Values.nats.networkPolicy.additionalIngress }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+{{- end }}

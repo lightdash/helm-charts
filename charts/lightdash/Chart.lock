@@ -8,5 +8,8 @@ dependencies:
 - name: browserless-chrome
   repository: https://charts.sagikazarmark.dev
   version: 0.0.5
-digest: sha256:98ec6d83bf6a41d9ca5e7eedd7b6565d6a28ab9f3bce5441621b640dd53350e4
-generated: "2025-07-13T18:48:36.997151-07:00"
+- name: nats
+  repository: https://nats-io.github.io/k8s/helm/charts/
+  version: 2.12.4
+digest: sha256:5868283a73abeb8cc367063232215d0efdd950ec0bb7fe28ce54482523d0259b
+generated: "2026-03-06T12:58:56.752768Z"

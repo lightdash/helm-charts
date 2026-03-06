@@ -23,5 +23,8 @@ data:
   {{- if .Values.warehouseQueryWorker.enabled }}
   SCHEDULER_WAREHOUSE_QUERY_WORKER_ENABLED: "true"
   {{- end }}
+  {{- if .Values.nats.enabled }}
+  NATS_URL: {{ include "lightdash.nats.url" . }}
+  {{- end }}
   {{- toYaml .Values.configMap | nindent 2 }}
 {{- end }}
