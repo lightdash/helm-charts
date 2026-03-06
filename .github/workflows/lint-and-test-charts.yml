@@ -28,6 +28,9 @@ jobs:
       - name: Add browserless-chrome repo for dependencies
         run: helm repo add browserless-chrome https://charts.sagikazarmark.dev
 
+      - name: Add nats repo for dependencies
+        run: helm repo add nats https://nats-io.github.io/k8s/helm/charts/
+
       - name: Run chart-testing (lint)
         run: ct lint --all
 
@@ -63,6 +66,9 @@ jobs:
 
       - name: Add browserless-chrome repo for dependencies
         run: helm repo add browserless-chrome https://charts.sagikazarmark.dev
+
+      - name: Add nats repo for dependencies
+        run: helm repo add nats https://nats-io.github.io/k8s/helm/charts/
 
       - name: Install PostgreSQL dependency
         run: |
