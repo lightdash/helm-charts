@@ -158,6 +158,57 @@ browserless-chrome:
     port: 80
   env:
     CONNECTION_TIMEOUT: "180000"
+
+## NATS JetStream configuration
+## ref: https://github.com/nats-io/k8s/tree/main/helm/charts/nats
+## @param nats.enabled Enable NATS JetStream deployment
+## @param nats.nameOverride Override the name of the NATS subchart
+## @param nats.networkPolicy.enabled Enable NetworkPolicy to restrict NATS access to Lightdash pods
+## @param nats.networkPolicy.additionalIngress Additional ingress rules (e.g., for Prometheus scraping)
+nats:
+  enabled: false
+  nameOverride: ""
+
+  networkPolicy:
+    enabled: true
+    additionalIngress: []
+    # Example: Allow Prometheus scraping from gmp-system namespace
+    # - from:
+    #     - namespaceSelector:
+    #         matchLabels:
+    #           kubernetes.io/metadata.name: gmp-system
+    #   ports:
+    #     - protocol: TCP
+    #       port: 7777
+
+  monitor:
+    enabled: true
+    port: 8222
+
+  promExporter:
+    enabled: false
+    port: 7777
+
+  config:
+    cluster:
+      enabled: false
+    jetstream:
+      enabled: true
+      fileStore:
+        enabled: false
+      memoryStore:
+        enabled: true
+        maxSize: 1Gi
+
+  container:
+    merge:
+      resources:
+        requests:
+          memory: 256Mi
+          cpu: 100m
+        limits:
+          memory: 1Gi
+
 ## @section Lightdash Database parameters
 
 ## PostgreSQL chart configuration

@@ -276,3 +276,21 @@ spec:
       app.kubernetes.io/component: {{ $component }}
 {{- end }}
 {{- end }}
+
+{{/*
+Create a default fully qualified NATS name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+*/}}
+{{- define "lightdash.nats.fullname" -}}
+{{- $name := default "nats" .Values.nats.nameOverride -}}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
+Create the NATS URL for connecting to JetStream
+*/}}
+{{- define "lightdash.nats.url" -}}
+{{- if .Values.nats.enabled -}}
+nats://{{ include "lightdash.nats.fullname" . }}:4222
+{{- end -}}
+{{- end -}}
