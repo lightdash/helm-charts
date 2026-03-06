@@ -28,6 +28,7 @@ jobs:
         run: |
           helm repo add bitnami https://charts.bitnami.com/bitnami
           helm repo add sagikazarmark https://charts.sagikazarmark.dev
+          helm repo add nats https://nats-io.github.io/k8s/helm/charts/
           helm repo update
 
       - name: Run chart-releaser
