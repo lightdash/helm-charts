@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 2.4.0](https://img.shields.io/badge/Version-2.4.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.2248.0](https://img.shields.io/badge/AppVersion-0.2248.0-informational?style=flat-square)
+![Version: 2.4.2](https://img.shields.io/badge/Version-2.4.2-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.2248.0](https://img.shields.io/badge/AppVersion-0.2248.0-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -165,6 +165,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | nats.monitor.enabled | bool | `true` |  |
 | nats.monitor.port | int | `8222` |  |
 | nats.nameOverride | string | `""` |  |
+| nats.natsBox.enabled | bool | `false` |  |
 | nats.networkPolicy.additionalIngress | list | `[]` |  |
 | nats.networkPolicy.enabled | bool | `true` |  |
 | nats.promExporter.enabled | bool | `false` |  |
@@ -189,6 +190,10 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | postgresql.image.registry | string | `"docker.io"` |  |
 | postgresql.image.repository | string | `"pgvector/pgvector"` |  |
 | postgresql.image.tag | string | `"pg16"` |  |
+| preAggregateQueryWorker.command[0] | string | `"node"` |  |
+| preAggregateQueryWorker.command[1] | string | `"dist/natsWorker.js"` |  |
+| preAggregateQueryWorker.command[2] | string | `"--stream"` |  |
+| preAggregateQueryWorker.command[3] | string | `"pre-aggregate"` |  |
 | preAggregateQueryWorker.concurrency | int | `4` |  |
 | preAggregateQueryWorker.db.maxConnections | string | `nil` |  |
 | preAggregateQueryWorker.enabled | bool | `false` |  |
@@ -198,7 +203,6 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | preAggregateQueryWorker.livenessProbe.initialDelaySeconds | int | `5` |  |
 | preAggregateQueryWorker.livenessProbe.periodSeconds | int | `15` |  |
 | preAggregateQueryWorker.livenessProbe.timeoutSeconds | int | `15` |  |
-| preAggregateQueryWorker.pollInterval | string | `nil` |  |
 | preAggregateQueryWorker.port | int | `8080` |  |
 | preAggregateQueryWorker.readinessProbe.failureThreshold | int | `2` |  |
 | preAggregateQueryWorker.readinessProbe.initialDelaySeconds | int | `5` |  |
@@ -212,9 +216,8 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | preAggregateQueryWorker.startupProbe.initialDelaySeconds | int | `5` |  |
 | preAggregateQueryWorker.startupProbe.periodSeconds | int | `10` |  |
 | preAggregateQueryWorker.startupProbe.timeoutSeconds | int | `10` |  |
-| preAggregateQueryWorker.tasks.exclude | string | `nil` |  |
-| preAggregateQueryWorker.tasks.include | string | `"runAsyncPreAggregateQuery"` |  |
 | preAggregateQueryWorker.terminationGracePeriodSeconds | int | `90` |  |
+| preAggregateQueryWorker.type | string | `"nats"` |  |
 | replicaCount | int | `1` | Specify the number of lightdash instances. |
 | resources | object | `{}` |  |
 | scheduler.concurrency | int | `3` |  |
@@ -239,9 +242,10 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | scheduler.startupProbe.initialDelaySeconds | int | `5` |  |
 | scheduler.startupProbe.periodSeconds | int | `10` |  |
 | scheduler.startupProbe.timeoutSeconds | int | `10` |  |
-| scheduler.tasks.exclude | string | `"runAsyncWarehouseQuery,runAsyncPreAggregateQuery"` |  |
+| scheduler.tasks.exclude | string | `nil` |  |
 | scheduler.tasks.include | string | `nil` |  |
 | scheduler.terminationGracePeriodSeconds | int | `90` |  |
+| scheduler.type | string | `"graphile"` |  |
 | schedulerExtraEnv | list | `[]` |  |
 | secrets.LIGHTDASH_SECRET | string | `"changeme"` | This is the secret used to sign the session ID cookie and to encrypt sensitive information. Do not share this secret! |
 | securityContext | object | `{}` |  |
@@ -255,6 +259,10 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | ssl.enabled | bool | `false` |  |
 | ssl.mountPath | string | `"/etc/ssl/certs"` |  |
 | tolerations | list | `[]` |  |
+| warehouseQueryWorker.command[0] | string | `"node"` |  |
+| warehouseQueryWorker.command[1] | string | `"dist/natsWorker.js"` |  |
+| warehouseQueryWorker.command[2] | string | `"--stream"` |  |
+| warehouseQueryWorker.command[3] | string | `"warehouse"` |  |
 | warehouseQueryWorker.concurrency | int | `4` |  |
 | warehouseQueryWorker.db.maxConnections | string | `nil` |  |
 | warehouseQueryWorker.enabled | bool | `false` |  |
@@ -264,7 +272,6 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | warehouseQueryWorker.livenessProbe.initialDelaySeconds | int | `5` |  |
 | warehouseQueryWorker.livenessProbe.periodSeconds | int | `15` |  |
 | warehouseQueryWorker.livenessProbe.timeoutSeconds | int | `15` |  |
-| warehouseQueryWorker.pollInterval | string | `nil` |  |
 | warehouseQueryWorker.port | int | `8080` |  |
 | warehouseQueryWorker.readinessProbe.failureThreshold | int | `2` |  |
 | warehouseQueryWorker.readinessProbe.initialDelaySeconds | int | `5` |  |
@@ -278,9 +285,8 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | warehouseQueryWorker.startupProbe.initialDelaySeconds | int | `5` |  |
 | warehouseQueryWorker.startupProbe.periodSeconds | int | `10` |  |
 | warehouseQueryWorker.startupProbe.timeoutSeconds | int | `10` |  |
-| warehouseQueryWorker.tasks.exclude | string | `nil` |  |
-| warehouseQueryWorker.tasks.include | string | `"runAsyncWarehouseQuery"` |  |
 | warehouseQueryWorker.terminationGracePeriodSeconds | int | `90` |  |
+| warehouseQueryWorker.type | string | `"nats"` |  |
 
 ----------------------------------------------
 Autogenerated from chart metadata using [helm-docs v1.7.0](https://github.com/norwoodj/helm-docs/releases/v1.7.0)
