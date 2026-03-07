@@ -1,0 +1,2 @@
+{{- /* PreAggregateNatsWorker deployment using reusable template - DO NOT REMOVE THIS COMMENT OTHERWISE FORMATTING WILL BREAK */ -}}
+{{- include "lightdash.workerDeployment" (dict "root" . "component" "pre-aggregate-nats-worker" "workerConfig" .Values.preAggregateNatsWorker) -}}

@@ -1,4 +1,0 @@
-{{- /* PreAggregateQueryWorker Pod Disruption Budget using reusable template - DO NOT REMOVE THIS COMMENT OTHERWISE FORMATTING WILL BREAK */ -}}
-{{- if .Values.preAggregateQueryWorker.enabled -}}
-{{- include "lightdash.podDisruptionBudget" (dict "root" . "component" "pre-aggregate-query-worker" "pdbConfig" .Values.podDisruptionBudget) -}}
-{{- end -}}

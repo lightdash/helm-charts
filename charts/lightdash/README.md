@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 2.4.0](https://img.shields.io/badge/Version-2.4.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.2248.0](https://img.shields.io/badge/AppVersion-0.2248.0-informational?style=flat-square)
+![Version: 2.5.0](https://img.shields.io/badge/Version-2.5.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.2248.0](https://img.shields.io/badge/AppVersion-0.2248.0-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -165,6 +165,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | nats.monitor.enabled | bool | `true` |  |
 | nats.monitor.port | int | `8222` |  |
 | nats.nameOverride | string | `""` |  |
+| nats.natsBox.enabled | bool | `false` |  |
 | nats.networkPolicy.additionalIngress | list | `[]` |  |
 | nats.networkPolicy.enabled | bool | `true` |  |
 | nats.promExporter.enabled | bool | `false` |  |
@@ -189,32 +190,34 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | postgresql.image.registry | string | `"docker.io"` |  |
 | postgresql.image.repository | string | `"pgvector/pgvector"` |  |
 | postgresql.image.tag | string | `"pg16"` |  |
-| preAggregateQueryWorker.concurrency | int | `4` |  |
-| preAggregateQueryWorker.db.maxConnections | string | `nil` |  |
-| preAggregateQueryWorker.enabled | bool | `false` |  |
-| preAggregateQueryWorker.extraVolumeMounts | list | `[]` |  |
-| preAggregateQueryWorker.extraVolumes | list | `[]` |  |
-| preAggregateQueryWorker.livenessProbe.failureThreshold | int | `20` |  |
-| preAggregateQueryWorker.livenessProbe.initialDelaySeconds | int | `5` |  |
-| preAggregateQueryWorker.livenessProbe.periodSeconds | int | `15` |  |
-| preAggregateQueryWorker.livenessProbe.timeoutSeconds | int | `15` |  |
-| preAggregateQueryWorker.pollInterval | string | `nil` |  |
-| preAggregateQueryWorker.port | int | `8080` |  |
-| preAggregateQueryWorker.readinessProbe.failureThreshold | int | `2` |  |
-| preAggregateQueryWorker.readinessProbe.initialDelaySeconds | int | `5` |  |
-| preAggregateQueryWorker.readinessProbe.periodSeconds | int | `5` |  |
-| preAggregateQueryWorker.readinessProbe.timeoutSeconds | int | `5` |  |
-| preAggregateQueryWorker.replicas | int | `1` |  |
-| preAggregateQueryWorker.resources.requests.cpu | string | `"475m"` |  |
-| preAggregateQueryWorker.resources.requests.ephemeral-storage | string | `"1Gi"` |  |
-| preAggregateQueryWorker.resources.requests.memory | string | `"725Mi"` |  |
-| preAggregateQueryWorker.startupProbe.failureThreshold | int | `18` |  |
-| preAggregateQueryWorker.startupProbe.initialDelaySeconds | int | `5` |  |
-| preAggregateQueryWorker.startupProbe.periodSeconds | int | `10` |  |
-| preAggregateQueryWorker.startupProbe.timeoutSeconds | int | `10` |  |
-| preAggregateQueryWorker.tasks.exclude | string | `nil` |  |
-| preAggregateQueryWorker.tasks.include | string | `"runAsyncPreAggregateQuery"` |  |
-| preAggregateQueryWorker.terminationGracePeriodSeconds | int | `90` |  |
+| preAggregateNatsWorker.command[0] | string | `"node"` |  |
+| preAggregateNatsWorker.command[1] | string | `"dist/natsWorker.js"` |  |
+| preAggregateNatsWorker.command[2] | string | `"--stream"` |  |
+| preAggregateNatsWorker.command[3] | string | `"pre-aggregate"` |  |
+| preAggregateNatsWorker.concurrency | int | `4` |  |
+| preAggregateNatsWorker.db.maxConnections | string | `nil` |  |
+| preAggregateNatsWorker.enabled | bool | `false` |  |
+| preAggregateNatsWorker.extraVolumeMounts | list | `[]` |  |
+| preAggregateNatsWorker.extraVolumes | list | `[]` |  |
+| preAggregateNatsWorker.livenessProbe.failureThreshold | int | `20` |  |
+| preAggregateNatsWorker.livenessProbe.initialDelaySeconds | int | `5` |  |
+| preAggregateNatsWorker.livenessProbe.periodSeconds | int | `15` |  |
+| preAggregateNatsWorker.livenessProbe.timeoutSeconds | int | `15` |  |
+| preAggregateNatsWorker.port | int | `8080` |  |
+| preAggregateNatsWorker.readinessProbe.failureThreshold | int | `2` |  |
+| preAggregateNatsWorker.readinessProbe.initialDelaySeconds | int | `5` |  |
+| preAggregateNatsWorker.readinessProbe.periodSeconds | int | `5` |  |
+| preAggregateNatsWorker.readinessProbe.timeoutSeconds | int | `5` |  |
+| preAggregateNatsWorker.replicas | int | `1` |  |
+| preAggregateNatsWorker.resources.requests.cpu | string | `"475m"` |  |
+| preAggregateNatsWorker.resources.requests.ephemeral-storage | string | `"1Gi"` |  |
+| preAggregateNatsWorker.resources.requests.memory | string | `"725Mi"` |  |
+| preAggregateNatsWorker.startupProbe.failureThreshold | int | `18` |  |
+| preAggregateNatsWorker.startupProbe.initialDelaySeconds | int | `5` |  |
+| preAggregateNatsWorker.startupProbe.periodSeconds | int | `10` |  |
+| preAggregateNatsWorker.startupProbe.timeoutSeconds | int | `10` |  |
+| preAggregateNatsWorker.terminationGracePeriodSeconds | int | `90` |  |
+| preAggregateNatsWorker.type | string | `"nats"` |  |
 | replicaCount | int | `1` | Specify the number of lightdash instances. |
 | resources | object | `{}` |  |
 | scheduler.concurrency | int | `3` |  |
@@ -239,9 +242,10 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | scheduler.startupProbe.initialDelaySeconds | int | `5` |  |
 | scheduler.startupProbe.periodSeconds | int | `10` |  |
 | scheduler.startupProbe.timeoutSeconds | int | `10` |  |
-| scheduler.tasks.exclude | string | `"runAsyncWarehouseQuery,runAsyncPreAggregateQuery"` |  |
+| scheduler.tasks.exclude | string | `nil` |  |
 | scheduler.tasks.include | string | `nil` |  |
 | scheduler.terminationGracePeriodSeconds | int | `90` |  |
+| scheduler.type | string | `"graphile"` |  |
 | schedulerExtraEnv | list | `[]` |  |
 | secrets.LIGHTDASH_SECRET | string | `"changeme"` | This is the secret used to sign the session ID cookie and to encrypt sensitive information. Do not share this secret! |
 | securityContext | object | `{}` |  |
@@ -255,32 +259,34 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | ssl.enabled | bool | `false` |  |
 | ssl.mountPath | string | `"/etc/ssl/certs"` |  |
 | tolerations | list | `[]` |  |
-| warehouseQueryWorker.concurrency | int | `4` |  |
-| warehouseQueryWorker.db.maxConnections | string | `nil` |  |
-| warehouseQueryWorker.enabled | bool | `false` |  |
-| warehouseQueryWorker.extraVolumeMounts | list | `[]` |  |
-| warehouseQueryWorker.extraVolumes | list | `[]` |  |
-| warehouseQueryWorker.livenessProbe.failureThreshold | int | `20` |  |
-| warehouseQueryWorker.livenessProbe.initialDelaySeconds | int | `5` |  |
-| warehouseQueryWorker.livenessProbe.periodSeconds | int | `15` |  |
-| warehouseQueryWorker.livenessProbe.timeoutSeconds | int | `15` |  |
-| warehouseQueryWorker.pollInterval | string | `nil` |  |
-| warehouseQueryWorker.port | int | `8080` |  |
-| warehouseQueryWorker.readinessProbe.failureThreshold | int | `2` |  |
-| warehouseQueryWorker.readinessProbe.initialDelaySeconds | int | `5` |  |
-| warehouseQueryWorker.readinessProbe.periodSeconds | int | `5` |  |
-| warehouseQueryWorker.readinessProbe.timeoutSeconds | int | `5` |  |
-| warehouseQueryWorker.replicas | int | `1` |  |
-| warehouseQueryWorker.resources.requests.cpu | string | `"475m"` |  |
-| warehouseQueryWorker.resources.requests.ephemeral-storage | string | `"1Gi"` |  |
-| warehouseQueryWorker.resources.requests.memory | string | `"725Mi"` |  |
-| warehouseQueryWorker.startupProbe.failureThreshold | int | `18` |  |
-| warehouseQueryWorker.startupProbe.initialDelaySeconds | int | `5` |  |
-| warehouseQueryWorker.startupProbe.periodSeconds | int | `10` |  |
-| warehouseQueryWorker.startupProbe.timeoutSeconds | int | `10` |  |
-| warehouseQueryWorker.tasks.exclude | string | `nil` |  |
-| warehouseQueryWorker.tasks.include | string | `"runAsyncWarehouseQuery"` |  |
-| warehouseQueryWorker.terminationGracePeriodSeconds | int | `90` |  |
+| warehouseNatsWorker.command[0] | string | `"node"` |  |
+| warehouseNatsWorker.command[1] | string | `"dist/natsWorker.js"` |  |
+| warehouseNatsWorker.command[2] | string | `"--stream"` |  |
+| warehouseNatsWorker.command[3] | string | `"warehouse"` |  |
+| warehouseNatsWorker.concurrency | int | `4` |  |
+| warehouseNatsWorker.db.maxConnections | string | `nil` |  |
+| warehouseNatsWorker.enabled | bool | `false` |  |
+| warehouseNatsWorker.extraVolumeMounts | list | `[]` |  |
+| warehouseNatsWorker.extraVolumes | list | `[]` |  |
+| warehouseNatsWorker.livenessProbe.failureThreshold | int | `20` |  |
+| warehouseNatsWorker.livenessProbe.initialDelaySeconds | int | `5` |  |
+| warehouseNatsWorker.livenessProbe.periodSeconds | int | `15` |  |
+| warehouseNatsWorker.livenessProbe.timeoutSeconds | int | `15` |  |
+| warehouseNatsWorker.port | int | `8080` |  |
+| warehouseNatsWorker.readinessProbe.failureThreshold | int | `2` |  |
+| warehouseNatsWorker.readinessProbe.initialDelaySeconds | int | `5` |  |
+| warehouseNatsWorker.readinessProbe.periodSeconds | int | `5` |  |
+| warehouseNatsWorker.readinessProbe.timeoutSeconds | int | `5` |  |
+| warehouseNatsWorker.replicas | int | `1` |  |
+| warehouseNatsWorker.resources.requests.cpu | string | `"475m"` |  |
+| warehouseNatsWorker.resources.requests.ephemeral-storage | string | `"1Gi"` |  |
+| warehouseNatsWorker.resources.requests.memory | string | `"725Mi"` |  |
+| warehouseNatsWorker.startupProbe.failureThreshold | int | `18` |  |
+| warehouseNatsWorker.startupProbe.initialDelaySeconds | int | `5` |  |
+| warehouseNatsWorker.startupProbe.periodSeconds | int | `10` |  |
+| warehouseNatsWorker.startupProbe.timeoutSeconds | int | `10` |  |
+| warehouseNatsWorker.terminationGracePeriodSeconds | int | `90` |  |
+| warehouseNatsWorker.type | string | `"nats"` |  |
 
 ----------------------------------------------
 Autogenerated from chart metadata using [helm-docs v1.7.0](https://github.com/norwoodj/helm-docs/releases/v1.7.0)
