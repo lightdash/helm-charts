@@ -327,6 +327,7 @@ lightdashBackend:
 
 ## Scheduler deployment specific configuration
 scheduler:
+  type: graphile
   port: 8080
   enabled: false
   replicas: 1
@@ -361,18 +362,19 @@ scheduler:
     periodSeconds: 5
     failureThreshold: 2
   tasks:
-    exclude: runAsyncWarehouseQuery,runAsyncPreAggregateQuery
+    exclude:
     include:
   extraVolumeMounts: []
   extraVolumes: []
 
 ## Dedicated warehouse async query worker configuration
 warehouseQueryWorker:
+  type: nats
+  command: ["node", "dist/natsWorker.js", "--stream", "warehouse"]
   port: 8080
   enabled: false
   replicas: 1
   concurrency: 4
-  pollInterval:
   db:
     maxConnections:
   resources:
@@ -396,19 +398,17 @@ warehouseQueryWorker:
     timeoutSeconds: 5
     periodSeconds: 5
     failureThreshold: 2
-  tasks:
-    exclude:
-    include: runAsyncWarehouseQuery
   extraVolumeMounts: []
   extraVolumes: []
 
 ## Dedicated pre-aggregate async query worker configuration
 preAggregateQueryWorker:
+  type: nats
+  command: ["node", "dist/natsWorker.js", "--stream", "pre-aggregate"]
   port: 8080
   enabled: false
   replicas: 1
   concurrency: 4
-  pollInterval:
   db:
     maxConnections:
   resources:
@@ -432,8 +432,5 @@ preAggregateQueryWorker:
     timeoutSeconds: 5
     periodSeconds: 5
     failureThreshold: 2
-  tasks:
-    exclude:
-    include: runAsyncPreAggregateQuery
   extraVolumeMounts: []
   extraVolumes: []

@@ -53,7 +53,7 @@ spec:
             {{- toYaml $root.Values.securityContext | nindent 12 }}
           image: "{{ $root.Values.image.repository }}:{{ $root.Values.image.tag | default $root.Chart.AppVersion }}"
           imagePullPolicy: {{ $root.Values.image.pullPolicy }}
-          command: ["node", "dist/scheduler.js"]
+          command: {{ $workerConfig.command | default (list "node" "dist/scheduler.js") | toJson }}
           args: {{ $root.Values.image.args }}
           env:
             - name: PGPASSWORD
@@ -63,19 +63,24 @@ spec:
                   key: {{ (include "lightdash.database.secret.passwordKey" $root) }}
             - name: PORT
               value: {{ $workerConfig.port | quote }}
-            {{- if $workerConfig.tasks.include }}
+            {{- if and $workerConfig.tasks $workerConfig.tasks.include }}
             - name: SCHEDULER_INCLUDE_TASKS
               value: "{{ $workerConfig.tasks.include }}"
             {{- end }}
-            {{- if $workerConfig.tasks.exclude }}
+            {{- if and $workerConfig.tasks $workerConfig.tasks.exclude }}
             - name: SCHEDULER_EXCLUDE_TASKS
               value: "{{ $workerConfig.tasks.exclude }}"
             {{- end }}
+            {{- if eq ($workerConfig.type | default "graphile") "nats" }}
+            - name: NATS_WORKER_CONCURRENCY
+              value: {{ $workerConfig.concurrency | default 3 | quote }}
+            {{- else }}
             - name: SCHEDULER_CONCURRENCY
               value: {{ $workerConfig.concurrency | default 3 | quote }}
             {{- if $workerConfig.pollInterval }}
             - name: SCHEDULER_POLL_INTERVAL
               value: {{ $workerConfig.pollInterval | quote }}
+            {{- end }}
             {{- end }}
             {{- if $workerConfig.db.maxConnections }}
             - name: PGMAXCONNECTIONS
