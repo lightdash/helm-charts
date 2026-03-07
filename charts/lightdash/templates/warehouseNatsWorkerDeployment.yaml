@@ -1,0 +1,2 @@
+{{- /* WarehouseNatsWorker deployment using reusable template - DO NOT REMOVE THIS COMMENT OTHERWISE FORMATTING WILL BREAK */ -}}
+{{- include "lightdash.workerDeployment" (dict "root" . "component" "warehouse-nats-worker" "workerConfig" .Values.warehouseNatsWorker) -}}

@@ -1,0 +1,4 @@
+{{- /* PreAggregateNatsWorker Pod Disruption Budget using reusable template - DO NOT REMOVE THIS COMMENT OTHERWISE FORMATTING WILL BREAK */ -}}
+{{- if .Values.preAggregateNatsWorker.enabled -}}
+{{- include "lightdash.podDisruptionBudget" (dict "root" . "component" "pre-aggregate-nats-worker" "pdbConfig" .Values.podDisruptionBudget) -}}
+{{- end -}}

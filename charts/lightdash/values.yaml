@@ -368,7 +368,7 @@ scheduler:
   extraVolumes: []
 
 ## Dedicated warehouse async query worker configuration
-warehouseQueryWorker:
+warehouseNatsWorker:
   type: nats
   command: ["node", "dist/natsWorker.js", "--stream", "warehouse"]
   port: 8080
@@ -402,7 +402,7 @@ warehouseQueryWorker:
   extraVolumes: []
 
 ## Dedicated pre-aggregate async query worker configuration
-preAggregateQueryWorker:
+preAggregateNatsWorker:
   type: nats
   command: ["node", "dist/natsWorker.js", "--stream", "pre-aggregate"]
   port: 8080
