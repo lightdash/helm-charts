@@ -1,0 +1,4 @@
+{{- /* WarehouseNatsWorker Pod Disruption Budget using reusable template - DO NOT REMOVE THIS COMMENT OTHERWISE FORMATTING WILL BREAK */ -}}
+{{- if .Values.warehouseNatsWorker.enabled -}}
+{{- include "lightdash.podDisruptionBudget" (dict "root" . "component" "warehouse-nats-worker" "pdbConfig" .Values.podDisruptionBudget) -}}
+{{- end -}}

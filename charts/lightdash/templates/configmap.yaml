@@ -17,12 +17,6 @@ data:
   {{- else }}
   SCHEDULER_ENABLED: "true"
   {{- end }}
-  {{- if .Values.preAggregateQueryWorker.enabled }}
-  SCHEDULER_PRE_AGGREGATE_QUERY_WORKER_ENABLED: "true"
-  {{- end }}
-  {{- if .Values.warehouseQueryWorker.enabled }}
-  SCHEDULER_WAREHOUSE_QUERY_WORKER_ENABLED: "true"
-  {{- end }}
   {{- if .Values.nats.enabled }}
   NATS_URL: {{ include "lightdash.nats.url" . }}
   {{- end }}
