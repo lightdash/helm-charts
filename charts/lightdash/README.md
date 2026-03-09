@@ -258,6 +258,9 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | ssl.configMapName | string | `""` |  |
 | ssl.enabled | bool | `false` |  |
 | ssl.mountPath | string | `"/etc/ssl/certs"` |  |
+| strategy.rollingUpdate.maxSurge | int | `1` |  |
+| strategy.rollingUpdate.maxUnavailable | int | `0` |  |
+| strategy.type | string | `"RollingUpdate"` |  |
 | tolerations | list | `[]` |  |
 | warehouseNatsWorker.command[0] | string | `"node"` |  |
 | warehouseNatsWorker.command[1] | string | `"dist/natsWorker.js"` |  |
