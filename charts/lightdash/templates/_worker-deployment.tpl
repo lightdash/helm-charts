@@ -18,6 +18,10 @@ metadata:
     app.kubernetes.io/component: {{ $component }}
 spec:
   replicas: {{ $workerConfig.replicas }}
+  {{- with $root.Values.strategy }}
+  strategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   selector:
     matchLabels:
       {{- include "lightdash.selectorLabels" $root | nindent 6 }}

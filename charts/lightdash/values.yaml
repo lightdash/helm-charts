@@ -86,6 +86,14 @@ ingress:
   #    hosts:
   #      - chart-example.local
 
+## Rolling update strategy for backend deployment
+## maxUnavailable: 0 ensures old pods are never killed before replacements pass readiness
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
+
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
