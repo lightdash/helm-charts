@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 2.5.0](https://img.shields.io/badge/Version-2.5.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.2248.0](https://img.shields.io/badge/AppVersion-0.2248.0-informational?style=flat-square)
+![Version: 2.5.1](https://img.shields.io/badge/Version-2.5.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.2248.0](https://img.shields.io/badge/AppVersion-0.2248.0-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -157,7 +157,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | nats.config.jetstream.enabled | bool | `true` |  |
 | nats.config.jetstream.fileStore.enabled | bool | `false` |  |
 | nats.config.jetstream.memoryStore.enabled | bool | `true` |  |
-| nats.config.jetstream.memoryStore.maxSize | string | `"1Gi"` |  |
+| nats.config.jetstream.memoryStore.maxSize | string | `"512Mi"` |  |
 | nats.container.merge.resources.limits.memory | string | `"1Gi"` |  |
 | nats.container.merge.resources.requests.cpu | string | `"100m"` |  |
 | nats.container.merge.resources.requests.memory | string | `"256Mi"` |  |

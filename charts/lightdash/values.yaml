@@ -198,7 +198,7 @@ nats:
         enabled: false
       memoryStore:
         enabled: true
-        maxSize: 1Gi
+        maxSize: 512Mi
 
   natsBox:
     enabled: false
