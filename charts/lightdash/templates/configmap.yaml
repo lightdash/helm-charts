@@ -18,6 +18,18 @@ data:
   SCHEDULER_ENABLED: "true"
   {{- end }}
   {{- if .Values.nats.enabled }}
+  NATS_ENABLED: "true"
+  {{- else }}
+  NATS_ENABLED: "false"
+  {{- end }}
+  {{- if .Values.preAggregateNatsWorker.enabled }}
+  PRE_AGGREGATES_ENABLED: "true"
+  PRE_AGGREGATES_PARQUET_ENABLED: "true"
+  {{- else }}
+  PRE_AGGREGATES_ENABLED: "false"
+  PRE_AGGREGATES_PARQUET_ENABLED: "false"
+  {{- end }}
+  {{- if .Values.nats.enabled }}
   NATS_URL: {{ include "lightdash.nats.url" . }}
   {{- end }}
   {{- toYaml .Values.configMap | nindent 2 }}
