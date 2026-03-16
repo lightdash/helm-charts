@@ -1,0 +1,63 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "lightdash.fullname" . }}-migrate
+  labels:
+    {{- include "lightdash.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: pre-upgrade
+    helm.sh/hook-weight: "0"
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  backoffLimit: {{ .Values.migrationJob.backoffLimit }}
+  ttlSecondsAfterFinished: {{ .Values.migrationJob.ttlSecondsAfterFinished }}
+  template:
+    metadata: {}
+    spec:
+      restartPolicy: Never
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "lightdash.serviceAccountName" . }}
+      containers:
+        - name: migrate
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          workingDir: /usr/app
+          command:
+            - pnpm
+            - -F
+            - backend
+            - migrate-production
+          env:
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "lightdash.database.secretName" . }}
+                  key: {{ include "lightdash.database.secret.passwordKey" . }}
+            {{- include "lightdash.sslEnvs" . | nindent 12 }}
+            {{- with .Values.migrationJob.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "lightdash.fullname" . }}
+            {{- if .Values.secrets }}
+            - secretRef:
+                name: {{ include "lightdash.fullname" . }}
+            {{- end }}
+          {{- if or .Values.migrationJob.extraVolumeMounts .Values.ssl.enabled }}
+          volumeMounts:
+            {{- include "lightdash.sslConfigMapVolumeMount" . | nindent 12 }}
+            {{- with .Values.migrationJob.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- end }}
+      {{- if or .Values.migrationJob.extraVolumes .Values.ssl.enabled }}
+      volumes:
+        {{- include "lightdash.sslConfigMapVolume" . | nindent 8 }}
+        {{- with .Values.migrationJob.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
