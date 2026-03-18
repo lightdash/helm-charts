@@ -5,6 +5,11 @@ metadata:
   name: {{ template "lightdash.fullname" . }}
   labels:
     {{- include "lightdash.labels" . | nindent 4 }}
+  {{- if not .Values.postgresql.enabled }}
+  annotations:
+    helm.sh/hook: pre-install
+    helm.sh/hook-weight: "-1"
+  {{- end }}
 data:
   PGUSER: {{ include "lightdash.database.user" . }}
   PGHOST: {{ include "lightdash.database.host" . }}
