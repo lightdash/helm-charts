@@ -186,8 +186,16 @@ nats:
     port: 8222
 
   promExporter:
-    enabled: false
+    enabled: true
     port: 7777
+    merge:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+
+  reloader:
+    enabled: false
 
   config:
     cluster:
@@ -198,7 +206,7 @@ nats:
         enabled: false
       memoryStore:
         enabled: true
-        maxSize: 512Mi
+        maxSize: 1Gi
 
   natsBox:
     enabled: false
@@ -374,14 +382,14 @@ warehouseNatsWorker:
   port: 8080
   enabled: false
   replicas: 1
-  concurrency: 4
+  concurrency: 100
   db:
     maxConnections:
   resources:
     requests:
-      memory: 725Mi
-      cpu: 475m
-      ephemeral-storage: 1Gi
+      memory: 1.5Gi
+      cpu: 250m
+      ephemeral-storage: 9Gi
   terminationGracePeriodSeconds: 90
   startupProbe:
     initialDelaySeconds: 5
@@ -408,14 +416,14 @@ preAggregateNatsWorker:
   port: 8080
   enabled: false
   replicas: 1
-  concurrency: 4
+  concurrency: 100
   db:
     maxConnections:
   resources:
     requests:
-      memory: 725Mi
-      cpu: 475m
-      ephemeral-storage: 1Gi
+      memory: 4Gi
+      cpu: 650m
+      ephemeral-storage: 9Gi
   terminationGracePeriodSeconds: 90
   startupProbe:
     initialDelaySeconds: 5

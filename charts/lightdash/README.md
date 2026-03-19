@@ -157,7 +157,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | nats.config.jetstream.enabled | bool | `true` |  |
 | nats.config.jetstream.fileStore.enabled | bool | `false` |  |
 | nats.config.jetstream.memoryStore.enabled | bool | `true` |  |
-| nats.config.jetstream.memoryStore.maxSize | string | `"512Mi"` |  |
+| nats.config.jetstream.memoryStore.maxSize | string | `"1Gi"` |  |
 | nats.container.merge.resources.limits.memory | string | `"1Gi"` |  |
 | nats.container.merge.resources.requests.cpu | string | `"100m"` |  |
 | nats.container.merge.resources.requests.memory | string | `"256Mi"` |  |
@@ -168,7 +168,10 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | nats.natsBox.enabled | bool | `false` |  |
 | nats.networkPolicy.additionalIngress | list | `[]` |  |
 | nats.networkPolicy.enabled | bool | `true` |  |
-| nats.promExporter.enabled | bool | `false` |  |
+| nats.promExporter.enabled | bool | `true` |  |
+| nats.promExporter.merge.resources.requests.cpu | string | `"100m"` |  |
+| nats.promExporter.merge.resources.requests.memory | string | `"128Mi"` |  |
+| nats.reloader.enabled | bool | `false` |  |
 | nats.promExporter.port | int | `7777` |  |
 | nodeSelector | object | `{}` |  |
 | podAnnotations | object | `{}` |  |
@@ -194,7 +197,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | preAggregateNatsWorker.command[1] | string | `"dist/natsWorker.js"` |  |
 | preAggregateNatsWorker.command[2] | string | `"--stream"` |  |
 | preAggregateNatsWorker.command[3] | string | `"pre-aggregate"` |  |
-| preAggregateNatsWorker.concurrency | int | `4` |  |
+| preAggregateNatsWorker.concurrency | int | `100` |  |
 | preAggregateNatsWorker.db.maxConnections | string | `nil` |  |
 | preAggregateNatsWorker.enabled | bool | `false` |  |
 | preAggregateNatsWorker.extraVolumeMounts | list | `[]` |  |
@@ -263,7 +266,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | warehouseNatsWorker.command[1] | string | `"dist/natsWorker.js"` |  |
 | warehouseNatsWorker.command[2] | string | `"--stream"` |  |
 | warehouseNatsWorker.command[3] | string | `"warehouse"` |  |
-| warehouseNatsWorker.concurrency | int | `4` |  |
+| warehouseNatsWorker.concurrency | int | `100` |  |
 | warehouseNatsWorker.db.maxConnections | string | `nil` |  |
 | warehouseNatsWorker.enabled | bool | `false` |  |
 | warehouseNatsWorker.extraVolumeMounts | list | `[]` |  |
