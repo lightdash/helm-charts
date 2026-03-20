@@ -20,7 +20,8 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "lightdash.serviceAccountName" . }}
+      # Service account doesn't exist on pre-install
+      serviceAccountName: default
       containers:
         - name: migrate
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -43,10 +44,10 @@ spec:
             {{- end }}
           envFrom:
             - configMapRef:
-                name: {{ include "lightdash.fullname" . }}
-            {{- if .Values.secrets }}
+                name: {{ include "lightdash.fullname" . }}-migration-configmap
+            {{- if not (empty .Values.secrets) }}
             - secretRef:
-                name: {{ include "lightdash.fullname" . }}
+                name: {{ include "lightdash.fullname" . }}-migration-secrets
             {{- end }}
           {{- if or .Values.migrationJob.extraVolumeMounts .Values.ssl.enabled }}
           volumeMounts:
