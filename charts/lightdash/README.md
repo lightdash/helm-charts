@@ -152,6 +152,11 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | lightdashBackend.startupProbe.periodSeconds | int | `10` |  |
 | lightdashBackend.startupProbe.timeoutSeconds | int | `10` |  |
 | lightdashBackend.terminationGracePeriodSeconds | int | `90` |  |
+| migrationJob.backoffLimit | int | `10` |  |
+| migrationJob.extraEnv | list | `[]` |  |
+| migrationJob.extraVolumeMounts | list | `[]` |  |
+| migrationJob.extraVolumes | list | `[]` |  |
+| migrationJob.ttlSecondsAfterFinished | int | `100` |  |
 | nameOverride | string | `""` |  |
 | nats.config.cluster.enabled | bool | `false` |  |
 | nats.config.jetstream.enabled | bool | `true` |  |
