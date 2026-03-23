@@ -290,6 +290,9 @@ ssl:
 ## @param migrationJob.extraEnv Extra env vars for the migration container
 ## @param migrationJob.extraVolumes Extra volumes for the migration pod
 ## @param migrationJob.extraVolumeMounts Extra volume mounts for the migration container
+## @param migrationJob.serviceAccount.create Create a dedicated ServiceAccount for the migration hook Job (pre-install/pre-upgrade)
+## @param migrationJob.serviceAccount.name Override ServiceAccount name (default: `<release-fullname>-migration`)
+## @param migrationJob.serviceAccount.annotations Extra annotations (e.g. workload identity) on the migration ServiceAccount
 migrationJob:
   enabled: true
   backoffLimit: 10
@@ -297,6 +300,10 @@ migrationJob:
   extraEnv: []
   extraVolumes: []
   extraVolumeMounts: []
+  serviceAccount:
+    create: true
+    name: ""
+    annotations: {}
 
 ## @param additional main containers for the backend and worker deployments
 extraContainers: []

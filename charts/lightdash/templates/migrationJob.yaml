@@ -20,8 +20,7 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      # Service account doesn't exist on pre-install
-      serviceAccountName: default
+      serviceAccountName: {{ include "lightdash.migrationServiceAccountName" . }}
       {{- if .Values.initContainers }}
       initContainers:
         {{- toYaml .Values.initContainers | nindent 8 }}

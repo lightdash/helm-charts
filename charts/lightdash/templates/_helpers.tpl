@@ -178,6 +178,17 @@ Add environment variables to configure database values
 {{- end -}}
 {{- end -}}
 
+{{/*
+ Name of the service account used by the migration hook Job
+ */}}
+{{- define "lightdash.migrationServiceAccountName" -}}
+{{- if .Values.migrationJob.serviceAccount.create -}}
+    {{- .Values.migrationJob.serviceAccount.name | default (printf "%s-migration" (include "lightdash.fullname" .)) -}}
+{{- else -}}
+    {{- .Values.migrationJob.serviceAccount.name | default "default" -}}
+{{- end -}}
+{{- end -}}
+
 
 {{/*
  Create the name of the backend configuration
