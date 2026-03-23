@@ -291,7 +291,7 @@ ssl:
 ## @param migrationJob.extraVolumes Extra volumes for the migration pod
 ## @param migrationJob.extraVolumeMounts Extra volume mounts for the migration container
 migrationJob:
-  enabled: true
+  enabled: false
   backoffLimit: 10
   ttlSecondsAfterFinished: 100
   extraEnv: []
