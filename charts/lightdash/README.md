@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 2.6.0](https://img.shields.io/badge/Version-2.6.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.2248.0](https://img.shields.io/badge/AppVersion-0.2248.0-informational?style=flat-square)
+![Version: 2.6.1](https://img.shields.io/badge/Version-2.6.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.2248.0](https://img.shields.io/badge/AppVersion-0.2248.0-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -153,6 +153,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | lightdashBackend.startupProbe.timeoutSeconds | int | `10` |  |
 | lightdashBackend.terminationGracePeriodSeconds | int | `90` |  |
 | migrationJob.backoffLimit | int | `10` |  |
+| migrationJob.enabled | bool | `false` |  |
 | migrationJob.extraEnv | list | `[]` |  |
 | migrationJob.extraVolumeMounts | list | `[]` |  |
 | migrationJob.extraVolumes | list | `[]` |  |
@@ -176,8 +177,8 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | nats.promExporter.enabled | bool | `true` |  |
 | nats.promExporter.merge.resources.requests.cpu | string | `"100m"` |  |
 | nats.promExporter.merge.resources.requests.memory | string | `"128Mi"` |  |
-| nats.reloader.enabled | bool | `false` |  |
 | nats.promExporter.port | int | `7777` |  |
+| nats.reloader.enabled | bool | `false` |  |
 | nodeSelector | object | `{}` |  |
 | podAnnotations | object | `{}` |  |
 | podAntiAffinity.enabled | bool | `false` |  |
@@ -217,9 +218,9 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | preAggregateNatsWorker.readinessProbe.periodSeconds | int | `5` |  |
 | preAggregateNatsWorker.readinessProbe.timeoutSeconds | int | `5` |  |
 | preAggregateNatsWorker.replicas | int | `1` |  |
-| preAggregateNatsWorker.resources.requests.cpu | string | `"475m"` |  |
-| preAggregateNatsWorker.resources.requests.ephemeral-storage | string | `"1Gi"` |  |
-| preAggregateNatsWorker.resources.requests.memory | string | `"725Mi"` |  |
+| preAggregateNatsWorker.resources.requests.cpu | string | `"650m"` |  |
+| preAggregateNatsWorker.resources.requests.ephemeral-storage | string | `"9Gi"` |  |
+| preAggregateNatsWorker.resources.requests.memory | string | `"4Gi"` |  |
 | preAggregateNatsWorker.startupProbe.failureThreshold | int | `18` |  |
 | preAggregateNatsWorker.startupProbe.initialDelaySeconds | int | `5` |  |
 | preAggregateNatsWorker.startupProbe.periodSeconds | int | `10` |  |
@@ -286,9 +287,9 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | warehouseNatsWorker.readinessProbe.periodSeconds | int | `5` |  |
 | warehouseNatsWorker.readinessProbe.timeoutSeconds | int | `5` |  |
 | warehouseNatsWorker.replicas | int | `1` |  |
-| warehouseNatsWorker.resources.requests.cpu | string | `"475m"` |  |
-| warehouseNatsWorker.resources.requests.ephemeral-storage | string | `"1Gi"` |  |
-| warehouseNatsWorker.resources.requests.memory | string | `"725Mi"` |  |
+| warehouseNatsWorker.resources.requests.cpu | string | `"250m"` |  |
+| warehouseNatsWorker.resources.requests.ephemeral-storage | string | `"9Gi"` |  |
+| warehouseNatsWorker.resources.requests.memory | string | `"1.5Gi"` |  |
 | warehouseNatsWorker.startupProbe.failureThreshold | int | `18` |  |
 | warehouseNatsWorker.startupProbe.initialDelaySeconds | int | `5` |  |
 | warehouseNatsWorker.startupProbe.periodSeconds | int | `10` |  |
