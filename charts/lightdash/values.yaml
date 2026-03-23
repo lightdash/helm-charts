@@ -284,6 +284,20 @@ ssl:
   certFileName: ""
   configMapName: ""
 
+## Migration Job (runs for both bundled and external DB)
+## @param migrationJob.backoffLimit Number of retries before the Job is marked failed
+## @param migrationJob.ttlSecondsAfterFinished Seconds after which the Job is eligible for automatic cleanup
+## @param migrationJob.extraEnv Extra env vars for the migration container
+## @param migrationJob.extraVolumes Extra volumes for the migration pod
+## @param migrationJob.extraVolumeMounts Extra volume mounts for the migration container
+migrationJob:
+  enabled: true
+  backoffLimit: 10
+  ttlSecondsAfterFinished: 100
+  extraEnv: []
+  extraVolumes: []
+  extraVolumeMounts: []
+
 ## @param additional main containers for the backend and worker deployments
 extraContainers: []
 
