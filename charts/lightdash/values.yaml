@@ -278,6 +278,7 @@ externalDatabase:
 ## @param ssl.enabled Enable SSL/TLS for the Lightdash Database connection
 ## @param ssl.mountPath Path to mount the SSL certificate
 ## @param ssl.certFileName Name of the certificate file
+## @param ssl.configMapName ConfigMap name for backend/worker SSL mounts (defaults to release-ssl-cert if empty)
 ssl:
   enabled: false
   mountPath: "/etc/ssl/certs"
@@ -290,10 +291,19 @@ ssl:
 ## @param migrationJob.extraEnv Extra env vars for the migration container
 ## @param migrationJob.extraVolumes Extra volumes for the migration pod
 ## @param migrationJob.extraVolumeMounts Extra volume mounts for the migration container
+## @param migrationJob.ssl.enabled Use migrationJob.ssl for the migration Job mount and NODE_EXTRA_CA_CERTS (e.g. a pre-install hook ConfigMap). When false and ssl.enabled is true, the migration Job uses top-level ssl (same ConfigMap as backend).
+## @param migrationJob.ssl.mountPath Path to mount the migration SSL certificate
+## @param migrationJob.ssl.certFileName Key/path for the cert file inside the ConfigMap volume
+## @param migrationJob.ssl.configMapName ConfigMap name for the migration Job (defaults to release-migration-ssl-cert if empty)
 migrationJob:
   enabled: false
   backoffLimit: 10
   ttlSecondsAfterFinished: 100
+  ssl:
+    enabled: false
+    mountPath: "/etc/ssl/certs"
+    certFileName: ""
+    configMapName: ""
   extraEnv: []
   extraVolumes: []
   extraVolumeMounts: []

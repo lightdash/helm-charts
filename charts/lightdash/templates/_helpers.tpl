@@ -257,6 +257,53 @@ Renders a volumeMount for the SSL certificate if ssl.enabled is true.
 {{- end -}}
 
 {{/*
+SSL env vars for the migration Job: migrationJob.ssl when enabled, else top-level ssl.
+*/}}
+{{- define "lightdash.migrationJobSslEnvs" -}}
+{{- if .Values.migrationJob.ssl.enabled -}}
+- name: PGSSLMODE
+  value: verify-full
+- name: NODE_EXTRA_CA_CERTS
+  value: {{ .Values.migrationJob.ssl.mountPath }}/{{ .Values.migrationJob.ssl.certFileName }}
+{{- else if .Values.ssl.enabled -}}
+- name: PGSSLMODE
+  value: verify-full
+- name: NODE_EXTRA_CA_CERTS
+  value: {{ .Values.ssl.mountPath }}/{{ .Values.ssl.certFileName }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Volume mount for the migration Job SSL cert: migrationJob.ssl when enabled, else ssl.
+*/}}
+{{- define "lightdash.migrationJobSslVolumeMount" -}}
+{{- if .Values.migrationJob.ssl.enabled -}}
+- name: ssl-cert
+  mountPath: {{ .Values.migrationJob.ssl.mountPath }}/{{ .Values.migrationJob.ssl.certFileName }}
+  subPath: {{ .Values.migrationJob.ssl.certFileName }}
+  readOnly: true
+{{- else if .Values.ssl.enabled -}}
+{{- include "lightdash.sslConfigMapVolumeMount" . }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Volume for the migration Job SSL cert ConfigMap: migrationJob.ssl when enabled, else ssl.
+*/}}
+{{- define "lightdash.migrationJobSslVolume" -}}
+{{- if .Values.migrationJob.ssl.enabled -}}
+- name: ssl-cert
+  configMap:
+    name: {{ .Values.migrationJob.ssl.configMapName | default (printf "%s-migration-ssl-cert" (include "lightdash.fullname" .)) }}
+    items:
+      - key: {{ .Values.migrationJob.ssl.certFileName }}
+        path: {{ .Values.migrationJob.ssl.certFileName }}
+{{- else if .Values.ssl.enabled -}}
+{{- include "lightdash.sslConfigMapVolume" . }}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Pod Disruption Budget template that can be reused for different components
 Usage: {{- include "lightdash.podDisruptionBudget" (dict "root" . "component" "backend" "pdbConfig" .Values.podDisruptionBudget) }}
 */}}

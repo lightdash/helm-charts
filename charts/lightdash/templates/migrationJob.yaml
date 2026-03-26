@@ -41,7 +41,7 @@ spec:
                 secretKeyRef:
                   name: {{ include "lightdash.database.secretName" . }}
                   key: {{ include "lightdash.database.secret.passwordKey" . }}
-            {{- include "lightdash.sslEnvs" . | nindent 12 }}
+            {{- include "lightdash.migrationJobSslEnvs" . | nindent 12 }}
             {{- with .Values.migrationJob.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
@@ -52,16 +52,16 @@ spec:
             - secretRef:
                 name: {{ include "lightdash.fullname" . }}-migration-secrets
             {{- end }}
-          {{- if or .Values.migrationJob.extraVolumeMounts .Values.ssl.enabled }}
+          {{- if or .Values.migrationJob.extraVolumeMounts .Values.migrationJob.ssl.enabled .Values.ssl.enabled }}
           volumeMounts:
-            {{- include "lightdash.sslConfigMapVolumeMount" . | nindent 12 }}
+            {{- include "lightdash.migrationJobSslVolumeMount" . | nindent 12 }}
             {{- with .Values.migrationJob.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
           {{- end }}
-      {{- if or .Values.migrationJob.extraVolumes .Values.ssl.enabled }}
+      {{- if or .Values.migrationJob.extraVolumes .Values.migrationJob.ssl.enabled .Values.ssl.enabled }}
       volumes:
-        {{- include "lightdash.sslConfigMapVolume" . | nindent 8 }}
+        {{- include "lightdash.migrationJobSslVolume" . | nindent 8 }}
         {{- with .Values.migrationJob.extraVolumes }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
