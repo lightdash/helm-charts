@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 2.6.1](https://img.shields.io/badge/Version-2.6.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.2248.0](https://img.shields.io/badge/AppVersion-0.2248.0-informational?style=flat-square)
+![Version: 2.7.0](https://img.shields.io/badge/Version-2.7.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.2248.0](https://img.shields.io/badge/AppVersion-0.2248.0-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -157,6 +157,10 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | migrationJob.extraEnv | list | `[]` |  |
 | migrationJob.extraVolumeMounts | list | `[]` |  |
 | migrationJob.extraVolumes | list | `[]` |  |
+| migrationJob.ssl.certFileName | string | `""` |  |
+| migrationJob.ssl.configMapName | string | `""` |  |
+| migrationJob.ssl.enabled | bool | `false` |  |
+| migrationJob.ssl.mountPath | string | `"/etc/ssl/certs"` |  |
 | migrationJob.ttlSecondsAfterFinished | int | `100` |  |
 | nameOverride | string | `""` |  |
 | nats.config.cluster.enabled | bool | `false` |  |
