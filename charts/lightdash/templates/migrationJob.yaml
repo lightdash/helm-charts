@@ -52,6 +52,10 @@ spec:
             - secretRef:
                 name: {{ include "lightdash.fullname" . }}-migration-secrets
             {{- end }}
+          {{- if not (empty .Values.migrationJob.resources) }}
+          resources:
+            {{- toYaml .Values.migrationJob.resources | nindent 12 }}
+          {{- end }}
           {{- if or .Values.migrationJob.extraVolumeMounts .Values.migrationJob.ssl.enabled .Values.ssl.enabled }}
           volumeMounts:
             {{- include "lightdash.migrationJobSslVolumeMount" . | nindent 12 }}
