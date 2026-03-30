@@ -179,7 +179,6 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | nats.natsBox.enabled | bool | `false` |  |
 | nats.networkPolicy.additionalIngress | list | `[]` |  |
 | nats.networkPolicy.enabled | bool | `true` |  |
-| nats.podDisruptionBudget.enabled | bool | `true` |  |
 | nats.podDisruptionBudget.merge.spec.maxUnavailable | int | `0` |  |
 | nats.promExporter.enabled | bool | `true` |  |
 | nats.promExporter.merge.resources.requests.cpu | string | `"100m"` |  |
