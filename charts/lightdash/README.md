@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 2.7.1](https://img.shields.io/badge/Version-2.7.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.2248.0](https://img.shields.io/badge/AppVersion-0.2248.0-informational?style=flat-square)
+![Version: 2.7.2](https://img.shields.io/badge/Version-2.7.2-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.2248.0](https://img.shields.io/badge/AppVersion-0.2248.0-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -179,11 +179,13 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | nats.natsBox.enabled | bool | `false` |  |
 | nats.networkPolicy.additionalIngress | list | `[]` |  |
 | nats.networkPolicy.enabled | bool | `true` |  |
+| nats.podDisruptionBudget.merge.spec.maxUnavailable | int | `0` |  |
 | nats.promExporter.enabled | bool | `true` |  |
 | nats.promExporter.merge.resources.requests.cpu | string | `"100m"` |  |
 | nats.promExporter.merge.resources.requests.memory | string | `"128Mi"` |  |
 | nats.promExporter.port | int | `7777` |  |
 | nats.reloader.enabled | bool | `false` |  |
+| nats.statefulSet.merge.spec.template.metadata.annotations."cluster-autoscaler.kubernetes.io/safe-to-evict" | string | `"false"` |  |
 | nodeSelector | object | `{}` |  |
 | podAnnotations | object | `{}` |  |
 | podAntiAffinity.enabled | bool | `false` |  |
