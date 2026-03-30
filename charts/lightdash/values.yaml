@@ -220,7 +220,6 @@ nats:
               cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
 
   podDisruptionBudget:
-    enabled: true
     merge:
       spec:
         maxUnavailable: 0
