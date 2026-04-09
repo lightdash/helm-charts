@@ -305,6 +305,8 @@ ssl:
 ## @param migrationJob.extraVolumes Extra volumes for the migration pod
 ## @param migrationJob.extraVolumeMounts Extra volume mounts for the migration container
 ## @param migrationJob.resources Resource requests and limits for the migration container (e.g. ephemeral-storage requests)
+## @param migrationJob.tolerations Tolerations for the migration pod
+## @param migrationJob.affinity Affinity rules for the migration pod
 ## @param migrationJob.ssl.enabled Use migrationJob.ssl for the migration Job mount and NODE_EXTRA_CA_CERTS (e.g. a pre-install hook ConfigMap). When false and ssl.enabled is true, the migration Job uses top-level ssl (same ConfigMap as backend).
 ## @param migrationJob.ssl.mountPath Path to mount the migration SSL certificate
 ## @param migrationJob.ssl.certFileName Key/path for the cert file inside the ConfigMap volume
@@ -329,6 +331,22 @@ migrationJob:
   # limits:
   #   memory: 2Gi
   #   ephemeral-storage: 2Gi
+  tolerations: []
+  # Example toleration:
+  # - key: "key"
+  #   operator: "Equal"
+  #   value: "value"
+  #   effect: "NoSchedule"
+  affinity: {}
+  # Example affinity:
+  # nodeAffinity:
+  #   requiredDuringSchedulingIgnoredDuringExecution:
+  #     nodeSelectorTerms:
+  #     - matchExpressions:
+  #       - key: "key"
+  #         operator: "In"
+  #         values:
+  #         - "value"
 
 ## @param additional main containers for the backend and worker deployments
 extraContainers: []
