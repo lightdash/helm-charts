@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 2.7.2](https://img.shields.io/badge/Version-2.7.2-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.2248.0](https://img.shields.io/badge/AppVersion-0.2248.0-informational?style=flat-square)
+![Version: 2.7.3](https://img.shields.io/badge/Version-2.7.3-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.2248.0](https://img.shields.io/badge/AppVersion-0.2248.0-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -152,6 +152,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | lightdashBackend.startupProbe.periodSeconds | int | `10` |  |
 | lightdashBackend.startupProbe.timeoutSeconds | int | `10` |  |
 | lightdashBackend.terminationGracePeriodSeconds | int | `90` |  |
+| migrationJob.affinity | object | `{}` |  |
 | migrationJob.backoffLimit | int | `10` |  |
 | migrationJob.enabled | bool | `false` |  |
 | migrationJob.extraEnv | list | `[]` |  |
@@ -162,6 +163,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | migrationJob.ssl.configMapName | string | `""` |  |
 | migrationJob.ssl.enabled | bool | `false` |  |
 | migrationJob.ssl.mountPath | string | `"/etc/ssl/certs"` |  |
+| migrationJob.tolerations | list | `[]` |  |
 | migrationJob.ttlSecondsAfterFinished | int | `100` |  |
 | nameOverride | string | `""` |  |
 | nats.config.cluster.enabled | bool | `false` |  |
