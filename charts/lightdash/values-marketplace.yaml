@@ -1,0 +1,57 @@
+## values-marketplace.yaml
+##
+## Overrides applied on top of values.yaml when packaging the chart for
+## AWS Marketplace (Containers Anywhere delivery).
+##
+## AWS Marketplace requires every image referenced by the chart to live in
+## the Marketplace-managed ECR registry (709825985650.dkr.ecr.us-east-1.amazonaws.com).
+## External registries (Docker Hub, GHCR, etc.) cause the submission to be
+## rejected at review, so every image override below points at ECR.
+##
+## Customers running this chart supply:
+##   - an external Postgres (RDS recommended)
+##   - a SITE_URL and LIGHTDASH_SECRET via --set or an existing secret
+##   - an ingress or LoadBalancer to expose the service
+##
+## Packaging is driven by scripts/publish-marketplace.sh.
+
+image:
+  repository: 709825985650.dkr.ecr.us-east-1.amazonaws.com/lightdash/lightdash-containers
+  pullPolicy: IfNotPresent
+  # tag is set from --app-version at package time; customers can override at install
+
+## Force external Postgres.
+## Bundled Bitnami/pgvector images live on Docker Hub and fail Marketplace
+## review. Managed DBs are the right production choice anyway.
+postgresql:
+  enabled: false
+
+externalDatabase:
+  host: ""
+  port: 5432
+  user: lightdash
+  database: lightdash
+  existingSecret: ""
+  secretKeys:
+    passwordKey: postgresql-password
+
+## Mirror of ghcr.io/browserless/chromium pushed to a second Marketplace ECR
+## repo by scripts/publish-marketplace.sh. Keep this tag in lockstep with
+## browserless-chrome.image.tag in values.yaml so PDF exports behave the
+## same as cloud.
+browserless-chrome:
+  enabled: true
+  image:
+    repository: 709825985650.dkr.ecr.us-east-1.amazonaws.com/lightdash/browserless-chromium
+    tag: v2.38.2
+
+## NATS remains disabled. Async workers require a NATS image we do not mirror
+## (the nats-io chart pulls from Docker Hub), so enabling it requires the
+## customer to supply their own image.
+nats:
+  enabled: false
+
+## No default secret. Customer supplies via --set secrets.LIGHTDASH_SECRET
+## or extraEnv with a secretKeyRef.
+secrets:
+  LIGHTDASH_SECRET: ""
