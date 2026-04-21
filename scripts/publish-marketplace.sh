@@ -98,6 +98,11 @@ if [[ "${SKIP_CHART_PUBLISH:-0}" != "1" ]]; then
     "$CHART_COPY/values.yaml" "$VALUES_FILE" > "$WORK_DIR/merged-values.yaml"
   mv "$WORK_DIR/merged-values.yaml" "$CHART_COPY/values.yaml"
 
+  # AWS Marketplace requires an explicit image.tag in values.yaml. Helm's
+  # default-to-.Chart.AppVersion fallback is not accepted by the validator,
+  # so bake the tag in at package time.
+  VERSION="$VERSION" yq -i '.image.tag = strenv(VERSION)' "$CHART_COPY/values.yaml"
+
   # The overrides file is only for packaging; do not ship it inside the chart.
   rm -f "$CHART_COPY/values-marketplace.yaml"
 

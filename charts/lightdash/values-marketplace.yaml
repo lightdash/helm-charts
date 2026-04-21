@@ -18,7 +18,9 @@
 image:
   repository: 709825985650.dkr.ecr.us-east-1.amazonaws.com/lightdash/lightdash-containers
   pullPolicy: IfNotPresent
-  # tag is set from --app-version at package time; customers can override at install
+  # image.tag is injected by scripts/publish-marketplace.sh at package time
+  # (AWS Marketplace rejects an empty/defaulted tag). Customers can still
+  # override it via --set image.tag=<version> at install.
 
 ## Force external Postgres.
 ## Bundled Bitnami/pgvector images live on Docker Hub and fail Marketplace
