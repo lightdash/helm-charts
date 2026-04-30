@@ -20,6 +20,14 @@ spec:
       ports:
         - protocol: TCP
           port: 4222
+    {{- range .Values.nats.networkPolicy.nodeCIDRs }}
+    - from:
+        - ipBlock:
+            cidr: {{ . | quote }}
+      ports:
+        - protocol: TCP
+          port: 4222
+    {{- end }}
     {{- with .Values.nats.networkPolicy.additionalIngress }}
     {{- toYaml . | nindent 4 }}
     {{- end }}

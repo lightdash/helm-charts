@@ -164,6 +164,7 @@ browserless-chrome:
 ## @param nats.enabled Enable NATS JetStream deployment
 ## @param nats.nameOverride Override the name of the NATS subchart
 ## @param nats.networkPolicy.enabled Enable NetworkPolicy to restrict NATS access to Lightdash pods
+## @param nats.networkPolicy.nodeCIDRs Node CIDRs allowed to access NATS when network plugins identify cross-node pod traffic as node traffic
 ## @param nats.networkPolicy.additionalIngress Additional ingress rules (e.g., for Prometheus scraping)
 nats:
   enabled: false
@@ -171,7 +172,12 @@ nats:
 
   networkPolicy:
     enabled: true
+    nodeCIDRs: []
     additionalIngress: []
+    # Example: Allow NATS access from Kubernetes node IPs when Cilium reports
+    # cross-node pod traffic as the remote-node identity.
+    # nodeCIDRs:
+    #   - 10.2.0.0/16
     # Example: Allow Prometheus scraping from gmp-system namespace
     # - from:
     #     - namespaceSelector:
