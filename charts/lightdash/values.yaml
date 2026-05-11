@@ -422,22 +422,24 @@ scheduler:
   ## However, in current versions, initialDelaySeconds is always honored and the probe will not start until after this initial delay.
   ## https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
   startupProbe:
-    ## 5 + (10 * 18) = ~185s max startup
-    initialDelaySeconds: 5
-    timeoutSeconds: 10
+    ## 10 + (10 * 30) = ~310s (~5 min) boot budget
+    path: /api/v1/livez
+    initialDelaySeconds: 10
     periodSeconds: 10
-    failureThreshold: 18
-  livenessProbe:
-    ## 5 + (15 * 20) = ~305s to restart
-    initialDelaySeconds: 5
-    timeoutSeconds: 15
-    periodSeconds: 15
-    failureThreshold: 20
-  readinessProbe:
-    ## 5 + (5 * 2) = ~15s to remove from LB
-    initialDelaySeconds: 5
     timeoutSeconds: 5
-    periodSeconds: 5
+    failureThreshold: 30
+  livenessProbe:
+    ## 10 + (30 * 6) = ~190s (~3 min) tolerance after startup
+    path: /api/v1/health
+    initialDelaySeconds: 10
+    periodSeconds: 30
+    timeoutSeconds: 5
+    failureThreshold: 6
+  readinessProbe:
+    path: /api/v1/health
+    initialDelaySeconds: 10
+    periodSeconds: 30
+    timeoutSeconds: 5
     failureThreshold: 2
   tasks:
     exclude:
