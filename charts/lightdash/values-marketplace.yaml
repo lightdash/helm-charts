@@ -45,7 +45,7 @@ browserless-chrome:
   enabled: true
   image:
     repository: 709825985650.dkr.ecr.us-east-1.amazonaws.com/lightdash/browserless-chromium
-    tag: v2.38.2
+    tag: v2.49.0
 
 ## NATS remains disabled. Async workers require a NATS image we do not mirror
 ## (the nats-io chart pulls from Docker Hub), so enabling it requires the
