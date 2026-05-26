@@ -13,8 +13,21 @@
 #
 # Prerequisites:
 #   - aws, docker, helm, gcloud, yq installed and authenticated
-#   - docker logged in to the Marketplace ECR (see MARKETPLACE_REGISTRY)
 #   - gcloud authenticated to the lightdash-containers GCP project
+#   - an authenticated AWS session AND docker logged in to the Marketplace ECR.
+#     These are two separate logins — refreshing the AWS session does NOT
+#     re-authenticate docker. If a push fails with
+#       "denied: Your authorization token has expired"
+#     run both of these again (the ECR token lasts ~12h):
+#
+#       # 1. Refresh the AWS session (opens a browser):
+#       aws login
+#
+#       # 2. Re-authenticate docker to the Marketplace ECR:
+#       aws ecr get-login-password --region us-east-1 \
+#         | docker login --username AWS --password-stdin \
+#             709825985650.dkr.ecr.us-east-1.amazonaws.com
+#
 #   - the Marketplace product has ECR repos for:
 #       lightdash/lightdash-containers
 #       lightdash/browserless-chromium
