@@ -153,7 +153,7 @@ browserless-chrome:
       cpu: "500m"
   image:
     repository: "ghcr.io/browserless/chromium"
-    tag: "v2.38.2"
+    tag: "v2.49.0"
   service:
     port: 80
   env:
