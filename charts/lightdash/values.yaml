@@ -320,11 +320,18 @@ ssl:
 ## @param migrationJob.ssl.mountPath Path to mount the migration SSL certificate
 ## @param migrationJob.ssl.certFileName Key/path for the cert file inside the ConfigMap volume
 ## @param migrationJob.ssl.configMapName ConfigMap name for the migration Job (defaults to release-migration-ssl-cert if empty)
+## @param migrationJob.serviceAccount.create Create a dedicated ServiceAccount for the migration hook Job (pre-install/pre-upgrade)
+## @param migrationJob.serviceAccount.name ServiceAccount name (defaults to `<release-fullname>-migration` when create is true, or `default` when create is false)
+## @param migrationJob.serviceAccount.annotations Annotations on the migration ServiceAccount (e.g. workload identity)
 migrationJob:
   enabled: false
   existingSecret: ""
   backoffLimit: 10
   ttlSecondsAfterFinished: 100
+  serviceAccount:
+    create: true
+    name: ""
+    annotations: {}
   ssl:
     enabled: false
     mountPath: "/etc/ssl/certs"

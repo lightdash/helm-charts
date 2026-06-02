@@ -161,6 +161,9 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | migrationJob.extraVolumeMounts | list | `[]` |  |
 | migrationJob.extraVolumes | list | `[]` |  |
 | migrationJob.resources | object | `{}` |  |
+| migrationJob.serviceAccount.annotations | object | `{}` |  |
+| migrationJob.serviceAccount.create | bool | `true` |  |
+| migrationJob.serviceAccount.name | string | `""` |  |
 | migrationJob.ssl.certFileName | string | `""` |  |
 | migrationJob.ssl.configMapName | string | `""` |  |
 | migrationJob.ssl.enabled | bool | `false` |  |
