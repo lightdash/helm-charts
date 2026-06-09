@@ -61,7 +61,10 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ template "lightdash.fullname" $ }}
-            {{- if .Values.secrets }}
+            {{- if .Values.existingSecret }}
+            - secretRef:
+                name: {{ .Values.existingSecret }}
+            {{- else if .Values.secrets }}
             - secretRef:
                 name: {{ template "lightdash.fullname" $ }}
             {{- end }}
