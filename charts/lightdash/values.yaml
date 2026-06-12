@@ -32,6 +32,9 @@ secrets:
   # -- 	This is the secret used to sign the session ID cookie and to encrypt sensitive information. Do not share this secret!
   LIGHTDASH_SECRET: changeme
 
+# -- Name of an existing Kubernetes secret to inject into all pods via envFrom. Takes precedence over .Values.secrets when set.
+existingSecret: ""
+
 extraEnv: []
 # extraEnv:
 #   - name: LIGHTDASH_SECRET
@@ -319,6 +322,7 @@ ssl:
 ## @param migrationJob.ssl.configMapName ConfigMap name for the migration Job (defaults to release-migration-ssl-cert if empty)
 migrationJob:
   enabled: false
+  existingSecret: ""
   backoffLimit: 10
   ttlSecondsAfterFinished: 100
   ssl:

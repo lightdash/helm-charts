@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 2.7.5](https://img.shields.io/badge/Version-2.7.5-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.2248.0](https://img.shields.io/badge/AppVersion-0.2248.0-informational?style=flat-square)
+![Version: 2.8.0](https://img.shields.io/badge/Version-2.8.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.2248.0](https://img.shields.io/badge/AppVersion-0.2248.0-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -112,6 +112,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | configMap.SECURE_COOKIES | string | `"false"` | Secure Cookies |
 | configMap.SITE_URL | string | `""` | Public URL of your instance including protocol e.g. https://lightdash.myorg.com |
 | configMap.TRUST_PROXY | string | `"false"` | Trust the reverse proxy when setting secure cookies (via the "X-Forwarded-Proto" header) |
+| existingSecret | string | `""` | Name of an existing Kubernetes secret to inject into all pods via envFrom. Takes precedence over .Values.secrets when set. |
 | externalDatabase.database | string | `"lightdash"` |  |
 | externalDatabase.existingSecret | string | `""` |  |
 | externalDatabase.host | string | `"localhost"` |  |
@@ -155,6 +156,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | migrationJob.affinity | object | `{}` |  |
 | migrationJob.backoffLimit | int | `10` |  |
 | migrationJob.enabled | bool | `false` |  |
+| migrationJob.existingSecret | string | `""` |  |
 | migrationJob.extraEnv | list | `[]` |  |
 | migrationJob.extraVolumeMounts | list | `[]` |  |
 | migrationJob.extraVolumes | list | `[]` |  |
