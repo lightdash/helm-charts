@@ -13,7 +13,11 @@ spec:
   backoffLimit: {{ .Values.migrationJob.backoffLimit }}
   ttlSecondsAfterFinished: {{ .Values.migrationJob.ttlSecondsAfterFinished }}
   template:
-    metadata: {}
+    metadata:
+      {{- with .Values.migrationJob.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
       restartPolicy: Never
       {{- with .Values.imagePullSecrets }}
