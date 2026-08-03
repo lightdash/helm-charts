@@ -1,0 +1,63 @@
+{{- if and .Values.headlessBrowserEgress.enabled (not (index .Values "browserless-chrome").enabled) }}
+{{- fail "headlessBrowserEgress.enabled requires browserless-chrome.enabled" }}
+{{- end }}
+{{- if and .Values.headlessBrowserEgress.enabled (index .Values "browserless-chrome").enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "lightdash.headlessBrowserEgress.fullname" . }}
+  labels:
+    {{- include "lightdash.labels" . | nindent 4 }}
+    app.kubernetes.io/component: headless-browser-egress
+data:
+  squid.conf: |
+    visible_hostname lightdash-headless-browser-egress
+    http_port {{ .Values.headlessBrowserEgress.port }}
+
+    acl allowed_ports port 1-65535
+    acl internal_lightdash_host dstdomain {{ include "lightdash.headlessBrowserEgress.internalHost" . }}
+    acl internal_lightdash_port port {{ include "lightdash.headlessBrowserEgress.internalPort" . }}
+    acl blocked_hostname dstdomain .localhost .local .internal
+    acl blocked_destination dst 0.0.0.0/8
+    acl blocked_destination dst 10.0.0.0/8
+    acl blocked_destination dst 100.64.0.0/10
+    acl blocked_destination dst 127.0.0.0/8
+    acl blocked_destination dst 169.254.0.0/16
+    acl blocked_destination dst 172.16.0.0/12
+    acl blocked_destination dst 192.0.0.0/24
+    acl blocked_destination dst 192.0.2.0/24
+    acl blocked_destination dst 192.88.99.0/24
+    acl blocked_destination dst 192.168.0.0/16
+    acl blocked_destination dst 198.18.0.0/15
+    acl blocked_destination dst 198.51.100.0/24
+    acl blocked_destination dst 203.0.113.0/24
+    acl blocked_destination dst 224.0.0.0/4
+    acl blocked_destination dst 240.0.0.0/4
+    acl blocked_destination dst ::/128
+    acl blocked_destination dst ::1/128
+    acl blocked_destination dst 64:ff9b::/96
+    acl blocked_destination dst 64:ff9b:1::/48
+    acl blocked_destination dst 100::/64
+    acl blocked_destination dst 2001::/32
+    acl blocked_destination dst 2001:10::/28
+    acl blocked_destination dst 2001:20::/28
+    acl blocked_destination dst 2001:db8::/32
+    acl blocked_destination dst 2002::/16
+    acl blocked_destination dst 3fff::/20
+    acl blocked_destination dst 5f00::/16
+    acl blocked_destination dst fc00::/7
+    acl blocked_destination dst fe80::/10
+    acl blocked_destination dst ff00::/8
+
+    http_access deny !allowed_ports
+    http_access allow internal_lightdash_host internal_lightdash_port
+    http_access deny blocked_hostname
+    http_access deny blocked_destination
+    http_access allow all
+
+    cache deny all
+    access_log stdio:/dev/stdout
+    cache_log /dev/stderr
+    coredump_dir /tmp
+    pid_filename /tmp/squid.pid
+{{- end }}

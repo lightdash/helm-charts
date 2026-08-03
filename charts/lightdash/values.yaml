@@ -162,6 +162,55 @@ browserless-chrome:
   env:
     CONNECTION_TIMEOUT: "180000"
 
+## Isolate Chromium behind a forward proxy that rejects private and special-use
+## destinations. NetworkPolicy enforcement requires a compatible CNI.
+## @param headlessBrowserEgress.enabled Deploy the Browserless egress proxy and configure Lightdash to use it; requires browserless-chrome.enabled
+## @param headlessBrowserEgress.internalLightdashHost Hostname Browserless may use to reach Lightdash; defaults to the chart service name
+## @param headlessBrowserEgress.internalLightdashPort Port Browserless may use to reach Lightdash; defaults to service.port
+## @param headlessBrowserEgress.networkPolicy.enabled Prevent Browserless from bypassing the proxy and restrict proxy egress
+headlessBrowserEgress:
+  enabled: false
+  internalLightdashHost: ""
+  internalLightdashPort: ""
+  replicaCount: 1
+  image:
+    repository: ubuntu/squid
+    tag: 7.2-26.04_edge
+    digest: sha256:65fe782fa64e07384db718fa1218bd783383fa15ce7e1c232c7fa04674206998
+    pullPolicy: IfNotPresent
+  port: 3128
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+  podAnnotations: {}
+  podLabels: {}
+  podSecurityContext:
+    seccompProfile:
+      type: RuntimeDefault
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+    runAsNonRoot: true
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  networkPolicy:
+    enabled: true
+    dnsNamespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: kube-system
+    dnsPodSelector:
+      matchLabels:
+        k8s-app: kube-dns
+    additionalBrowserEgress: []
+    additionalProxyEgress: []
+
 ## NATS JetStream configuration
 ## ref: https://github.com/nats-io/k8s/tree/main/helm/charts/nats
 ## @param nats.enabled Enable NATS JetStream deployment

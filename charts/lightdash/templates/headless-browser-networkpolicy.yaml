@@ -1,0 +1,138 @@
+{{- if and .Values.headlessBrowserEgress.enabled .Values.headlessBrowserEgress.networkPolicy.enabled (index .Values "browserless-chrome").enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "lightdash.headlessBrowser.fullname" . }}-isolation
+  labels:
+    {{- include "lightdash.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: browserless-chrome
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              {{- include "lightdash.selectorLabels" . | nindent 14 }}
+      ports:
+        - protocol: TCP
+          port: 3000
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              {{- include "lightdash.selectorLabels" . | nindent 14 }}
+              app.kubernetes.io/component: headless-browser-egress
+      ports:
+        - protocol: TCP
+          port: {{ .Values.headlessBrowserEgress.port }}
+    - to:
+        - namespaceSelector:
+            {{- toYaml .Values.headlessBrowserEgress.networkPolicy.dnsNamespaceSelector | nindent 12 }}
+          podSelector:
+            {{- toYaml .Values.headlessBrowserEgress.networkPolicy.dnsPodSelector | nindent 12 }}
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    {{- with .Values.headlessBrowserEgress.networkPolicy.additionalBrowserEgress }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "lightdash.headlessBrowserEgress.fullname" . }}
+  labels:
+    {{- include "lightdash.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "lightdash.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: headless-browser-egress
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: browserless-chrome
+              app.kubernetes.io/instance: {{ .Release.Name }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.headlessBrowserEgress.port }}
+  egress:
+    - to:
+        - namespaceSelector:
+            {{- toYaml .Values.headlessBrowserEgress.networkPolicy.dnsNamespaceSelector | nindent 12 }}
+          podSelector:
+            {{- toYaml .Values.headlessBrowserEgress.networkPolicy.dnsPodSelector | nindent 12 }}
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - to:
+        - podSelector:
+            matchLabels:
+              {{- include "lightdash.selectorLabels" . | nindent 14 }}
+              app.kubernetes.io/component: backend
+      ports:
+        - protocol: TCP
+          port: {{ include "lightdash.headlessBrowserEgress.internalPort" . }}
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 0.0.0.0/8
+              - 10.0.0.0/8
+              - 100.64.0.0/10
+              - 127.0.0.0/8
+              - 169.254.0.0/16
+              - 172.16.0.0/12
+              - 192.0.0.0/24
+              - 192.0.2.0/24
+              - 192.88.99.0/24
+              - 192.168.0.0/16
+              - 198.18.0.0/15
+              - 198.51.100.0/24
+              - 203.0.113.0/24
+              - 224.0.0.0/4
+              - 240.0.0.0/4
+      ports:
+        - protocol: TCP
+          port: 1
+          endPort: 65535
+    - to:
+        - ipBlock:
+            cidr: ::/0
+            except:
+              - ::/128
+              - ::1/128
+              - 64:ff9b::/96
+              - 64:ff9b:1::/48
+              - 100::/64
+              - 2001::/32
+              - 2001:10::/28
+              - 2001:20::/28
+              - 2001:db8::/32
+              - 2002::/16
+              - 3fff::/20
+              - 5f00::/16
+              - fc00::/7
+              - fe80::/10
+              - ff00::/8
+      ports:
+        - protocol: TCP
+          port: 1
+          endPort: 65535
+    {{- with .Values.headlessBrowserEgress.networkPolicy.additionalProxyEgress }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+{{- end }}

@@ -29,6 +29,23 @@ Note, a persistent volume claim is created called `data-lightdashdb-postgresql-0
 
 Use `--set primary.persistence.enabled=false` to skip creating a persistent volume claim(for development purposes only).
 
+### Headless browser network isolation
+
+`headlessBrowserEgress.enabled` deploys a forward proxy that rejects private and
+special-use destinations. Its NetworkPolicies also prevent Browserless from
+bypassing that proxy. Keep `headlessBrowserEgress.networkPolicy.enabled` on in
+production and ensure your Kubernetes CNI enforces `NetworkPolicy` resources.
+
+```yaml
+headlessBrowserEgress:
+  enabled: true
+  networkPolicy:
+    enabled: true
+```
+
+This mode requires the bundled `browserless-chrome` deployment. Helm rejects
+the configuration when egress isolation is enabled without it.
+
 
 ## Installing Lightdash
 

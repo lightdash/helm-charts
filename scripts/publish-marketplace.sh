@@ -7,9 +7,10 @@
 # Marketplace-managed ECR, so each run:
 #   1. Pulls the Lightdash commercial image from GCP and re-pushes to ECR.
 #   2. Pulls the browserless/chromium image from GHCR and re-pushes to ECR.
-#   3. Packages the chart using values-marketplace.yaml with --app-version
+#   3. Pulls the Squid egress proxy image and re-pushes it to ECR.
+#   4. Packages the chart using values-marketplace.yaml with --app-version
 #      set to the Lightdash version being published.
-#   4. Pushes the packaged chart to ECR as an OCI artifact.
+#   5. Pushes the packaged chart to ECR as an OCI artifact.
 #
 # Prerequisites:
 #   - aws, docker, helm, gcloud, yq installed and authenticated
@@ -31,6 +32,7 @@
 #   - the Marketplace product has ECR repos for:
 #       lightdash/lightdash-containers
 #       lightdash/browserless-chromium
+#       lightdash/squid
 #       lightdash                          (for the Helm chart OCI artifact)
 #     Create any missing repos from the product's Repositories tab first.
 #
@@ -46,6 +48,8 @@
 #   SOURCE_IMAGE               default: us-docker.pkg.dev/lightdash-containers/lightdash/lightdash
 #   BROWSERLESS_SOURCE_IMAGE   default: ghcr.io/browserless/chromium
 #   BROWSERLESS_TAG            default: read from values-marketplace.yaml
+#   EGRESS_PROXY_SOURCE_IMAGE  default: ubuntu/squid
+#   EGRESS_PROXY_TAG           default: read from values-marketplace.yaml
 #   SKIP_IMAGE_MIRROR          set to 1 to skip image pushes (e.g. chart-only republish)
 #   SKIP_CHART_PUBLISH         set to 1 to skip helm package/push
 
@@ -61,10 +65,16 @@ MARKETPLACE_REGISTRY="${MARKETPLACE_REGISTRY:-709825985650.dkr.ecr.us-east-1.ama
 MARKETPLACE_NAMESPACE="${MARKETPLACE_NAMESPACE:-lightdash}"
 SOURCE_IMAGE="${SOURCE_IMAGE:-us-docker.pkg.dev/lightdash-containers/lightdash/lightdash}"
 BROWSERLESS_SOURCE_IMAGE="${BROWSERLESS_SOURCE_IMAGE:-ghcr.io/browserless/chromium}"
+EGRESS_PROXY_SOURCE_IMAGE="${EGRESS_PROXY_SOURCE_IMAGE:-ubuntu/squid}"
 
 BROWSERLESS_TAG="${BROWSERLESS_TAG:-$(grep -A1 "browserless-chromium" "$VALUES_FILE" | grep 'tag:' | awk '{print $2}')}"
 if [[ -z "$BROWSERLESS_TAG" ]]; then
   echo "Could not determine BROWSERLESS_TAG from $VALUES_FILE" >&2
+  exit 1
+fi
+EGRESS_PROXY_TAG="${EGRESS_PROXY_TAG:-$(grep -A2 'repository: ubuntu/squid' "$CHART_DIR/values.yaml" | grep 'tag:' | awk '{print $2}')}"
+if [[ -z "$EGRESS_PROXY_TAG" ]]; then
+  echo "Could not determine EGRESS_PROXY_TAG from $CHART_DIR/values.yaml" >&2
   exit 1
 fi
 
@@ -72,11 +82,13 @@ CHART_VERSION="${CHART_VERSION:-$(grep -E '^version:' "$CHART_DIR/Chart.yaml" | 
 
 LIGHTDASH_DST="$MARKETPLACE_REGISTRY/$MARKETPLACE_NAMESPACE/lightdash-containers:$VERSION"
 BROWSERLESS_DST="$MARKETPLACE_REGISTRY/$MARKETPLACE_NAMESPACE/browserless-chromium:$BROWSERLESS_TAG"
+EGRESS_PROXY_DST="$MARKETPLACE_REGISTRY/$MARKETPLACE_NAMESPACE/squid:$EGRESS_PROXY_TAG"
 
 echo "Publishing to Marketplace:"
 echo "  Lightdash version   : $VERSION"
 echo "  Chart version       : $CHART_VERSION"
 echo "  Browserless version : $BROWSERLESS_TAG"
+echo "  Egress proxy version : $EGRESS_PROXY_TAG"
 echo "  Registry            : $MARKETPLACE_REGISTRY/$MARKETPLACE_NAMESPACE"
 echo
 
@@ -91,6 +103,12 @@ if [[ "${SKIP_IMAGE_MIRROR:-0}" != "1" ]]; then
   docker pull --platform linux/amd64 "$BROWSERLESS_SOURCE_IMAGE:$BROWSERLESS_TAG"
   docker tag "$BROWSERLESS_SOURCE_IMAGE:$BROWSERLESS_TAG" "$BROWSERLESS_DST"
   docker push "$BROWSERLESS_DST"
+
+  echo
+  echo "==> Mirroring Browserless egress proxy"
+  docker pull --platform linux/amd64 "$EGRESS_PROXY_SOURCE_IMAGE:$EGRESS_PROXY_TAG"
+  docker tag "$EGRESS_PROXY_SOURCE_IMAGE:$EGRESS_PROXY_TAG" "$EGRESS_PROXY_DST"
+  docker push "$EGRESS_PROXY_DST"
 fi
 
 if [[ "${SKIP_CHART_PUBLISH:-0}" != "1" ]]; then

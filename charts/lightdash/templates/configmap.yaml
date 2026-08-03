@@ -1,4 +1,8 @@
 {{- if .Values.configMap }}
+{{- $configMap := .Values.configMap }}
+{{- if and .Values.headlessBrowserEgress.enabled (index .Values "browserless-chrome").enabled }}
+{{- $configMap = omit $configMap "HEADLESS_BROWSER_PROXY_URL" "INTERNAL_LIGHTDASH_HOST" }}
+{{- end }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -12,6 +16,10 @@ data:
   PGDATABASE: {{ include "lightdash.database.name" . }}
   HEADLESS_BROWSER_HOST: {{ include "lightdash.headlessBrowser.host" . }}
   HEADLESS_BROWSER_PORT: {{ include "lightdash.headlessBrowser.port" .  | quote }}
+  {{- if and .Values.headlessBrowserEgress.enabled (index .Values "browserless-chrome").enabled }}
+  HEADLESS_BROWSER_PROXY_URL: {{ include "lightdash.headlessBrowserEgress.proxyUrl" . | quote }}
+  INTERNAL_LIGHTDASH_HOST: {{ include "lightdash.headlessBrowserEgress.internalUrl" . | quote }}
+  {{- end }}
   {{- if .Values.scheduler.enabled }}
   SCHEDULER_ENABLED: "false"
   {{- else }}
@@ -32,5 +40,5 @@ data:
   {{- if .Values.nats.enabled }}
   NATS_URL: {{ include "lightdash.nats.url" . }}
   {{- end }}
-  {{- toYaml .Values.configMap | nindent 2 }}
+  {{- toYaml $configMap | nindent 2 }}
 {{- end }}

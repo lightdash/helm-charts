@@ -1,0 +1,19 @@
+{{- if and .Values.headlessBrowserEgress.enabled (index .Values "browserless-chrome").enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "lightdash.headlessBrowserEgress.fullname" . }}
+  labels:
+    {{- include "lightdash.labels" . | nindent 4 }}
+    app.kubernetes.io/component: headless-browser-egress
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "lightdash.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: headless-browser-egress
+  ports:
+    - name: proxy
+      port: {{ .Values.headlessBrowserEgress.port }}
+      targetPort: proxy
+      protocol: TCP
+{{- end }}

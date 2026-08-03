@@ -220,6 +220,27 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
     {{- printf ((index .Values "browserless-chrome").service.port | toString) -}}
 {{- end -}}
 
+{{/* Headless-browser egress proxy names and internal Lightdash destination. */}}
+{{- define "lightdash.headlessBrowserEgress.fullname" -}}
+{{- printf "%s-headless-browser-egress" (include "lightdash.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{- define "lightdash.headlessBrowserEgress.internalHost" -}}
+{{- default (include "lightdash.fullname" .) .Values.headlessBrowserEgress.internalLightdashHost -}}
+{{- end -}}
+
+{{- define "lightdash.headlessBrowserEgress.internalPort" -}}
+{{- default .Values.service.port .Values.headlessBrowserEgress.internalLightdashPort -}}
+{{- end -}}
+
+{{- define "lightdash.headlessBrowserEgress.proxyUrl" -}}
+{{- printf "http://%s:%v" (include "lightdash.headlessBrowserEgress.fullname" .) .Values.headlessBrowserEgress.port -}}
+{{- end -}}
+
+{{- define "lightdash.headlessBrowserEgress.internalUrl" -}}
+{{- printf "http://%s:%s" (include "lightdash.headlessBrowserEgress.internalHost" .) (include "lightdash.headlessBrowserEgress.internalPort" .) -}}
+{{- end -}}
+
 {{/*
 Renders environment variables for SSL if enabled.
 */}}
