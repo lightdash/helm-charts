@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 2.10.82](https://img.shields.io/badge/Version-2.10.82-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.71.0](https://img.shields.io/badge/AppVersion-1.71.0-informational?style=flat-square)
+![Version: 2.10.83](https://img.shields.io/badge/Version-2.10.83-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.71.0](https://img.shields.io/badge/AppVersion-1.71.0-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -28,6 +28,23 @@ helm install lightdashdb bitnami/postgresql --set auth.username=lightdash,auth.p
 Note, a persistent volume claim is created called `data-lightdashdb-postgresql-0` is created at invocation of the above. It is not deleted if `helm uninstall` is called.
 
 Use `--set primary.persistence.enabled=false` to skip creating a persistent volume claim(for development purposes only).
+
+### Headless browser network isolation
+
+`headlessBrowserEgress.enabled` deploys a forward proxy that rejects private and
+special-use destinations. Its NetworkPolicies also prevent Browserless from
+bypassing that proxy. Keep `headlessBrowserEgress.networkPolicy.enabled` on in
+production and ensure your Kubernetes CNI enforces `NetworkPolicy` resources.
+
+```yaml
+headlessBrowserEgress:
+  enabled: true
+  networkPolicy:
+    enabled: true
+```
+
+This mode requires the bundled `browserless-chrome` deployment. Helm rejects
+the configuration when egress isolation is enabled without it.
 
 ## Installing Lightdash
 
@@ -126,6 +143,33 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | fullnameOverride | string | `""` |  |
 | global.imageRegistry | string | `""` |  |
 | global.storageClass | string | `""` |  |
+| headlessBrowserEgress.affinity | object | `{}` |  |
+| headlessBrowserEgress.enabled | bool | `false` |  |
+| headlessBrowserEgress.image.digest | string | `"sha256:65fe782fa64e07384db718fa1218bd783383fa15ce7e1c232c7fa04674206998"` |  |
+| headlessBrowserEgress.image.pullPolicy | string | `"IfNotPresent"` |  |
+| headlessBrowserEgress.image.repository | string | `"ubuntu/squid"` |  |
+| headlessBrowserEgress.image.tag | string | `"7.2-26.04_edge"` |  |
+| headlessBrowserEgress.internalLightdashHost | string | `""` |  |
+| headlessBrowserEgress.internalLightdashPort | string | `""` |  |
+| headlessBrowserEgress.networkPolicy.additionalBrowserEgress | list | `[]` |  |
+| headlessBrowserEgress.networkPolicy.additionalProxyEgress | list | `[]` |  |
+| headlessBrowserEgress.networkPolicy.dnsNamespaceSelector.matchLabels."kubernetes.io/metadata.name" | string | `"kube-system"` |  |
+| headlessBrowserEgress.networkPolicy.dnsPodSelector.matchLabels.k8s-app | string | `"kube-dns"` |  |
+| headlessBrowserEgress.networkPolicy.enabled | bool | `true` |  |
+| headlessBrowserEgress.nodeSelector | object | `{}` |  |
+| headlessBrowserEgress.podAnnotations | object | `{}` |  |
+| headlessBrowserEgress.podLabels | object | `{}` |  |
+| headlessBrowserEgress.podSecurityContext.seccompProfile.type | string | `"RuntimeDefault"` |  |
+| headlessBrowserEgress.port | int | `3128` |  |
+| headlessBrowserEgress.replicaCount | int | `1` |  |
+| headlessBrowserEgress.resources.limits.cpu | string | `"500m"` |  |
+| headlessBrowserEgress.resources.limits.memory | string | `"256Mi"` |  |
+| headlessBrowserEgress.resources.requests.cpu | string | `"50m"` |  |
+| headlessBrowserEgress.resources.requests.memory | string | `"64Mi"` |  |
+| headlessBrowserEgress.securityContext.allowPrivilegeEscalation | bool | `false` |  |
+| headlessBrowserEgress.securityContext.capabilities.drop[0] | string | `"ALL"` |  |
+| headlessBrowserEgress.securityContext.runAsNonRoot | bool | `true` |  |
+| headlessBrowserEgress.tolerations | list | `[]` |  |
 | image.pullPolicy | string | `"IfNotPresent"` |  |
 | image.repository | string | `"lightdash/lightdash"` |  |
 | image.tag | string | `""` |  |
