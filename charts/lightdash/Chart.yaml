@@ -6,7 +6,7 @@ type: application
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 2.10.172
+version: 2.10.173
 
 # This is the version number of the application being deployed. This version number should be
 # incremented each time you make changes to the application. Versions are not expected to
@@ -15,28 +15,28 @@ version: 2.10.172
 appVersion: 1.134.0
 
 maintainers:
-  - name: owlas
-    email: oliver@lightdash.com
-    url: https://github.com/owlas
-  - name: jim80net
-    email: jim@ramtank.com
-    url: https://github.com/jim80net
+    - name: owlas
+      email: oliver@lightdash.com
+      url: https://github.com/owlas
+    - name: jim80net
+      email: jim@ramtank.com
+      url: https://github.com/jim80net
 icon: https://docs.lightdash.com/img/logo.png
 dependencies:
-  - name: common
-    repository: https://charts.bitnami.com/bitnami
-    tags:
-      - bitnami-common
-    version: 1.x.x
-  - condition: postgresql.enabled
-    version: 11.x.x
-    name: postgresql
-    repository: https://charts.bitnami.com/bitnami
-  - name: browserless-chrome
-    version: 0.0.5
-    repository: https://charts.sagikazarmark.dev
-    condition: browserless-chrome.enabled
-  - name: nats
-    version: 2.12.4
-    repository: https://nats-io.github.io/k8s/helm/charts/
-    condition: nats.enabled
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+          - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      version: 11.x.x
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+    - name: browserless-chrome
+      version: 0.0.5
+      repository: https://charts.sagikazarmark.dev
+      condition: browserless-chrome.enabled
+    - name: nats
+      version: 2.12.4
+      repository: https://nats-io.github.io/k8s/helm/charts/
+      condition: nats.enabled

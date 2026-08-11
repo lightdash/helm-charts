@@ -459,6 +459,47 @@ scheduler:
   extraVolumeMounts: []
   extraVolumes: []
 
+## Dedicated graphile worker for data app builds (appGeneratePipeline).
+## When enabling, set scheduler.tasks.exclude=appGeneratePipeline so builds
+## only run on this pool.
+appBuildWorker:
+  type: graphile
+  port: 8080
+  enabled: false
+  replicas: 1
+  concurrency: 10
+  db:
+    maxConnections:
+  resources:
+    requests:
+      memory: 725Mi
+      cpu: 475m
+      ephemeral-storage: 1Gi
+  terminationGracePeriodSeconds: 90
+  startupProbe:
+    ## 5 + (10 * 18) = ~185s max startup
+    initialDelaySeconds: 5
+    timeoutSeconds: 10
+    periodSeconds: 10
+    failureThreshold: 18
+  livenessProbe:
+    ## 5 + (15 * 20) = ~305s to restart
+    initialDelaySeconds: 5
+    timeoutSeconds: 15
+    periodSeconds: 15
+    failureThreshold: 20
+  readinessProbe:
+    ## 5 + (5 * 2) = ~15s to remove from LB
+    initialDelaySeconds: 5
+    timeoutSeconds: 5
+    periodSeconds: 5
+    failureThreshold: 2
+  tasks:
+    exclude:
+    include: appGeneratePipeline
+  extraVolumeMounts: []
+  extraVolumes: []
+
 ## Dedicated warehouse async query worker configuration
 warehouseNatsWorker:
   type: nats
