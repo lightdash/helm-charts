@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 2.10.172](https://img.shields.io/badge/Version-2.10.172-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.134.0](https://img.shields.io/badge/AppVersion-1.134.0-informational?style=flat-square)
+![Version: 2.10.173](https://img.shields.io/badge/Version-2.10.173-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.134.0](https://img.shields.io/badge/AppVersion-1.134.0-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -92,6 +92,32 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | affinity | object | `{}` |  |
+| appBuildWorker.concurrency | int | `10` |  |
+| appBuildWorker.db.maxConnections | string | `nil` |  |
+| appBuildWorker.enabled | bool | `false` |  |
+| appBuildWorker.extraVolumeMounts | list | `[]` |  |
+| appBuildWorker.extraVolumes | list | `[]` |  |
+| appBuildWorker.livenessProbe.failureThreshold | int | `20` |  |
+| appBuildWorker.livenessProbe.initialDelaySeconds | int | `5` |  |
+| appBuildWorker.livenessProbe.periodSeconds | int | `15` |  |
+| appBuildWorker.livenessProbe.timeoutSeconds | int | `15` |  |
+| appBuildWorker.port | int | `8080` |  |
+| appBuildWorker.readinessProbe.failureThreshold | int | `2` |  |
+| appBuildWorker.readinessProbe.initialDelaySeconds | int | `5` |  |
+| appBuildWorker.readinessProbe.periodSeconds | int | `5` |  |
+| appBuildWorker.readinessProbe.timeoutSeconds | int | `5` |  |
+| appBuildWorker.replicas | int | `1` |  |
+| appBuildWorker.resources.requests.cpu | string | `"475m"` |  |
+| appBuildWorker.resources.requests.ephemeral-storage | string | `"1Gi"` |  |
+| appBuildWorker.resources.requests.memory | string | `"725Mi"` |  |
+| appBuildWorker.startupProbe.failureThreshold | int | `18` |  |
+| appBuildWorker.startupProbe.initialDelaySeconds | int | `5` |  |
+| appBuildWorker.startupProbe.periodSeconds | int | `10` |  |
+| appBuildWorker.startupProbe.timeoutSeconds | int | `10` |  |
+| appBuildWorker.tasks.exclude | string | `nil` |  |
+| appBuildWorker.tasks.include | string | `"appGeneratePipeline"` |  |
+| appBuildWorker.terminationGracePeriodSeconds | int | `90` |  |
+| appBuildWorker.type | string | `"graphile"` |  |
 | autoscaling.enabled | bool | `false` |  |
 | autoscaling.maxReplicas | int | `100` |  |
 | autoscaling.minReplicas | int | `1` |  |

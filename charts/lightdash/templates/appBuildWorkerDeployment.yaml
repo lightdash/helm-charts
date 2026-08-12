@@ -1,0 +1,2 @@
+{{- /* App-build worker deployment using reusable template - DO NOT REMOVE THIS COMMENT OTHERWISE FORMATTING WILL BREAK */ -}}
+{{- include "lightdash.workerDeployment" (dict "root" . "component" "app-build-worker" "workerConfig" .Values.appBuildWorker) -}}
