@@ -14,5 +14,8 @@ data:
   PGHOST: {{ include "lightdash.database.host" . }}
   PGPORT: {{ include "lightdash.database.port" . | quote }}
   PGDATABASE: {{ include "lightdash.database.name" . }}
+  {{- if .Values.nats.enabled }}
+  NATS_URL: {{ include "lightdash.nats.url" . }}
+  {{- end }}
   {{- toYaml .Values.configMap | nindent 2 }}
 {{- end }}
