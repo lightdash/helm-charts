@@ -424,6 +424,20 @@ lightdashBackend:
     ## Probe endpoint path. /api/v1/health checks the database on every request.
     ## /api/v1/readyz (backend only) is TTL-cached and gates on schema migration state.
     path: /api/v1/health
+  ## Container lifecycle hooks. The default preStop sleep keeps the pod serving
+  ## while the Service endpoint removal propagates, so a rollout does not send
+  ## requests to a pod that has begun shutting down. 10s is a conventional value
+  ## that exceeds typical endpoint propagation; it is not derived from a
+  ## measurement. Raise it if your load balancer detaches slowly, and keep it
+  ## well below terminationGracePeriodSeconds (default 90), which covers the
+  ## sleep plus graceful shutdown of in-flight work.
+  lifecycle:
+    preStop:
+      exec:
+        command: ["sh", "-c", "sleep 10"]
+  ## Deployment update strategy. Empty uses the Kubernetes default RollingUpdate.
+  ## Set type: Recreate for an upgrade declared breaking.
+  strategy: {}
   extraVolumeMounts: []
   extraVolumes: []
 
@@ -467,6 +481,14 @@ scheduler:
     ## /api/v1/health (in-memory worker state, no database query) and /api/v1/livez;
     ## they do not serve /api/v1/readyz.
     path: /api/v1/health
+  ## Container lifecycle hooks. Empty by default: worker pods take no Service
+  ## traffic, so there is no endpoint-removal race to cover, and a preStop delay
+  ## postpones SIGTERM and with it the release of in-flight jobs for retry.
+  ## Set a hook only if your topology needs one.
+  lifecycle: {}
+  ## Deployment update strategy. Empty uses the Kubernetes default RollingUpdate.
+  ## Set type: Recreate for an upgrade declared breaking.
+  strategy: {}
   tasks:
     exclude:
     include:
@@ -512,6 +534,14 @@ appBuildWorker:
     ## /api/v1/health (in-memory worker state, no database query) and /api/v1/livez;
     ## they do not serve /api/v1/readyz.
     path: /api/v1/health
+  ## Container lifecycle hooks. Empty by default: worker pods take no Service
+  ## traffic, so there is no endpoint-removal race to cover, and a preStop delay
+  ## postpones SIGTERM and with it the release of in-flight jobs for retry.
+  ## Set a hook only if your topology needs one.
+  lifecycle: {}
+  ## Deployment update strategy. Empty uses the Kubernetes default RollingUpdate.
+  ## Set type: Recreate for an upgrade declared breaking.
+  strategy: {}
   tasks:
     exclude:
     include: appGeneratePipeline
@@ -553,6 +583,14 @@ warehouseNatsWorker:
     ## /api/v1/health (in-memory worker state, no database query) and /api/v1/livez;
     ## they do not serve /api/v1/readyz.
     path: /api/v1/health
+  ## Container lifecycle hooks. Empty by default: worker pods take no Service
+  ## traffic, so there is no endpoint-removal race to cover, and a preStop delay
+  ## postpones SIGTERM and with it the release of in-flight jobs for retry.
+  ## Set a hook only if your topology needs one.
+  lifecycle: {}
+  ## Deployment update strategy. Empty uses the Kubernetes default RollingUpdate.
+  ## Set type: Recreate for an upgrade declared breaking.
+  strategy: {}
   extraVolumeMounts: []
   extraVolumes: []
 
@@ -591,5 +629,13 @@ preAggregateNatsWorker:
     ## /api/v1/health (in-memory worker state, no database query) and /api/v1/livez;
     ## they do not serve /api/v1/readyz.
     path: /api/v1/health
+  ## Container lifecycle hooks. Empty by default: worker pods take no Service
+  ## traffic, so there is no endpoint-removal race to cover, and a preStop delay
+  ## postpones SIGTERM and with it the release of in-flight jobs for retry.
+  ## Set a hook only if your topology needs one.
+  lifecycle: {}
+  ## Deployment update strategy. Empty uses the Kubernetes default RollingUpdate.
+  ## Set type: Recreate for an upgrade declared breaking.
+  strategy: {}
   extraVolumeMounts: []
   extraVolumes: []

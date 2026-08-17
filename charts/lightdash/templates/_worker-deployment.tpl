@@ -18,6 +18,10 @@ metadata:
     app.kubernetes.io/component: {{ $component }}
 spec:
   replicas: {{ $workerConfig.replicas }}
+  {{- with $workerConfig.strategy }}
+  strategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   selector:
     matchLabels:
       {{- include "lightdash.selectorLabels" $root | nindent 6 }}
@@ -163,6 +167,10 @@ spec:
               port: {{ $workerConfig.port }}
           resources:
             {{- toYaml $workerConfig.resources | nindent 12 }}
+          {{- with $workerConfig.lifecycle }}
+          lifecycle:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- if or $volumeMounts $root.Values.ssl.enabled }}
           volumeMounts:
             {{- if $volumeMounts }}
