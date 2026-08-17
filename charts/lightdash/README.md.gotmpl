@@ -40,6 +40,32 @@ helm install lightdash lightdash/lightdash \
 
 ```
 
+### Database migration startup budget
+
+The backend image runs database migrations before it starts the HTTP server when `migrationJob.enabled` is `false`. The backend startup probe covers this full startup path.
+
+The default startup probe budget is about 185 seconds:
+
+```text
+initialDelaySeconds + (periodSeconds * failureThreshold)
+5 + (10 * 18) = 185 seconds
+```
+
+The migration follower wait budget defaults to 30 minutes through `MIGRATION_WAIT_TIMEOUT_MS`. This wait budget does not limit the time that the lease holder spends running a migration. Size the startup probe for the follower wait budget plus the longest expected migration.
+
+For example, a 30-minute follower wait and a 20-minute migration need about 50 minutes. The following values provide about 50 minutes and 5 seconds:
+
+```yaml
+lightdashBackend:
+  startupProbe:
+    initialDelaySeconds: 5
+    timeoutSeconds: 10
+    periodSeconds: 10
+    failureThreshold: 300
+```
+
+For long migrations, set `migrationJob.enabled=true`. The migration hook Job has no startup probe, and the backend pods start after the Job completes.
+
 {{ template "chart.requirementsSection" . }}
 
 ## High Availability

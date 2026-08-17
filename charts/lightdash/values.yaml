@@ -403,11 +403,16 @@ lightdashBackend:
   ## In some older Kubernetes versions, the initialDelaySeconds might be ignored if periodSeconds was set to a value higher than initialDelaySeconds.
   ## However, in current versions, initialDelaySeconds is always honored and the probe will not start until after this initial delay.
   ## https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
+  # -- Backend startup probe. When migrationJob.enabled is false, size its approximate initialDelaySeconds + (periodSeconds * failureThreshold) budget to cover the 30-minute MIGRATION_WAIT_TIMEOUT_MS default plus the longest expected migration. Enable migrationJob.enabled to run migrations in a hook Job without a startup probe.
   startupProbe:
     ## 5 + (10 * 18) = ~185s max startup
+    # -- Delay before the first backend startup probe
     initialDelaySeconds: 5
+    # -- Timeout for each backend startup probe
     timeoutSeconds: 10
+    # -- Interval between backend startup probes
     periodSeconds: 10
+    # -- Failed backend startup probes before Kubernetes restarts the container
     failureThreshold: 18
   livenessProbe:
     ## 5 + (15 * 6) = ~95s to restart
