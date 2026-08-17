@@ -414,6 +414,9 @@ lightdashBackend:
     timeoutSeconds: 5
     periodSeconds: 5
     failureThreshold: 2
+    ## Probe endpoint path. /api/v1/health checks the database on every request.
+    ## /api/v1/readyz (backend only) is TTL-cached and gates on schema migration state.
+    path: /api/v1/health
   extraVolumeMounts: []
   extraVolumes: []
 
@@ -453,6 +456,10 @@ scheduler:
     timeoutSeconds: 5
     periodSeconds: 5
     failureThreshold: 2
+    ## Probe endpoint path. Worker processes serve their own health handler at
+    ## /api/v1/health (in-memory worker state, no database query) and /api/v1/livez;
+    ## they do not serve /api/v1/readyz.
+    path: /api/v1/health
   tasks:
     exclude:
     include:
@@ -494,6 +501,10 @@ appBuildWorker:
     timeoutSeconds: 5
     periodSeconds: 5
     failureThreshold: 2
+    ## Probe endpoint path. Worker processes serve their own health handler at
+    ## /api/v1/health (in-memory worker state, no database query) and /api/v1/livez;
+    ## they do not serve /api/v1/readyz.
+    path: /api/v1/health
   tasks:
     exclude:
     include: appGeneratePipeline
@@ -531,6 +542,10 @@ warehouseNatsWorker:
     timeoutSeconds: 5
     periodSeconds: 5
     failureThreshold: 2
+    ## Probe endpoint path. Worker processes serve their own health handler at
+    ## /api/v1/health (in-memory worker state, no database query) and /api/v1/livez;
+    ## they do not serve /api/v1/readyz.
+    path: /api/v1/health
   extraVolumeMounts: []
   extraVolumes: []
 
@@ -565,5 +580,9 @@ preAggregateNatsWorker:
     timeoutSeconds: 5
     periodSeconds: 5
     failureThreshold: 2
+    ## Probe endpoint path. Worker processes serve their own health handler at
+    ## /api/v1/health (in-memory worker state, no database query) and /api/v1/livez;
+    ## they do not serve /api/v1/readyz.
+    path: /api/v1/health
   extraVolumeMounts: []
   extraVolumes: []
