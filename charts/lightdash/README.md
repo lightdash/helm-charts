@@ -74,15 +74,17 @@ podAntiAffinity:
 
 ### Pod Disruption Budget
 
-A Pod Disruption Budget is enabled by default to prevent all pods from being evicted simultaneously during voluntary disruptions:
+A Pod Disruption Budget is enabled by default. It permits one pod to be evicted during a voluntary disruption:
 
 ```yaml
 podDisruptionBudget:
   enabled: true
-  minAvailable: 1
+  maxUnavailable: 1
 ```
 
-**Important:** PDBs only work effectively when combined with multiple replicas. With `replicaCount: 1`, the PDB cannot prevent downtime.
+Set `minAvailable` to pin a minimum number of available pods instead. When both fields are set, `minAvailable` takes precedence and `maxUnavailable` is ignored. Both fields accept zero.
+
+**Important:** With `replicaCount: 1`, the default permits the only pod to be evicted, so it does not prevent downtime.
 
 ## Values
 
