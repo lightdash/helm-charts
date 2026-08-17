@@ -8,6 +8,7 @@ on:
 concurrency:
   group: chart-release
   cancel-in-progress: false
+  queue: max
 
 jobs:
   test:
