@@ -45,6 +45,10 @@ LEDGER_EXISTED_BEFORE=false
 LEDGER_COUNT_BEFORE=0
 UPGRADE_START_EPOCH=0
 UPGRADE_END_EPOCH=0
+ROLLOUT_OBSERVER_PID=""
+ROLLOUT_OBSERVER_FILE=""
+ROLLOUT_DEPLOYMENT_BEFORE=""
+ROLLOUT_DEPLOYMENT_AFTER=""
 DRAIN_APP_NODE=""
 DRAIN_DB_NODE=""
 
@@ -136,6 +140,7 @@ remove_ddl_trigger() {
 cleanup() {
     set +e
     remove_ddl_trigger
+    stop_rollout_observer
     if [[ "$TRAFFIC_CREATED" == "true" ]]; then
         kubectl delete pod -n "$NAMESPACE" "$TRAFFIC_POD" --ignore-not-found --wait=false >/dev/null 2>&1
     fi
@@ -805,20 +810,102 @@ capture_migration_baseline() {
     fi
 }
 
+backend_deployment_rollout_config() {
+    kubectl get deployment -n "$NAMESPACE" "$RELEASE_NAME-backend" -o json |
+        jq -c '{replicas: .spec.replicas, strategy: .spec.strategy, availableReplicas: (.status.availableReplicas // 0), readyReplicas: (.status.readyReplicas // 0), updatedReplicas: (.status.updatedReplicas // 0)}'
+}
+
+start_rollout_observer() {
+    ROLLOUT_OBSERVER_FILE="$TEMP_DIR/backend-rollout.tsv"
+    ROLLOUT_DEPLOYMENT_BEFORE="$(backend_deployment_rollout_config)"
+    (
+        local sample_index=0
+        while true; do
+            local epoch
+            local endpoint_state
+            local pod_state
+            epoch="$(date +%s)"
+            endpoint_state="$(
+                kubectl get endpointslices.discovery.k8s.io -n "$NAMESPACE" -l "kubernetes.io/service-name=$RELEASE_NAME" -o json 2>/dev/null |
+                    jq -c '{
+                        readyAddresses: ([.items[].endpoints[]? | select(.conditions.ready == true) | .addresses[]?] | length),
+                        endpoints: ([.items[].endpoints[]? | {
+                            addresses: .addresses,
+                            ready: (if ((.conditions // {}) | has("ready")) then .conditions.ready else null end),
+                            serving: (if ((.conditions // {}) | has("serving")) then .conditions.serving else null end),
+                            terminating: (if ((.conditions // {}) | has("terminating")) then .conditions.terminating else null end),
+                            pod: (.targetRef.name // null)
+                        }] | sort_by(.pod))
+                    }' 2>/dev/null || printf '{"error":"endpoint-query-failed"}'
+            )"
+            pod_state="$(
+                kubectl get pods -n "$NAMESPACE" -l "app.kubernetes.io/name=lightdash,app.kubernetes.io/instance=$RELEASE_NAME,app.kubernetes.io/component=backend" -o json 2>/dev/null |
+                    jq -c '[.items[] | {
+                        name: .metadata.name,
+                        hash: (.metadata.labels["pod-template-hash"] // null),
+                        phase: (.status.phase // null),
+                        ready: (([.status.conditions[]? | select(.type == "Ready")][0].status) // "Unknown"),
+                        deleting: (.metadata.deletionTimestamp // null)
+                    }] | sort_by(.name)' 2>/dev/null || printf '[{"error":"pod-query-failed"}]'
+            )"
+            printf '%s\t%s\t%s\t%s\n' "$epoch" "$sample_index" "$endpoint_state" "$pod_state"
+            sample_index=$((sample_index + 1))
+            sleep 0.5
+        done
+    ) >"$ROLLOUT_OBSERVER_FILE" &
+    ROLLOUT_OBSERVER_PID=$!
+}
+
+stop_rollout_observer() {
+    if [[ -z "$ROLLOUT_OBSERVER_PID" ]]; then
+        return
+    fi
+    kill "$ROLLOUT_OBSERVER_PID" >/dev/null 2>&1 || true
+    wait "$ROLLOUT_OBSERVER_PID" >/dev/null 2>&1 || true
+    ROLLOUT_OBSERVER_PID=""
+}
+
+print_rollout_timeline() {
+    printf 'Backend Deployment before upgrade: %s\n' "$ROLLOUT_DEPLOYMENT_BEFORE"
+    printf 'Backend Deployment after upgrade: %s\n' "$ROLLOUT_DEPLOYMENT_AFTER"
+    if [[ ! -s "$ROLLOUT_OBSERVER_FILE" ]]; then
+        printf 'Backend rollout timeline: no samples\n'
+        return
+    fi
+    printf 'Backend rollout timeline (state changes from 0.5s samples):\n'
+    awk -F '\t' -v start="$UPGRADE_START_EPOCH" -v end="$UPGRADE_END_EPOCH" -v assertion="$TRAFFIC_ASSERT_EPOCH" '
+        $1 ~ /^[0-9]+$/ && $1 >= start && $1 <= assertion {
+            state = $3 FS $4
+            if (state != previous) {
+                phase = $1 <= end ? "helm-upgrade" : "post-upgrade"
+                printf "%s sample=%s phase=%s endpoints=%s pods=%s\n", $1, $2, phase, $3, $4
+                previous = state
+            }
+        }
+    ' "$ROLLOUT_OBSERVER_FILE"
+}
+
 start_traffic_monitor() {
     local initial_samples
+    local observer_samples
     local monitor_command
     # The browser route represents user traffic through the Service without the database-backed diagnostics run by /api/v1/health.
     monitor_command="while true; do epoch=\$(date +%s); output=\$(curl -sS -o /dev/null -w \"%{http_code} %{time_total}\" --max-time 10 http://lightdash:8080/ 2>/dev/null); curl_exit=\$?; set -- \$output; printf \"%s %s %s %s\\n\" \"\$epoch\" \"\${1:-000}\" \"\$curl_exit\" \"\${2:-0}\"; sleep 0.5; done"
     kubectl run -n "$NAMESPACE" "$TRAFFIC_POD" --image=curlimages/curl:8.12.1 --restart=Never --command -- sh -c "$monitor_command" >/dev/null
     TRAFFIC_CREATED=true
     kubectl wait -n "$NAMESPACE" --for=condition=Ready "pod/$TRAFFIC_POD" --timeout=5m >/dev/null
+    start_rollout_observer
     sleep 2
     initial_samples="$(kubectl logs -n "$NAMESPACE" "$TRAFFIC_POD" | awk '$1 ~ /^[0-9]+$/ {count += 1} END {print count + 0}')"
+    observer_samples="$(wc -l <"$ROLLOUT_OBSERVER_FILE" | tr -d '[:space:]')"
     if ((initial_samples < 2)); then
         fail "Traffic monitor setup" "the monitor produced only $initial_samples samples before the upgrade"
     fi
+    if ((observer_samples < 2)) || ! kill -0 "$ROLLOUT_OBSERVER_PID" >/dev/null 2>&1; then
+        fail "Rollout observer setup" "the observer produced $observer_samples samples before the upgrade"
+    fi
     record_result "PASS" "Traffic monitor setup" "the monitor produced $initial_samples samples before the upgrade"
+    record_result "PASS" "Rollout observer setup" "the observer produced $observer_samples samples before the upgrade"
 }
 
 assert_helm_deployed() {
@@ -946,6 +1033,8 @@ assert_traffic() {
     local window_seconds=$((UPGRADE_END_EPOCH - UPGRADE_START_EPOCH))
     local bucket_details
     TRAFFIC_ASSERT_EPOCH="$(date +%s)"
+    stop_rollout_observer
+    ROLLOUT_DEPLOYMENT_AFTER="$(backend_deployment_rollout_config)"
     monitor_phase="$(kubectl get pod -n "$NAMESPACE" "$TRAFFIC_POD" -o jsonpath='{.status.phase}')"
     traffic_counts
     bucket_details="refused=$TRAFFIC_REFUSED_COUNT timeout=$TRAFFIC_TIMEOUT_COUNT http_5xx=$TRAFFIC_5XX_COUNT other_curl=$TRAFFIC_OTHER_CURL_COUNT other_http=$TRAFFIC_OTHER_HTTP_COUNT"
@@ -955,6 +1044,7 @@ assert_traffic() {
     else
         printf 'Traffic anomaly timeline: none\n'
     fi
+    print_rollout_timeline
     if [[ "$monitor_phase" != "Running" ]]; then
         record_result "FAIL" "Traffic monitor coverage" "the monitor phase is $monitor_phase after the ${window_seconds}s upgrade window"
     elif ((TRAFFIC_SAMPLE_COUNT == 0)); then
