@@ -461,7 +461,7 @@ highest_released_version_before() {
 
 chart_version_for_source() {
     local source="$1"
-    chart_metadata "$source" | awk '$1 == "version:" {gsub(/"/, "", $2); print $2}'
+    chart_metadata "$source" | awk '/^version:/ {gsub(/"/, "", $2); print $2}'
 }
 
 resolve_sources() {
