@@ -281,7 +281,9 @@ postgresql:
     secretKeys:
       userPasswordKey: "password"
   commonAnnotations:
-    helm.sh/hook: pre-install,pre-upgrade
+    ## Create the bundled database during install. Helm upgrades do not modify it.
+    ## Apply postgresql.* changes manually. The full management migration is planned for chart 3.0.0.
+    helm.sh/hook: pre-install
     helm.sh/hook-weight: "-1"
 ## External PostgreSQL configuration
 ## All of these values are only used when postgresql.enabled is set to false

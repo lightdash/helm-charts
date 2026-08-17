@@ -20,6 +20,8 @@ If you want to use your own PostgreSQL instance, ensure it has the vector extens
 
 You may wish to use the Bitnami PostgreSQL chart to spin up a development environment. This guidance is for convenience, you'll want to [read the docs](https://github.com/bitnami/charts/tree/master/bitnami/postgresql/#installing-the-chart) before deciding how to implement PostgresSQL.
 
+The bundled database is created during chart installation. Helm upgrades do not modify it. Apply changes to `postgresql.*` values manually. The full management migration is planned for the 3.0.0 chart major.
+
 ```
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm install lightdashdb bitnami/postgresql --set auth.username=lightdash,auth.password=changeme,auth.database=lightdash
