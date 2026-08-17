@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 2.10.263](https://img.shields.io/badge/Version-2.10.263-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.169.1](https://img.shields.io/badge/AppVersion-1.169.1-informational?style=flat-square)
+![Version: 2.11.0](https://img.shields.io/badge/Version-2.11.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.169.1](https://img.shields.io/badge/AppVersion-1.169.1-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -104,6 +104,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | appBuildWorker.port | int | `8080` |  |
 | appBuildWorker.readinessProbe.failureThreshold | int | `2` |  |
 | appBuildWorker.readinessProbe.initialDelaySeconds | int | `5` |  |
+| appBuildWorker.readinessProbe.path | string | `"/api/v1/health"` |  |
 | appBuildWorker.readinessProbe.periodSeconds | int | `5` |  |
 | appBuildWorker.readinessProbe.timeoutSeconds | int | `5` |  |
 | appBuildWorker.replicas | int | `1` |  |
@@ -172,6 +173,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | lightdashBackend.livenessProbe.timeoutSeconds | int | `15` |  |
 | lightdashBackend.readinessProbe.failureThreshold | int | `2` |  |
 | lightdashBackend.readinessProbe.initialDelaySeconds | int | `5` |  |
+| lightdashBackend.readinessProbe.path | string | `"/api/v1/health"` |  |
 | lightdashBackend.readinessProbe.periodSeconds | int | `5` |  |
 | lightdashBackend.readinessProbe.timeoutSeconds | int | `5` |  |
 | lightdashBackend.startupProbe.failureThreshold | int | `18` |  |
@@ -257,6 +259,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | preAggregateNatsWorker.port | int | `8080` |  |
 | preAggregateNatsWorker.readinessProbe.failureThreshold | int | `2` |  |
 | preAggregateNatsWorker.readinessProbe.initialDelaySeconds | int | `5` |  |
+| preAggregateNatsWorker.readinessProbe.path | string | `"/api/v1/health"` |  |
 | preAggregateNatsWorker.readinessProbe.periodSeconds | int | `5` |  |
 | preAggregateNatsWorker.readinessProbe.timeoutSeconds | int | `5` |  |
 | preAggregateNatsWorker.replicas | int | `1` |  |
@@ -283,6 +286,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | scheduler.port | int | `8080` |  |
 | scheduler.readinessProbe.failureThreshold | int | `2` |  |
 | scheduler.readinessProbe.initialDelaySeconds | int | `5` |  |
+| scheduler.readinessProbe.path | string | `"/api/v1/health"` |  |
 | scheduler.readinessProbe.periodSeconds | int | `5` |  |
 | scheduler.readinessProbe.timeoutSeconds | int | `5` |  |
 | scheduler.replicas | int | `1` |  |
@@ -326,6 +330,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | warehouseNatsWorker.port | int | `8080` |  |
 | warehouseNatsWorker.readinessProbe.failureThreshold | int | `2` |  |
 | warehouseNatsWorker.readinessProbe.initialDelaySeconds | int | `5` |  |
+| warehouseNatsWorker.readinessProbe.path | string | `"/api/v1/health"` |  |
 | warehouseNatsWorker.readinessProbe.periodSeconds | int | `5` |  |
 | warehouseNatsWorker.readinessProbe.timeoutSeconds | int | `5` |  |
 | warehouseNatsWorker.replicas | int | `1` |  |
