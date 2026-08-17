@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 2.12.1](https://img.shields.io/badge/Version-2.12.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.170.0](https://img.shields.io/badge/AppVersion-1.170.0-informational?style=flat-square)
+![Version: 2.13.0](https://img.shields.io/badge/Version-2.13.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.170.0](https://img.shields.io/badge/AppVersion-1.170.0-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -99,6 +99,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | appBuildWorker.enabled | bool | `false` |  |
 | appBuildWorker.extraVolumeMounts | list | `[]` |  |
 | appBuildWorker.extraVolumes | list | `[]` |  |
+| appBuildWorker.lifecycle | object | `{}` |  |
 | appBuildWorker.livenessProbe.failureThreshold | int | `20` |  |
 | appBuildWorker.livenessProbe.initialDelaySeconds | int | `5` |  |
 | appBuildWorker.livenessProbe.periodSeconds | int | `15` |  |
@@ -117,6 +118,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | appBuildWorker.startupProbe.initialDelaySeconds | int | `5` |  |
 | appBuildWorker.startupProbe.periodSeconds | int | `10` |  |
 | appBuildWorker.startupProbe.timeoutSeconds | int | `10` |  |
+| appBuildWorker.strategy | object | `{}` |  |
 | appBuildWorker.tasks.exclude | string | `nil` |  |
 | appBuildWorker.tasks.include | string | `"appGeneratePipeline"` |  |
 | appBuildWorker.terminationGracePeriodSeconds | int | `90` |  |
@@ -169,6 +171,9 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | initContainers | list | `[]` |  |
 | lightdashBackend.extraVolumeMounts | list | `[]` |  |
 | lightdashBackend.extraVolumes | list | `[]` |  |
+| lightdashBackend.lifecycle.preStop.exec.command[0] | string | `"sh"` |  |
+| lightdashBackend.lifecycle.preStop.exec.command[1] | string | `"-c"` |  |
+| lightdashBackend.lifecycle.preStop.exec.command[2] | string | `"sleep 10"` |  |
 | lightdashBackend.livenessProbe.failureThreshold | int | `6` |  |
 | lightdashBackend.livenessProbe.initialDelaySeconds | int | `5` |  |
 | lightdashBackend.livenessProbe.periodSeconds | int | `15` |  |
@@ -182,6 +187,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | lightdashBackend.startupProbe.initialDelaySeconds | int | `5` |  |
 | lightdashBackend.startupProbe.periodSeconds | int | `10` |  |
 | lightdashBackend.startupProbe.timeoutSeconds | int | `10` |  |
+| lightdashBackend.strategy | object | `{}` |  |
 | lightdashBackend.terminationGracePeriodSeconds | int | `90` |  |
 | migrationJob.affinity | object | `{}` |  |
 | migrationJob.backoffLimit | int | `10` |  |
@@ -254,6 +260,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | preAggregateNatsWorker.enabled | bool | `false` |  |
 | preAggregateNatsWorker.extraVolumeMounts | list | `[]` |  |
 | preAggregateNatsWorker.extraVolumes | list | `[]` |  |
+| preAggregateNatsWorker.lifecycle | object | `{}` |  |
 | preAggregateNatsWorker.livenessProbe.failureThreshold | int | `20` |  |
 | preAggregateNatsWorker.livenessProbe.initialDelaySeconds | int | `5` |  |
 | preAggregateNatsWorker.livenessProbe.periodSeconds | int | `15` |  |
@@ -272,6 +279,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | preAggregateNatsWorker.startupProbe.initialDelaySeconds | int | `5` |  |
 | preAggregateNatsWorker.startupProbe.periodSeconds | int | `10` |  |
 | preAggregateNatsWorker.startupProbe.timeoutSeconds | int | `10` |  |
+| preAggregateNatsWorker.strategy | object | `{}` |  |
 | preAggregateNatsWorker.terminationGracePeriodSeconds | int | `90` |  |
 | preAggregateNatsWorker.type | string | `"nats"` |  |
 | replicaCount | int | `1` | Specify the number of lightdash instances. |
@@ -281,6 +289,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | scheduler.enabled | bool | `false` |  |
 | scheduler.extraVolumeMounts | list | `[]` |  |
 | scheduler.extraVolumes | list | `[]` |  |
+| scheduler.lifecycle | object | `{}` |  |
 | scheduler.livenessProbe.failureThreshold | int | `20` |  |
 | scheduler.livenessProbe.initialDelaySeconds | int | `5` |  |
 | scheduler.livenessProbe.periodSeconds | int | `15` |  |
@@ -299,6 +308,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | scheduler.startupProbe.initialDelaySeconds | int | `5` |  |
 | scheduler.startupProbe.periodSeconds | int | `10` |  |
 | scheduler.startupProbe.timeoutSeconds | int | `10` |  |
+| scheduler.strategy | object | `{}` |  |
 | scheduler.tasks.exclude | string | `nil` |  |
 | scheduler.tasks.include | string | `nil` |  |
 | scheduler.terminationGracePeriodSeconds | int | `90` |  |
@@ -325,6 +335,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | warehouseNatsWorker.enabled | bool | `false` |  |
 | warehouseNatsWorker.extraVolumeMounts | list | `[]` |  |
 | warehouseNatsWorker.extraVolumes | list | `[]` |  |
+| warehouseNatsWorker.lifecycle | object | `{}` |  |
 | warehouseNatsWorker.livenessProbe.failureThreshold | int | `20` |  |
 | warehouseNatsWorker.livenessProbe.initialDelaySeconds | int | `5` |  |
 | warehouseNatsWorker.livenessProbe.periodSeconds | int | `15` |  |
@@ -343,6 +354,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | warehouseNatsWorker.startupProbe.initialDelaySeconds | int | `5` |  |
 | warehouseNatsWorker.startupProbe.periodSeconds | int | `10` |  |
 | warehouseNatsWorker.startupProbe.timeoutSeconds | int | `10` |  |
+| warehouseNatsWorker.strategy | object | `{}` |  |
 | warehouseNatsWorker.terminationGracePeriodSeconds | int | `90` |  |
 | warehouseNatsWorker.type | string | `"nats"` |  |
 

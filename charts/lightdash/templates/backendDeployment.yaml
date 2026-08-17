@@ -11,6 +11,10 @@ spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
+  {{- with .Values.lightdashBackend.strategy }}
+  strategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   selector:
     matchLabels:
       {{- include "lightdash.selectorLabels" . | nindent 6 }}
@@ -126,6 +130,10 @@ spec:
               port: {{ .Values.service.port }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          {{- with .Values.lightdashBackend.lifecycle }}
+          lifecycle:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- if or $volumeMounts .Values.ssl.enabled }}
           volumeMounts:
             {{- if $volumeMounts }}
