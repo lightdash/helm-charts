@@ -229,7 +229,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | podAntiAffinity.node | string | `"hard"` |  |
 | podAntiAffinity.zone | string | `"soft"` |  |
 | podDisruptionBudget.enabled | bool | `true` |  |
-| podDisruptionBudget.minAvailable | int | `1` |  |
+| podDisruptionBudget.maxUnavailable | int | `1` |  |
 | podLabels | object | `{}` |  |
 | podSecurityContext | object | `{}` |  |
 | postgresql.auth.database | string | `"lightdash"` |  |
