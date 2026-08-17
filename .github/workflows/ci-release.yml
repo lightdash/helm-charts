@@ -8,7 +8,6 @@ on:
 concurrency:
   group: chart-release
   cancel-in-progress: false
-  queue: max
 
 jobs:
   test:
@@ -34,14 +33,9 @@ jobs:
       - name: Clean up fresh install
         run: |
           helm uninstall lightdash --wait || true
-          kubectl delete pvc --all --wait=false --request-timeout=10s
-          deadline=$((SECONDS + 120))
-          while true; do
-            pvc_names="$(kubectl get pvc -o name --request-timeout=10s)"
-            [[ -z "$pvc_names" ]] && break
-            ((SECONDS < deadline)) || exit 1
-            sleep 2
-          done
+          kubectl delete statefulset lightdash-postgresql --ignore-not-found --wait --timeout=120s --request-timeout=10s
+          kubectl delete pod lightdash-postgresql-0 --ignore-not-found --wait --timeout=120s --request-timeout=10s
+          kubectl delete pvc --all --wait --timeout=120s --request-timeout=10s
 
       - name: Run upgrade rehearsal
         run: scripts/rehearsal/rehearse.sh --to local --skip-cluster
