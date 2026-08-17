@@ -71,18 +71,3 @@ jobs:
 
       - name: Run upgrade rehearsal
         run: scripts/rehearsal/rehearse.sh --to local --skip-cluster
-
-  automerge:
-    needs: [lint, test]
-    if: ${{ contains(github.event.pull_request.labels, 'merge after testing') }}
-    runs-on: ubuntu-22.04
-    steps:
-      - name: automerge
-        uses: "pascalgn/automerge-action@v0.14.3"
-        env:
-          MERGE_LABELS: "merge after testing"
-          MERGE_METHOD: squash
-          MERGE_COMMIT_MESSAGE: pull-request-title
-          MERGE_FORKS: false
-          MERGE_DELETE_BRANCH: true
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
