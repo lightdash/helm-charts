@@ -808,7 +808,8 @@ capture_migration_baseline() {
 start_traffic_monitor() {
     local initial_samples
     local monitor_command
-    monitor_command="while true; do code=\$(curl -s -o /dev/null -w \"%{http_code}\" --max-time 2 http://lightdash:8080/api/v1/health || true); printf \"%s %s\\n\" \"\$(date +%s)\" \"\${code:-000}\"; sleep 0.5; done"
+    # The browser route represents user traffic through the Service without the database-backed diagnostics run by /api/v1/health.
+    monitor_command="while true; do epoch=\$(date +%s); output=\$(curl -sS -o /dev/null -w \"%{http_code} %{time_total}\" --max-time 10 http://lightdash:8080/ 2>/dev/null); curl_exit=\$?; set -- \$output; printf \"%s %s %s %s\\n\" \"\$epoch\" \"\${1:-000}\" \"\$curl_exit\" \"\${2:-0}\"; sleep 0.5; done"
     kubectl run -n "$NAMESPACE" "$TRAFFIC_POD" --image=curlimages/curl:8.12.1 --restart=Never --command -- sh -c "$monitor_command" >/dev/null
     TRAFFIC_CREATED=true
     kubectl wait -n "$NAMESPACE" --for=condition=Ready "pod/$TRAFFIC_POD" --timeout=5m >/dev/null
@@ -917,33 +918,53 @@ traffic_counts() {
     local logs
     logs="$(kubectl logs -n "$NAMESPACE" "$TRAFFIC_POD")"
     TRAFFIC_SAMPLE_COUNT="$(printf '%s\n' "$logs" | awk -v start="$UPGRADE_START_EPOCH" -v end="$UPGRADE_END_EPOCH" '$1 ~ /^[0-9]+$/ && $1 >= start && $1 <= end {count += 1} END {print count + 0}')"
-    TRAFFIC_DROP_COUNT="$(printf '%s\n' "$logs" | awk -v start="$UPGRADE_START_EPOCH" -v end="$UPGRADE_END_EPOCH" '$1 ~ /^[0-9]+$/ && $1 >= start && $1 <= end && $2 != "200" {count += 1} END {print count + 0}')"
-    TRAFFIC_DROP_DETAILS="$(printf '%s\n' "$logs" | awk -v start="$UPGRADE_START_EPOCH" -v end="$UPGRADE_END_EPOCH" '$1 ~ /^[0-9]+$/ && $1 >= start && $1 <= end && $2 != "200" {codes[$2] += 1} END {for (code in codes) printf "%s=%d ", code, codes[code]}' | sed 's/[[:space:]]*$//')"
+    TRAFFIC_REFUSED_COUNT="$(printf '%s\n' "$logs" | awk -v start="$UPGRADE_START_EPOCH" -v end="$UPGRADE_END_EPOCH" '$1 ~ /^[0-9]+$/ && $1 >= start && $1 <= end && $3 == "7" {count += 1} END {print count + 0}')"
+    TRAFFIC_TIMEOUT_COUNT="$(printf '%s\n' "$logs" | awk -v start="$UPGRADE_START_EPOCH" -v end="$UPGRADE_END_EPOCH" '$1 ~ /^[0-9]+$/ && $1 >= start && $1 <= end && $3 == "28" {count += 1} END {print count + 0}')"
+    TRAFFIC_5XX_COUNT="$(printf '%s\n' "$logs" | awk -v start="$UPGRADE_START_EPOCH" -v end="$UPGRADE_END_EPOCH" '$1 ~ /^[0-9]+$/ && $1 >= start && $1 <= end && $3 == "0" && $2 ~ /^5[0-9][0-9]$/ {count += 1} END {print count + 0}')"
+    TRAFFIC_OTHER_CURL_COUNT="$(printf '%s\n' "$logs" | awk -v start="$UPGRADE_START_EPOCH" -v end="$UPGRADE_END_EPOCH" '$1 ~ /^[0-9]+$/ && $1 >= start && $1 <= end && $3 != "0" && $3 != "7" && $3 != "28" {count += 1} END {print count + 0}')"
+    TRAFFIC_OTHER_HTTP_COUNT="$(printf '%s\n' "$logs" | awk -v start="$UPGRADE_START_EPOCH" -v end="$UPGRADE_END_EPOCH" '$1 ~ /^[0-9]+$/ && $1 >= start && $1 <= end && $3 == "0" && $2 != "200" && $2 !~ /^5[0-9][0-9]$/ {count += 1} END {print count + 0}')"
+    TRAFFIC_FAILURE_COUNT=$((TRAFFIC_REFUSED_COUNT + TRAFFIC_5XX_COUNT + TRAFFIC_OTHER_CURL_COUNT + TRAFFIC_OTHER_HTTP_COUNT))
     TRAFFIC_FIRST_EPOCH="$(printf '%s\n' "$logs" | awk -v start="$UPGRADE_START_EPOCH" -v end="$UPGRADE_END_EPOCH" '$1 ~ /^[0-9]+$/ && $1 >= start && $1 <= end {print $1; exit}')"
     TRAFFIC_LAST_EPOCH="$(printf '%s\n' "$logs" | awk -v start="$UPGRADE_START_EPOCH" -v end="$UPGRADE_END_EPOCH" '$1 ~ /^[0-9]+$/ && $1 >= start && $1 <= end {last = $1} END {print last}')"
+    TRAFFIC_ANOMALY_TIMELINE="$(printf '%s\n' "$logs" | awk -v start="$UPGRADE_START_EPOCH" -v end="$UPGRADE_END_EPOCH" -v assertion="$TRAFFIC_ASSERT_EPOCH" '$1 ~ /^[0-9]+$/ && $1 >= start && $1 <= assertion && ($2 != "200" || $3 != "0") {phase = $1 <= end ? "helm-upgrade" : "post-upgrade"; printf "%s phase=%s http=%s curl_exit=%s time_total=%ss\n", $1, phase, $2, $3, $4}')"
 }
 
 TRAFFIC_SAMPLE_COUNT=0
-TRAFFIC_DROP_COUNT=0
-TRAFFIC_DROP_DETAILS=""
+TRAFFIC_REFUSED_COUNT=0
+TRAFFIC_TIMEOUT_COUNT=0
+TRAFFIC_5XX_COUNT=0
+TRAFFIC_OTHER_CURL_COUNT=0
+TRAFFIC_OTHER_HTTP_COUNT=0
+TRAFFIC_FAILURE_COUNT=0
 TRAFFIC_FIRST_EPOCH=""
 TRAFFIC_LAST_EPOCH=""
+TRAFFIC_ASSERT_EPOCH=0
+TRAFFIC_ANOMALY_TIMELINE=""
 
 assert_traffic() {
     local monitor_phase
     local window_seconds=$((UPGRADE_END_EPOCH - UPGRADE_START_EPOCH))
+    local bucket_details
+    TRAFFIC_ASSERT_EPOCH="$(date +%s)"
     monitor_phase="$(kubectl get pod -n "$NAMESPACE" "$TRAFFIC_POD" -o jsonpath='{.status.phase}')"
     traffic_counts
+    bucket_details="refused=$TRAFFIC_REFUSED_COUNT timeout=$TRAFFIC_TIMEOUT_COUNT http_5xx=$TRAFFIC_5XX_COUNT other_curl=$TRAFFIC_OTHER_CURL_COUNT other_http=$TRAFFIC_OTHER_HTTP_COUNT"
+    printf 'Traffic phase markers: upgrade_start=%s helm_wait_end=%s assertion=%s samples=%s..%s\n' "$UPGRADE_START_EPOCH" "$UPGRADE_END_EPOCH" "$TRAFFIC_ASSERT_EPOCH" "${TRAFFIC_FIRST_EPOCH:-none}" "${TRAFFIC_LAST_EPOCH:-none}"
+    if [[ -n "$TRAFFIC_ANOMALY_TIMELINE" ]]; then
+        printf 'Traffic anomaly timeline:\n%s\n' "$TRAFFIC_ANOMALY_TIMELINE"
+    else
+        printf 'Traffic anomaly timeline: none\n'
+    fi
     if [[ "$monitor_phase" != "Running" ]]; then
         record_result "FAIL" "Traffic monitor coverage" "the monitor phase is $monitor_phase after the ${window_seconds}s upgrade window"
     elif ((TRAFFIC_SAMPLE_COUNT == 0)); then
         record_result "FAIL" "Traffic" "the monitor captured no upgrade samples"
     elif ((TRAFFIC_FIRST_EPOCH > UPGRADE_START_EPOCH + 1 || TRAFFIC_LAST_EPOCH < UPGRADE_END_EPOCH - 2)); then
         record_result "FAIL" "Traffic monitor coverage" "samples span $TRAFFIC_FIRST_EPOCH to $TRAFFIC_LAST_EPOCH for the $UPGRADE_START_EPOCH to $UPGRADE_END_EPOCH upgrade window"
-    elif ((TRAFFIC_DROP_COUNT <= ALLOWED_DROPS)); then
-        record_result "PASS" "Traffic" "$TRAFFIC_DROP_COUNT of $TRAFFIC_SAMPLE_COUNT requests dropped in ${window_seconds}s; allowance is $ALLOWED_DROPS"
+    elif ((TRAFFIC_FAILURE_COUNT <= ALLOWED_DROPS)); then
+        record_result "PASS" "Traffic" "$TRAFFIC_FAILURE_COUNT of $TRAFFIC_SAMPLE_COUNT requests failed in ${window_seconds}s ($bucket_details); allowance is $ALLOWED_DROPS"
     else
-        record_result "FAIL" "Traffic" "$TRAFFIC_DROP_COUNT of $TRAFFIC_SAMPLE_COUNT requests dropped in ${window_seconds}s (${TRAFFIC_DROP_DETAILS:-unknown codes}); allowance is $ALLOWED_DROPS"
+        record_result "FAIL" "Traffic" "$TRAFFIC_FAILURE_COUNT of $TRAFFIC_SAMPLE_COUNT requests failed in ${window_seconds}s ($bucket_details); allowance is $ALLOWED_DROPS"
     fi
 }
 
