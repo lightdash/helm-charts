@@ -9,7 +9,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v7
 
       - name: Generate Helm Docs
         uses: docker://jnorwood/helm-docs:v1.7.0
@@ -18,7 +18,7 @@ jobs:
           args: --chart-search-root /github/workspace
 
       - name: commit changes
-        uses: stefanzweifel/git-auto-commit-action@v4.13.1
+        uses: stefanzweifel/git-auto-commit-action@v7.2.0
         with:
           commit_message: ":robot: update docs [skip ci]"
           repository: .
