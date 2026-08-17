@@ -45,6 +45,12 @@ LEDGER_EXISTED_BEFORE=false
 LEDGER_COUNT_BEFORE=0
 UPGRADE_START_EPOCH=0
 UPGRADE_END_EPOCH=0
+ROLLOUT_OBSERVER_PID=""
+ROLLOUT_OBSERVER_FILE=""
+ROLLOUT_DEPLOYMENT_BEFORE=""
+ROLLOUT_DEPLOYMENT_AFTER=""
+POSTGRES_POD_UID_BEFORE=""
+POSTGRES_POD_UID_AFTER=""
 DRAIN_APP_NODE=""
 DRAIN_DB_NODE=""
 
@@ -136,6 +142,7 @@ remove_ddl_trigger() {
 cleanup() {
     set +e
     remove_ddl_trigger
+    stop_rollout_observer
     if [[ "$TRAFFIC_CREATED" == "true" ]]; then
         kubectl delete pod -n "$NAMESPACE" "$TRAFFIC_POD" --ignore-not-found --wait=false >/dev/null 2>&1
     fi
@@ -461,7 +468,7 @@ highest_released_version_before() {
 
 chart_version_for_source() {
     local source="$1"
-    chart_metadata "$source" | awk '$1 == "version:" {gsub(/"/, "", $2); print $2}'
+    chart_metadata "$source" | awk '/^version:/ {gsub(/"/, "", $2); print $2}'
 }
 
 resolve_sources() {
@@ -805,19 +812,146 @@ capture_migration_baseline() {
     fi
 }
 
+backend_deployment_rollout_config() {
+    kubectl get deployment -n "$NAMESPACE" "$RELEASE_NAME-backend" -o json |
+        jq -c '{replicas: .spec.replicas, strategy: .spec.strategy, availableReplicas: (.status.availableReplicas // 0), readyReplicas: (.status.readyReplicas // 0), updatedReplicas: (.status.updatedReplicas // 0)}'
+}
+
+postgres_pod_uid() {
+    kubectl get pod -n "$NAMESPACE" "$RELEASE_NAME-postgresql-0" -o jsonpath='{.metadata.uid}' 2>/dev/null || true
+}
+
+start_rollout_observer() {
+    ROLLOUT_OBSERVER_FILE="$TEMP_DIR/backend-rollout.tsv"
+    ROLLOUT_DEPLOYMENT_BEFORE="$(backend_deployment_rollout_config)"
+    POSTGRES_POD_UID_BEFORE="$(postgres_pod_uid)"
+    (
+        local sample_index=0
+        while true; do
+            local epoch
+            local endpoint_state
+            local pod_state
+            local postgres_endpoint_state
+            local postgres_pod_state
+            epoch="$(date +%s)"
+            endpoint_state="$(
+                kubectl get endpointslices.discovery.k8s.io -n "$NAMESPACE" -l "kubernetes.io/service-name=$RELEASE_NAME" -o json 2>/dev/null |
+                    jq -c '{
+                        readyAddresses: ([.items[].endpoints[]? | select(.conditions.ready == true) | .addresses[]?] | length),
+                        endpoints: ([.items[].endpoints[]? | {
+                            addresses: .addresses,
+                            ready: (if ((.conditions // {}) | has("ready")) then .conditions.ready else null end),
+                            serving: (if ((.conditions // {}) | has("serving")) then .conditions.serving else null end),
+                            terminating: (if ((.conditions // {}) | has("terminating")) then .conditions.terminating else null end),
+                            pod: (.targetRef.name // null)
+                        }] | sort_by(.pod))
+                    }' 2>/dev/null || printf '{"error":"endpoint-query-failed"}'
+            )"
+            pod_state="$(
+                kubectl get pods -n "$NAMESPACE" -l "app.kubernetes.io/name=lightdash,app.kubernetes.io/instance=$RELEASE_NAME,app.kubernetes.io/component=backend" -o json 2>/dev/null |
+                    jq -c '[.items[] | {
+                        name: .metadata.name,
+                        hash: (.metadata.labels["pod-template-hash"] // null),
+                        phase: (.status.phase // null),
+                        ready: (([.status.conditions[]? | select(.type == "Ready")][0].status) // "Unknown"),
+                        deleting: (.metadata.deletionTimestamp // null)
+                    }] | sort_by(.name)' 2>/dev/null || printf '[{"error":"pod-query-failed"}]'
+            )"
+            postgres_endpoint_state="$(
+                kubectl get endpointslices.discovery.k8s.io -n "$NAMESPACE" -l "kubernetes.io/service-name=$RELEASE_NAME-postgresql" -o json 2>/dev/null |
+                    jq -c '{
+                        readyAddresses: ([.items[].endpoints[]? | select(.conditions.ready == true) | .addresses[]?] | length),
+                        endpoints: ([.items[].endpoints[]? | {
+                            addresses: .addresses,
+                            ready: (if ((.conditions // {}) | has("ready")) then .conditions.ready else null end),
+                            serving: (if ((.conditions // {}) | has("serving")) then .conditions.serving else null end),
+                            terminating: (if ((.conditions // {}) | has("terminating")) then .conditions.terminating else null end),
+                            pod: (.targetRef.name // null)
+                        }] | sort_by(.pod))
+                    }' 2>/dev/null || printf '{"error":"postgres-endpoint-query-failed"}'
+            )"
+            postgres_pod_state="$(
+                kubectl get pod -n "$NAMESPACE" "$RELEASE_NAME-postgresql-0" -o json 2>/dev/null |
+                    jq -c '{
+                        name: .metadata.name,
+                        uid: .metadata.uid,
+                        ownerUid: (([.metadata.ownerReferences[]? | select(.kind == "StatefulSet")][0].uid) // null),
+                        phase: (.status.phase // null),
+                        ready: (([.status.conditions[]? | select(.type == "Ready")][0].status) // "Unknown"),
+                        deleting: (.metadata.deletionTimestamp // null)
+                    }' 2>/dev/null || printf '{"error":"postgres-pod-query-failed"}'
+            )"
+            printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$epoch" "$sample_index" "$endpoint_state" "$pod_state" "$postgres_endpoint_state" "$postgres_pod_state"
+            sample_index=$((sample_index + 1))
+            sleep 0.5
+        done
+    ) >"$ROLLOUT_OBSERVER_FILE" &
+    ROLLOUT_OBSERVER_PID=$!
+}
+
+stop_rollout_observer() {
+    if [[ -z "$ROLLOUT_OBSERVER_PID" ]]; then
+        return
+    fi
+    kill "$ROLLOUT_OBSERVER_PID" >/dev/null 2>&1 || true
+    wait "$ROLLOUT_OBSERVER_PID" >/dev/null 2>&1 || true
+    ROLLOUT_OBSERVER_PID=""
+}
+
+print_rollout_timeline() {
+    printf 'Backend Deployment before upgrade: %s\n' "$ROLLOUT_DEPLOYMENT_BEFORE"
+    printf 'Backend Deployment after upgrade: %s\n' "$ROLLOUT_DEPLOYMENT_AFTER"
+    if [[ ! -s "$ROLLOUT_OBSERVER_FILE" ]]; then
+        printf 'Backend rollout timeline: no samples\n'
+        return
+    fi
+    printf 'Backend rollout timeline (state changes from 0.5s samples):\n'
+    awk -F '\t' -v start="$UPGRADE_START_EPOCH" -v end="$UPGRADE_END_EPOCH" -v assertion="$TRAFFIC_ASSERT_EPOCH" '
+        $1 ~ /^[0-9]+$/ && $1 >= start && $1 <= assertion {
+            state = $3 FS $4 FS $5 FS $6
+            if (state != previous) {
+                phase = $1 <= end ? "helm-upgrade" : "post-upgrade"
+                printf "%s sample=%s phase=%s backendEndpoints=%s backendPods=%s postgresEndpoints=%s postgresPod=%s\n", $1, $2, phase, $3, $4, $5, $6
+                previous = state
+            }
+        }
+    ' "$ROLLOUT_OBSERVER_FILE"
+}
+
+assert_postgres_pod_uid_stable() {
+    POSTGRES_POD_UID_AFTER="$(postgres_pod_uid)"
+    if [[ -z "$POSTGRES_POD_UID_BEFORE" ]]; then
+        record_result "FAIL" "PostgreSQL pod UID" "the pod UID was unavailable before the upgrade"
+    elif [[ -z "$POSTGRES_POD_UID_AFTER" ]]; then
+        record_result "FAIL" "PostgreSQL pod UID" "the pod UID was unavailable after the upgrade"
+    elif [[ "$POSTGRES_POD_UID_BEFORE" == "$POSTGRES_POD_UID_AFTER" ]]; then
+        record_result "PASS" "PostgreSQL pod UID" "the pod UID remained $POSTGRES_POD_UID_AFTER"
+    else
+        record_result "FAIL" "PostgreSQL pod UID" "the pod UID changed from $POSTGRES_POD_UID_BEFORE to $POSTGRES_POD_UID_AFTER"
+    fi
+}
+
 start_traffic_monitor() {
     local initial_samples
+    local observer_samples
     local monitor_command
-    monitor_command="while true; do code=\$(curl -s -o /dev/null -w \"%{http_code}\" --max-time 2 http://lightdash:8080/api/v1/health || true); printf \"%s %s\\n\" \"\$(date +%s)\" \"\${code:-000}\"; sleep 0.5; done"
+    # The browser route represents user traffic through the Service without the database-backed diagnostics run by /api/v1/health.
+    monitor_command="while true; do epoch=\$(date +%s); output=\$(curl -sS -o /dev/null -w \"%{http_code} %{time_total}\" --max-time 10 http://lightdash:8080/ 2>/dev/null); curl_exit=\$?; set -- \$output; printf \"%s %s %s %s\\n\" \"\$epoch\" \"\${1:-000}\" \"\$curl_exit\" \"\${2:-0}\"; sleep 0.5; done"
     kubectl run -n "$NAMESPACE" "$TRAFFIC_POD" --image=curlimages/curl:8.12.1 --restart=Never --command -- sh -c "$monitor_command" >/dev/null
     TRAFFIC_CREATED=true
     kubectl wait -n "$NAMESPACE" --for=condition=Ready "pod/$TRAFFIC_POD" --timeout=5m >/dev/null
+    start_rollout_observer
     sleep 2
     initial_samples="$(kubectl logs -n "$NAMESPACE" "$TRAFFIC_POD" | awk '$1 ~ /^[0-9]+$/ {count += 1} END {print count + 0}')"
+    observer_samples="$(wc -l <"$ROLLOUT_OBSERVER_FILE" | tr -d '[:space:]')"
     if ((initial_samples < 2)); then
         fail "Traffic monitor setup" "the monitor produced only $initial_samples samples before the upgrade"
     fi
+    if ((observer_samples < 2)) || ! kill -0 "$ROLLOUT_OBSERVER_PID" >/dev/null 2>&1; then
+        fail "Rollout observer setup" "the observer produced $observer_samples samples before the upgrade"
+    fi
     record_result "PASS" "Traffic monitor setup" "the monitor produced $initial_samples samples before the upgrade"
+    record_result "PASS" "Rollout observer setup" "the observer produced $observer_samples samples before the upgrade"
 }
 
 assert_helm_deployed() {
@@ -917,33 +1051,57 @@ traffic_counts() {
     local logs
     logs="$(kubectl logs -n "$NAMESPACE" "$TRAFFIC_POD")"
     TRAFFIC_SAMPLE_COUNT="$(printf '%s\n' "$logs" | awk -v start="$UPGRADE_START_EPOCH" -v end="$UPGRADE_END_EPOCH" '$1 ~ /^[0-9]+$/ && $1 >= start && $1 <= end {count += 1} END {print count + 0}')"
-    TRAFFIC_DROP_COUNT="$(printf '%s\n' "$logs" | awk -v start="$UPGRADE_START_EPOCH" -v end="$UPGRADE_END_EPOCH" '$1 ~ /^[0-9]+$/ && $1 >= start && $1 <= end && $2 != "200" {count += 1} END {print count + 0}')"
-    TRAFFIC_DROP_DETAILS="$(printf '%s\n' "$logs" | awk -v start="$UPGRADE_START_EPOCH" -v end="$UPGRADE_END_EPOCH" '$1 ~ /^[0-9]+$/ && $1 >= start && $1 <= end && $2 != "200" {codes[$2] += 1} END {for (code in codes) printf "%s=%d ", code, codes[code]}' | sed 's/[[:space:]]*$//')"
+    TRAFFIC_REFUSED_COUNT="$(printf '%s\n' "$logs" | awk -v start="$UPGRADE_START_EPOCH" -v end="$UPGRADE_END_EPOCH" '$1 ~ /^[0-9]+$/ && $1 >= start && $1 <= end && $3 == "7" {count += 1} END {print count + 0}')"
+    TRAFFIC_TIMEOUT_COUNT="$(printf '%s\n' "$logs" | awk -v start="$UPGRADE_START_EPOCH" -v end="$UPGRADE_END_EPOCH" '$1 ~ /^[0-9]+$/ && $1 >= start && $1 <= end && $3 == "28" {count += 1} END {print count + 0}')"
+    TRAFFIC_5XX_COUNT="$(printf '%s\n' "$logs" | awk -v start="$UPGRADE_START_EPOCH" -v end="$UPGRADE_END_EPOCH" '$1 ~ /^[0-9]+$/ && $1 >= start && $1 <= end && $3 == "0" && $2 ~ /^5[0-9][0-9]$/ {count += 1} END {print count + 0}')"
+    TRAFFIC_OTHER_CURL_COUNT="$(printf '%s\n' "$logs" | awk -v start="$UPGRADE_START_EPOCH" -v end="$UPGRADE_END_EPOCH" '$1 ~ /^[0-9]+$/ && $1 >= start && $1 <= end && $3 != "0" && $3 != "7" && $3 != "28" {count += 1} END {print count + 0}')"
+    TRAFFIC_OTHER_HTTP_COUNT="$(printf '%s\n' "$logs" | awk -v start="$UPGRADE_START_EPOCH" -v end="$UPGRADE_END_EPOCH" '$1 ~ /^[0-9]+$/ && $1 >= start && $1 <= end && $3 == "0" && $2 != "200" && $2 !~ /^5[0-9][0-9]$/ {count += 1} END {print count + 0}')"
+    TRAFFIC_FAILURE_COUNT=$((TRAFFIC_REFUSED_COUNT + TRAFFIC_5XX_COUNT + TRAFFIC_OTHER_CURL_COUNT + TRAFFIC_OTHER_HTTP_COUNT))
     TRAFFIC_FIRST_EPOCH="$(printf '%s\n' "$logs" | awk -v start="$UPGRADE_START_EPOCH" -v end="$UPGRADE_END_EPOCH" '$1 ~ /^[0-9]+$/ && $1 >= start && $1 <= end {print $1; exit}')"
     TRAFFIC_LAST_EPOCH="$(printf '%s\n' "$logs" | awk -v start="$UPGRADE_START_EPOCH" -v end="$UPGRADE_END_EPOCH" '$1 ~ /^[0-9]+$/ && $1 >= start && $1 <= end {last = $1} END {print last}')"
+    TRAFFIC_ANOMALY_TIMELINE="$(printf '%s\n' "$logs" | awk -v start="$UPGRADE_START_EPOCH" -v end="$UPGRADE_END_EPOCH" -v assertion="$TRAFFIC_ASSERT_EPOCH" '$1 ~ /^[0-9]+$/ && $1 >= start && $1 <= assertion && ($2 != "200" || $3 != "0") {phase = $1 <= end ? "helm-upgrade" : "post-upgrade"; printf "%s phase=%s http=%s curl_exit=%s time_total=%ss\n", $1, phase, $2, $3, $4}')"
 }
 
 TRAFFIC_SAMPLE_COUNT=0
-TRAFFIC_DROP_COUNT=0
-TRAFFIC_DROP_DETAILS=""
+TRAFFIC_REFUSED_COUNT=0
+TRAFFIC_TIMEOUT_COUNT=0
+TRAFFIC_5XX_COUNT=0
+TRAFFIC_OTHER_CURL_COUNT=0
+TRAFFIC_OTHER_HTTP_COUNT=0
+TRAFFIC_FAILURE_COUNT=0
 TRAFFIC_FIRST_EPOCH=""
 TRAFFIC_LAST_EPOCH=""
+TRAFFIC_ASSERT_EPOCH=0
+TRAFFIC_ANOMALY_TIMELINE=""
 
 assert_traffic() {
     local monitor_phase
     local window_seconds=$((UPGRADE_END_EPOCH - UPGRADE_START_EPOCH))
+    local bucket_details
+    TRAFFIC_ASSERT_EPOCH="$(date +%s)"
+    stop_rollout_observer
+    ROLLOUT_DEPLOYMENT_AFTER="$(backend_deployment_rollout_config)"
     monitor_phase="$(kubectl get pod -n "$NAMESPACE" "$TRAFFIC_POD" -o jsonpath='{.status.phase}')"
     traffic_counts
+    bucket_details="refused=$TRAFFIC_REFUSED_COUNT timeout=$TRAFFIC_TIMEOUT_COUNT http_5xx=$TRAFFIC_5XX_COUNT other_curl=$TRAFFIC_OTHER_CURL_COUNT other_http=$TRAFFIC_OTHER_HTTP_COUNT"
+    printf 'Traffic phase markers: upgrade_start=%s helm_wait_end=%s assertion=%s samples=%s..%s\n' "$UPGRADE_START_EPOCH" "$UPGRADE_END_EPOCH" "$TRAFFIC_ASSERT_EPOCH" "${TRAFFIC_FIRST_EPOCH:-none}" "${TRAFFIC_LAST_EPOCH:-none}"
+    if [[ -n "$TRAFFIC_ANOMALY_TIMELINE" ]]; then
+        printf 'Traffic anomaly timeline:\n%s\n' "$TRAFFIC_ANOMALY_TIMELINE"
+    else
+        printf 'Traffic anomaly timeline: none\n'
+    fi
+    print_rollout_timeline
+    assert_postgres_pod_uid_stable
     if [[ "$monitor_phase" != "Running" ]]; then
         record_result "FAIL" "Traffic monitor coverage" "the monitor phase is $monitor_phase after the ${window_seconds}s upgrade window"
     elif ((TRAFFIC_SAMPLE_COUNT == 0)); then
         record_result "FAIL" "Traffic" "the monitor captured no upgrade samples"
     elif ((TRAFFIC_FIRST_EPOCH > UPGRADE_START_EPOCH + 1 || TRAFFIC_LAST_EPOCH < UPGRADE_END_EPOCH - 2)); then
         record_result "FAIL" "Traffic monitor coverage" "samples span $TRAFFIC_FIRST_EPOCH to $TRAFFIC_LAST_EPOCH for the $UPGRADE_START_EPOCH to $UPGRADE_END_EPOCH upgrade window"
-    elif ((TRAFFIC_DROP_COUNT <= ALLOWED_DROPS)); then
-        record_result "PASS" "Traffic" "$TRAFFIC_DROP_COUNT of $TRAFFIC_SAMPLE_COUNT requests dropped in ${window_seconds}s; allowance is $ALLOWED_DROPS"
+    elif ((TRAFFIC_FAILURE_COUNT <= ALLOWED_DROPS)); then
+        record_result "PASS" "Traffic" "$TRAFFIC_FAILURE_COUNT of $TRAFFIC_SAMPLE_COUNT requests failed in ${window_seconds}s ($bucket_details); allowance is $ALLOWED_DROPS"
     else
-        record_result "FAIL" "Traffic" "$TRAFFIC_DROP_COUNT of $TRAFFIC_SAMPLE_COUNT requests dropped in ${window_seconds}s (${TRAFFIC_DROP_DETAILS:-unknown codes}); allowance is $ALLOWED_DROPS"
+        record_result "FAIL" "Traffic" "$TRAFFIC_FAILURE_COUNT of $TRAFFIC_SAMPLE_COUNT requests failed in ${window_seconds}s ($bucket_details); allowance is $ALLOWED_DROPS"
     fi
 }
 

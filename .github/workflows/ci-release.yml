@@ -5,12 +5,48 @@ on:
     branches:
       - main
 
+concurrency:
+  group: chart-release
+  cancel-in-progress: false
+  queue: max
+
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v5
+        with:
+          version: v3.21.4
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1.14.0
+        with:
+          node_image: kindest/node:v1.35.0
+
+      - name: Run fresh install rehearsal
+        run: scripts/rehearsal/rehearse.sh --install-only --to local --skip-cluster
+
+      - name: Clean up fresh install
+        run: |
+          helm uninstall lightdash --wait || true
+          kubectl delete statefulset lightdash-postgresql --ignore-not-found --wait --timeout=120s --request-timeout=10s
+          kubectl delete pod lightdash-postgresql-0 --ignore-not-found --wait --timeout=120s --request-timeout=10s
+          kubectl delete pvc --all --wait --timeout=120s --request-timeout=10s
+
+      - name: Run upgrade rehearsal
+        run: scripts/rehearsal/rehearse.sh --to local --skip-cluster
+
   release:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -20,9 +56,9 @@ jobs:
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
       - name: Install Helm
-        uses: azure/setup-helm@v1
+        uses: azure/setup-helm@v5
         with:
-          version: v3.4.0
+          version: v3.21.4
 
       - name: Add Helm dependency repos
         run: |
@@ -32,7 +68,7 @@ jobs:
           helm repo update
 
       - name: Run chart-releaser
-        uses: helm/chart-releaser-action@v1.1.0
+        uses: helm/chart-releaser-action@v1.7.0
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
           CR_SKIP_EXISTING: true

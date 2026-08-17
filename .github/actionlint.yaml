@@ -1,0 +1,4 @@
+paths:
+  .github/workflows/ci-release.yml:
+    ignore:
+      - 'unexpected key "queue" for "concurrency" section'
