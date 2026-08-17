@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 2.13.4](https://img.shields.io/badge/Version-2.13.4-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.172.0](https://img.shields.io/badge/AppVersion-1.172.0-informational?style=flat-square)
+![Version: 2.14.0](https://img.shields.io/badge/Version-2.14.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.172.0](https://img.shields.io/badge/AppVersion-1.172.0-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -19,6 +19,8 @@ If you want to use your own PostgreSQL instance, ensure it has the vector extens
 #### Using the Bitnami PostgreSQL chart
 
 You may wish to use the Bitnami PostgreSQL chart to spin up a development environment. This guidance is for convenience, you'll want to [read the docs](https://github.com/bitnami/charts/tree/master/bitnami/postgresql/#installing-the-chart) before deciding how to implement PostgresSQL.
+
+The bundled database is created during chart installation. Helm upgrades do not modify it. Apply changes to `postgresql.*` values manually. The full management migration is planned for the 3.0.0 chart major.
 
 ```
 helm repo add bitnami https://charts.bitnami.com/bitnami
@@ -272,7 +274,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | postgresql.auth.password | string | `""` |  |
 | postgresql.auth.secretKeys.userPasswordKey | string | `"password"` |  |
 | postgresql.auth.username | string | `"lightdash"` |  |
-| postgresql.commonAnnotations."helm.sh/hook" | string | `"pre-install,pre-upgrade"` |  |
+| postgresql.commonAnnotations."helm.sh/hook" | string | `"pre-install"` |  |
 | postgresql.commonAnnotations."helm.sh/hook-weight" | string | `"-1"` |  |
 | postgresql.enabled | bool | `true` |  |
 | postgresql.image.registry | string | `"docker.io"` |  |
