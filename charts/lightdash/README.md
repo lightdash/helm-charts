@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 2.13.0](https://img.shields.io/badge/Version-2.13.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.170.0](https://img.shields.io/badge/AppVersion-1.170.0-informational?style=flat-square)
+![Version: 2.13.1](https://img.shields.io/badge/Version-2.13.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.170.0](https://img.shields.io/badge/AppVersion-1.170.0-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -38,6 +38,32 @@ helm install lightdash lightdash/lightdash \
   --set secrets.PGPASSWORD=changeme \
 
 ```
+
+### Database migration startup budget
+
+The backend image runs database migrations before it starts the HTTP server when `migrationJob.enabled` is `false`. The backend startup probe covers this full startup path.
+
+The default startup probe budget is about 185 seconds:
+
+```text
+initialDelaySeconds + (periodSeconds * failureThreshold)
+5 + (10 * 18) = 185 seconds
+```
+
+The migration follower wait budget defaults to 30 minutes through `MIGRATION_WAIT_TIMEOUT_MS`. This wait budget does not limit the time that the lease holder spends running a migration. Size the startup probe for the follower wait budget plus the longest expected migration.
+
+For example, a 30-minute follower wait and a 20-minute migration need about 50 minutes. The following values provide about 50 minutes and 5 seconds:
+
+```yaml
+lightdashBackend:
+  startupProbe:
+    initialDelaySeconds: 5
+    timeoutSeconds: 10
+    periodSeconds: 10
+    failureThreshold: 300
+```
+
+For long migrations, set `migrationJob.enabled=true`. The migration hook Job has no startup probe, and the backend pods start after the Job completes.
 
 ## Requirements
 
@@ -183,10 +209,11 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | lightdashBackend.readinessProbe.path | string | `"/api/v1/health"` |  |
 | lightdashBackend.readinessProbe.periodSeconds | int | `5` |  |
 | lightdashBackend.readinessProbe.timeoutSeconds | int | `5` |  |
-| lightdashBackend.startupProbe.failureThreshold | int | `18` |  |
-| lightdashBackend.startupProbe.initialDelaySeconds | int | `5` |  |
-| lightdashBackend.startupProbe.periodSeconds | int | `10` |  |
-| lightdashBackend.startupProbe.timeoutSeconds | int | `10` |  |
+| lightdashBackend.startupProbe | object | `{"failureThreshold":18,"initialDelaySeconds":5,"periodSeconds":10,"timeoutSeconds":10}` | Backend startup probe. When migrationJob.enabled is false, size its approximate initialDelaySeconds + (periodSeconds * failureThreshold) budget to cover the 30-minute MIGRATION_WAIT_TIMEOUT_MS default plus the longest expected migration. Enable migrationJob.enabled to run migrations in a hook Job without a startup probe. |
+| lightdashBackend.startupProbe.failureThreshold | int | `18` | Failed backend startup probes before Kubernetes restarts the container |
+| lightdashBackend.startupProbe.initialDelaySeconds | int | `5` | Delay before the first backend startup probe |
+| lightdashBackend.startupProbe.periodSeconds | int | `10` | Interval between backend startup probes |
+| lightdashBackend.startupProbe.timeoutSeconds | int | `10` | Timeout for each backend startup probe |
 | lightdashBackend.strategy | object | `{}` |  |
 | lightdashBackend.terminationGracePeriodSeconds | int | `90` |  |
 | migrationJob.affinity | object | `{}` |  |
