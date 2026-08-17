@@ -324,8 +324,7 @@ metadata:
 spec:
   {{- if $pdbConfig.minAvailable }}
   minAvailable: {{ $pdbConfig.minAvailable }}
-  {{- end }}
-  {{- if $pdbConfig.maxUnavailable }}
+  {{- else if $pdbConfig.maxUnavailable }}
   maxUnavailable: {{ $pdbConfig.maxUnavailable }}
   {{- end }}
   selector:
