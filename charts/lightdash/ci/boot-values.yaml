@@ -1,0 +1,4 @@
+secrets:
+  S3_ENDPOINT: http://s3.invalid
+  S3_BUCKET: lightdash-ci
+  S3_REGION: us-east-1
