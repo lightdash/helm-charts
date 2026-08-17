@@ -70,7 +70,7 @@ jobs:
           kubectl delete pvc --all --wait --timeout=120s --request-timeout=10s
 
       - name: Run upgrade rehearsal
-        run: scripts/rehearsal/rehearse.sh --from 2.13.1 --to local --skip-cluster
+        run: scripts/rehearsal/rehearse.sh --to local --skip-cluster
 
   automerge:
     needs: [lint, test]
