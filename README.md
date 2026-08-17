@@ -1,6 +1,10 @@
 # Lightdash helm-charts
 
-# Migrating to 1.0.0
+# Upgrading
+
+The step-by-step upgrade guide lives at [docs/upgrade-guide.md](docs/upgrade-guide.md). It covers the chart 3.0.0 changes, the values edits for common setups, how to verify an upgrade, and how to roll back. You can rehearse your own upgrade in a local kind cluster with the harness in [scripts/rehearsal/](scripts/rehearsal/README.md).
+
+## Migrating to 1.0.0
 
 The 1.0.0 release contains breaking changes. You **must first update your instance to 0.10.1** before updating to 1.0.0.
 
