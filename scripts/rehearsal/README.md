@@ -32,7 +32,7 @@ Run the default rehearsal from the repository root:
 scripts/rehearsal/rehearse.sh
 ```
 
-The default command installs the latest released chart. It upgrades the release to `charts/lightdash`. It seeds the database and the product API. It monitors traffic during the upgrade. It then checks the release, migrations, migration ledger, readiness, traffic, marker row, and user login.
+The default command installs the newest released chart older than the target chart. It upgrades the release to `charts/lightdash`. It seeds the database and the product API. It monitors traffic during the upgrade. It then checks the release, migrations, migration ledger, backend rollout, readiness, traffic, marker row, and user login.
 
 The current main branch can fail the zero-drop traffic assertion. A single backend replica has no pre-stop drain. PR #147 contains the pending fix. Keep the default allowance at zero until that fix lands.
 
@@ -57,8 +57,9 @@ scripts/rehearsal/rehearse.sh --install-only
 ## Options
 
 ```text
---from <chart-version|latest>          Default: latest
+--from <chart-version|latest>          Default: newest release older than target
 --to <chart-version|local>             Default: local
+--allow-non-forward                    Allow an equal-version or downgrade rehearsal
 --values <file>                        Default: scripts/rehearsal/values/rehearsal.yaml
 --install-only                         Install the target, seed it, and assert it
 --drill <name>                         Run one failure drill
@@ -70,6 +71,10 @@ scripts/rehearsal/rehearse.sh --install-only
 ```
 
 `--install-only` and `--drill` cannot run together. A drill always uses the default rehearsal values. A drill rejects a custom values file.
+
+The default source is the newest released chart older than the resolved target chart. Upgrade rehearsals reject an equal or newer source unless you pass `--allow-non-forward` explicitly.
+
+Custom-values rehearsals cover bundled-PostgreSQL installs only. The SQL assertions connect directly to the bundled PostgreSQL pod. External-database values are not supported.
 
 The script locates the repository from its own path. You can run it from any working directory.
 
@@ -97,7 +102,7 @@ Run a parked migration drill:
 scripts/rehearsal/rehearse.sh --from <older-version> --drill parked-migration
 ```
 
-This drill enables the migration Job. It rejects migration DDL. It checks the parked ledger and lease state. It also checks that the old backend stays available.
+This drill enables the migration Job. It rejects migration DDL. It checks the parked ledger, lease state, and `migration_parked` readiness warning. It also checks that the old backend stays available.
 
 Run a killed migrator drill:
 
@@ -105,7 +110,7 @@ Run a killed migrator drill:
 scripts/rehearsal/rehearse.sh --from <older-version> --drill killed-migrator
 ```
 
-This drill pauses migration DDL. It deletes the active migration pod. It checks that a replacement takes the lease and finishes within five minutes.
+This drill pauses migration DDL. It deletes the active migration pod. It checks that a replacement takes the lease and finishes within about 90 seconds.
 
 Run a slow migration drill:
 

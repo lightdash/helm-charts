@@ -9,6 +9,8 @@ DEFAULT_VALUES="$SCRIPT_DIR/values/rehearsal.yaml"
 
 FROM_SOURCE="latest"
 TO_SOURCE="local"
+FROM_EXPLICIT=false
+ALLOW_NON_FORWARD=false
 VALUES_FILE="$DEFAULT_VALUES"
 VALUES_EXPLICIT=false
 INSTALL_ONLY=false
@@ -56,6 +58,7 @@ usage() {
         "" \
         "  --from <chart-version|latest>" \
         "  --to <chart-version|local>" \
+        "  --allow-non-forward" \
         "  --values <file>" \
         "  --install-only" \
         "  --drill <parked-migration|killed-migrator|slow-migration|drain>" \
@@ -185,12 +188,17 @@ parse_args() {
             --from)
                 require_value "$1" "${2:-}"
                 FROM_SOURCE="$2"
+                FROM_EXPLICIT=true
                 shift 2
                 ;;
             --to)
                 require_value "$1" "${2:-}"
                 TO_SOURCE="$2"
                 shift 2
+                ;;
+            --allow-non-forward)
+                ALLOW_NON_FORWARD=true
+                shift
                 ;;
             --values)
                 require_value "$1" "${2:-}"
@@ -430,15 +438,50 @@ highest_released_version() {
     printf '%s\n' "$version"
 }
 
-resolve_sources() {
-    setup_helm_repos
-    if [[ "$FROM_SOURCE" == "latest" ]]; then
-        FROM_SOURCE="$(highest_released_version)"
+version_less_than() {
+    local version="${1#v}"
+    local maximum="${2#v}"
+    [[ "$version" != "$maximum" && "$(printf '%s\n%s\n' "$version" "$maximum" | sort -V | head -n 1)" == "$version" ]]
+}
+
+highest_released_version_before() {
+    local target="$1"
+    local version
+    local selected=""
+    while IFS= read -r version; do
+        if version_less_than "$version" "$target"; then
+            selected="$version"
+        fi
+    done < <(helm search repo lightdash/lightdash --versions -o json | jq -r '.[].version' | sort -V)
+    if [[ -z "$selected" ]]; then
+        fail "Chart resolution" "the Lightdash chart repository returned no version older than $target"
     fi
+    printf '%s\n' "$selected"
+}
+
+chart_version_for_source() {
+    local source="$1"
+    chart_metadata "$source" | awk '$1 == "version:" {gsub(/"/, "", $2); print $2}'
+}
+
+resolve_sources() {
+    local source_version
+    local target_version
+    setup_helm_repos
     if [[ "$TO_SOURCE" == "local" ]]; then
         helm dependency build "$LOCAL_CHART" >/dev/null
     fi
-    record_result "PASS" "Chart resolution" "from=$FROM_SOURCE to=$TO_SOURCE"
+    target_version="$(chart_version_for_source "$TO_SOURCE")"
+    if [[ "$FROM_EXPLICIT" != "true" ]]; then
+        FROM_SOURCE="$(highest_released_version_before "$target_version")"
+    elif [[ "$FROM_SOURCE" == "latest" ]]; then
+        FROM_SOURCE="$(highest_released_version)"
+    fi
+    source_version="$(chart_version_for_source "$FROM_SOURCE")"
+    if [[ "$INSTALL_ONLY" != "true" && "$DRILL" != "drain" && "$ALLOW_NON_FORWARD" != "true" ]] && ! version_less_than "$source_version" "$target_version"; then
+        fail "Chart resolution" "source chart $source_version must be older than target chart $target_version; pass --allow-non-forward to override"
+    fi
+    record_result "PASS" "Chart resolution" "from=$FROM_SOURCE ($source_version) to=$TO_SOURCE ($target_version)"
 }
 
 image_setting_from_values() {
@@ -687,6 +730,23 @@ create_client_pod() {
     kubectl run -n "$NAMESPACE" "$CLIENT_POD" --image=curlimages/curl:8.12.1 --restart=Never --command -- sleep 7200 >/dev/null
     CLIENT_CREATED=true
     kubectl wait -n "$NAMESPACE" --for=condition=Ready "pod/$CLIENT_POD" --timeout=5m >/dev/null
+}
+
+backend_pod_template_hash() {
+    kubectl get pods -n "$NAMESPACE" -l app.kubernetes.io/component=backend -o json | jq -r '[.items[] | select(.metadata.deletionTimestamp == null) | select(any(.status.conditions[]?; .type == "Ready" and .status == "True")) | .metadata.labels["pod-template-hash"] // empty] | unique | first // empty'
+}
+
+assert_backend_rollout() {
+    local before="$1"
+    local after
+    after="$(backend_pod_template_hash)"
+    if [[ -z "$after" ]]; then
+        record_result "FAIL" "Backend rollout" "no Ready backend pod exposes pod-template-hash after the upgrade"
+    elif [[ "$after" == "$before" ]]; then
+        record_result "FAIL" "Backend rollout" "pod-template-hash remained $before"
+    else
+        record_result "PASS" "Backend rollout" "pod-template-hash changed from $before to $after"
+    fi
 }
 
 wait_for_api() {
@@ -945,6 +1005,7 @@ upgrade_chart() {
 }
 
 run_happy_path() {
+    local backend_hash_before
     CURRENT_STEP="Helm install"
     install_chart
     CURRENT_STEP="API client setup"
@@ -961,12 +1022,34 @@ run_happy_path() {
         return
     fi
     capture_migration_baseline
+    backend_hash_before="$(backend_pod_template_hash)"
+    if [[ -z "$backend_hash_before" ]]; then
+        fail "Backend rollout" "no Ready backend pod exposes pod-template-hash before the upgrade"
+    fi
     CURRENT_STEP="traffic monitor setup"
     start_traffic_monitor
     CURRENT_STEP="Helm upgrade"
     upgrade_chart
     CURRENT_STEP="post-upgrade assertions"
+    assert_backend_rollout "$backend_hash_before"
     assert_successful_rehearsal
+}
+
+assert_parked_warning() {
+    local response
+    local code
+    local body
+    if ! response="$(kubectl exec -n "$NAMESPACE" "$CLIENT_POD" -- curl -sS --max-time 10 -w $'\n%{http_code}' "http://$RELEASE_NAME:8080/api/v1/readyz")"; then
+        record_result "FAIL" "Parked warning" "readyz request failed"
+        return
+    fi
+    code="$(printf '%s\n' "$response" | tail -n 1)"
+    body="$(printf '%s\n' "$response" | sed '$d')"
+    if [[ "$code" == "200" ]] && printf '%s' "$body" | jq -e '.status == "ready" and any(.warnings[]?; . == "migration_parked")' >/dev/null 2>&1; then
+        record_result "PASS" "Parked warning" "readyz reports migration_parked"
+    else
+        record_result "FAIL" "Parked warning" "readyz returned HTTP $code without migration_parked: $body"
+    fi
 }
 
 run_parked_migration_drill() {
@@ -1014,6 +1097,7 @@ run_parked_migration_drill() {
     else
         record_result "FAIL" "Parked lease" "migration_lease.parked_at is null"
     fi
+    assert_parked_warning
     local helm_state
     helm_state="$(helm status "$RELEASE_NAME" -n "$NAMESPACE" -o json | jq -r '.info.status')"
     if [[ "$helm_state" != "deployed" ]]; then
@@ -1097,7 +1181,7 @@ run_killed_migrator_drill() {
     else
         record_result "FAIL" "Killed migrator upgrade" "helm upgrade exited $upgrade_status: $(tail -n 5 "$TEMP_DIR/killed-upgrade.log" | tr '\n' ' ')"
     fi
-    if ((recovery_seconds <= 300)); then
+    if ((recovery_seconds <= 90)); then
         record_result "PASS" "Lease takeover delay" "kill-to-completion recovery took ${recovery_seconds}s"
     else
         record_result "FAIL" "Lease takeover delay" "kill-to-completion recovery took ${recovery_seconds}s"
