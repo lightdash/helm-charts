@@ -322,10 +322,9 @@ metadata:
     {{- include "lightdash.labels" $root | nindent 4 }}
     app.kubernetes.io/component: {{ $component }}
 spec:
-  {{- if $pdbConfig.minAvailable }}
+  {{- if and (hasKey $pdbConfig "minAvailable") (not (kindIs "invalid" $pdbConfig.minAvailable)) }}
   minAvailable: {{ $pdbConfig.minAvailable }}
-  {{- end }}
-  {{- if $pdbConfig.maxUnavailable }}
+  {{- else if and (hasKey $pdbConfig "maxUnavailable") (not (kindIs "invalid" $pdbConfig.maxUnavailable)) }}
   maxUnavailable: {{ $pdbConfig.maxUnavailable }}
   {{- end }}
   selector:

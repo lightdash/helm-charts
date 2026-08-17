@@ -108,10 +108,17 @@ autoscaling:
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
 
+## Pod disruption budget for the backend and worker deployments.
+## maxUnavailable 1 permits one voluntary eviction at any replica count, so node
+## drains and cluster upgrades complete on a single-replica install.
+## With replicaCount above 1 the budget keeps all but one pod serving.
+## To pin a floor instead, set minAvailable. When minAvailable is set it takes
+## precedence and maxUnavailable is ignored, so an existing minAvailable override
+## keeps working across an upgrade to this chart version.
 podDisruptionBudget:
   enabled: true
-  minAvailable: 1
-  # maxUnavailable: 50%
+  maxUnavailable: 1
+  # minAvailable: 1
 
 nodeSelector: {}
 

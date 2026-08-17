@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 2.11.0](https://img.shields.io/badge/Version-2.11.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.169.1](https://img.shields.io/badge/AppVersion-1.169.1-informational?style=flat-square)
+![Version: 2.12.0](https://img.shields.io/badge/Version-2.12.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.169.1](https://img.shields.io/badge/AppVersion-1.169.1-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -74,15 +74,17 @@ podAntiAffinity:
 
 ### Pod Disruption Budget
 
-A Pod Disruption Budget is enabled by default to prevent all pods from being evicted simultaneously during voluntary disruptions:
+A Pod Disruption Budget is enabled by default. It permits one pod to be evicted during a voluntary disruption:
 
 ```yaml
 podDisruptionBudget:
   enabled: true
-  minAvailable: 1
+  maxUnavailable: 1
 ```
 
-**Important:** PDBs only work effectively when combined with multiple replicas. With `replicaCount: 1`, the PDB cannot prevent downtime.
+Set `minAvailable` to pin a minimum number of available pods instead. When both fields are set, `minAvailable` takes precedence and `maxUnavailable` is ignored. Both fields accept zero.
+
+**Important:** With `replicaCount: 1`, the default permits the only pod to be evicted, so it does not prevent downtime.
 
 ## Values
 
@@ -229,7 +231,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | podAntiAffinity.node | string | `"hard"` |  |
 | podAntiAffinity.zone | string | `"soft"` |  |
 | podDisruptionBudget.enabled | bool | `true` |  |
-| podDisruptionBudget.minAvailable | int | `1` |  |
+| podDisruptionBudget.maxUnavailable | int | `1` |  |
 | podLabels | object | `{}` |  |
 | podSecurityContext | object | `{}` |  |
 | postgresql.auth.database | string | `"lightdash"` |  |
