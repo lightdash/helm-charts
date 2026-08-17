@@ -2,8 +2,8 @@ apiVersion: v1
 entries:
   lightdash:
   - apiVersion: v2
-    appVersion: 1.169.0
-    created: "2026-08-17T17:23:50.554202065Z"
+    appVersion: 1.169.1
+    created: "2026-08-17T19:36:06.512494885Z"
     dependencies:
     - name: common
       repository: https://charts.bitnami.com/bitnami
@@ -23,7 +23,7 @@ entries:
       repository: https://nats-io.github.io/k8s/helm/charts/
       version: 2.12.4
     description: A Helm chart to deploy lightdash on kubernetes
-    digest: 4f4d4b1fea9a33bdde137ef8d12f6aea8e31fab05f61b927b574acdd799ec2e2
+    digest: cba7f1512da22daf8505754fe8f1657afe8ac815b9cfdd8df254ee7e697efb19
     icon: https://docs.lightdash.com/img/logo.png
     maintainers:
     - email: oliver@lightdash.com
@@ -35,8 +35,8 @@ entries:
     name: lightdash
     type: application
     urls:
-    - https://github.com/lightdash/helm-charts/releases/download/lightdash-2.10.262/lightdash-2.10.262.tgz
-    version: 2.10.262
+    - https://github.com/lightdash/helm-charts/releases/download/lightdash-2.10.263/lightdash-2.10.263.tgz
+    version: 2.10.263
   - apiVersion: v2
     appVersion: 1.167.4
     created: "2026-08-17T13:50:57.87900871Z"
