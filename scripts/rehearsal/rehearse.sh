@@ -49,6 +49,8 @@ ROLLOUT_OBSERVER_PID=""
 ROLLOUT_OBSERVER_FILE=""
 ROLLOUT_DEPLOYMENT_BEFORE=""
 ROLLOUT_DEPLOYMENT_AFTER=""
+POSTGRES_POD_UID_BEFORE=""
+POSTGRES_POD_UID_AFTER=""
 DRAIN_APP_NODE=""
 DRAIN_DB_NODE=""
 
@@ -815,15 +817,22 @@ backend_deployment_rollout_config() {
         jq -c '{replicas: .spec.replicas, strategy: .spec.strategy, availableReplicas: (.status.availableReplicas // 0), readyReplicas: (.status.readyReplicas // 0), updatedReplicas: (.status.updatedReplicas // 0)}'
 }
 
+postgres_pod_uid() {
+    kubectl get pod -n "$NAMESPACE" "$RELEASE_NAME-postgresql-0" -o jsonpath='{.metadata.uid}' 2>/dev/null || true
+}
+
 start_rollout_observer() {
     ROLLOUT_OBSERVER_FILE="$TEMP_DIR/backend-rollout.tsv"
     ROLLOUT_DEPLOYMENT_BEFORE="$(backend_deployment_rollout_config)"
+    POSTGRES_POD_UID_BEFORE="$(postgres_pod_uid)"
     (
         local sample_index=0
         while true; do
             local epoch
             local endpoint_state
             local pod_state
+            local postgres_endpoint_state
+            local postgres_pod_state
             epoch="$(date +%s)"
             endpoint_state="$(
                 kubectl get endpointslices.discovery.k8s.io -n "$NAMESPACE" -l "kubernetes.io/service-name=$RELEASE_NAME" -o json 2>/dev/null |
@@ -848,7 +857,31 @@ start_rollout_observer() {
                         deleting: (.metadata.deletionTimestamp // null)
                     }] | sort_by(.name)' 2>/dev/null || printf '[{"error":"pod-query-failed"}]'
             )"
-            printf '%s\t%s\t%s\t%s\n' "$epoch" "$sample_index" "$endpoint_state" "$pod_state"
+            postgres_endpoint_state="$(
+                kubectl get endpointslices.discovery.k8s.io -n "$NAMESPACE" -l "kubernetes.io/service-name=$RELEASE_NAME-postgresql" -o json 2>/dev/null |
+                    jq -c '{
+                        readyAddresses: ([.items[].endpoints[]? | select(.conditions.ready == true) | .addresses[]?] | length),
+                        endpoints: ([.items[].endpoints[]? | {
+                            addresses: .addresses,
+                            ready: (if ((.conditions // {}) | has("ready")) then .conditions.ready else null end),
+                            serving: (if ((.conditions // {}) | has("serving")) then .conditions.serving else null end),
+                            terminating: (if ((.conditions // {}) | has("terminating")) then .conditions.terminating else null end),
+                            pod: (.targetRef.name // null)
+                        }] | sort_by(.pod))
+                    }' 2>/dev/null || printf '{"error":"postgres-endpoint-query-failed"}'
+            )"
+            postgres_pod_state="$(
+                kubectl get pod -n "$NAMESPACE" "$RELEASE_NAME-postgresql-0" -o json 2>/dev/null |
+                    jq -c '{
+                        name: .metadata.name,
+                        uid: .metadata.uid,
+                        ownerUid: (([.metadata.ownerReferences[]? | select(.kind == "StatefulSet")][0].uid) // null),
+                        phase: (.status.phase // null),
+                        ready: (([.status.conditions[]? | select(.type == "Ready")][0].status) // "Unknown"),
+                        deleting: (.metadata.deletionTimestamp // null)
+                    }' 2>/dev/null || printf '{"error":"postgres-pod-query-failed"}'
+            )"
+            printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$epoch" "$sample_index" "$endpoint_state" "$pod_state" "$postgres_endpoint_state" "$postgres_pod_state"
             sample_index=$((sample_index + 1))
             sleep 0.5
         done
@@ -875,14 +908,27 @@ print_rollout_timeline() {
     printf 'Backend rollout timeline (state changes from 0.5s samples):\n'
     awk -F '\t' -v start="$UPGRADE_START_EPOCH" -v end="$UPGRADE_END_EPOCH" -v assertion="$TRAFFIC_ASSERT_EPOCH" '
         $1 ~ /^[0-9]+$/ && $1 >= start && $1 <= assertion {
-            state = $3 FS $4
+            state = $3 FS $4 FS $5 FS $6
             if (state != previous) {
                 phase = $1 <= end ? "helm-upgrade" : "post-upgrade"
-                printf "%s sample=%s phase=%s endpoints=%s pods=%s\n", $1, $2, phase, $3, $4
+                printf "%s sample=%s phase=%s backendEndpoints=%s backendPods=%s postgresEndpoints=%s postgresPod=%s\n", $1, $2, phase, $3, $4, $5, $6
                 previous = state
             }
         }
     ' "$ROLLOUT_OBSERVER_FILE"
+}
+
+assert_postgres_pod_uid_stable() {
+    POSTGRES_POD_UID_AFTER="$(postgres_pod_uid)"
+    if [[ -z "$POSTGRES_POD_UID_BEFORE" ]]; then
+        record_result "FAIL" "PostgreSQL pod UID" "the pod UID was unavailable before the upgrade"
+    elif [[ -z "$POSTGRES_POD_UID_AFTER" ]]; then
+        record_result "FAIL" "PostgreSQL pod UID" "the pod UID was unavailable after the upgrade"
+    elif [[ "$POSTGRES_POD_UID_BEFORE" == "$POSTGRES_POD_UID_AFTER" ]]; then
+        record_result "PASS" "PostgreSQL pod UID" "the pod UID remained $POSTGRES_POD_UID_AFTER"
+    else
+        record_result "FAIL" "PostgreSQL pod UID" "the pod UID changed from $POSTGRES_POD_UID_BEFORE to $POSTGRES_POD_UID_AFTER"
+    fi
 }
 
 start_traffic_monitor() {
@@ -1045,6 +1091,7 @@ assert_traffic() {
         printf 'Traffic anomaly timeline: none\n'
     fi
     print_rollout_timeline
+    assert_postgres_pod_uid_stable
     if [[ "$monitor_phase" != "Running" ]]; then
         record_result "FAIL" "Traffic monitor coverage" "the monitor phase is $monitor_phase after the ${window_seconds}s upgrade window"
     elif ((TRAFFIC_SAMPLE_COUNT == 0)); then

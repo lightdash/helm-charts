@@ -34,7 +34,7 @@ scripts/rehearsal/rehearse.sh
 
 The default command installs the newest released chart older than the target chart. It upgrades the release to `charts/lightdash`. It seeds the database and the product API. It monitors traffic during the upgrade. It then checks the release, migrations, migration ledger, backend rollout, readiness, traffic, marker row, and user login.
 
-The current main branch can fail the zero-drop traffic assertion. A single backend replica has no pre-stop drain. PR #147 contains the pending fix. Keep the default allowance at zero until that fix lands.
+The default rehearsal does not override the backend readiness path. It tests the chart defaults for both install and upgrade.
 
 Use an older released chart as the starting point:
 
