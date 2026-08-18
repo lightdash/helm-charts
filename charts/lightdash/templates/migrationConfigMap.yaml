@@ -17,5 +17,14 @@ data:
   {{- if .Values.nats.enabled }}
   NATS_URL: {{ include "lightdash.nats.url" . }}
   {{- end }}
+  {{- if not .Values.configMap.LIGHTDASH_INSTALL_TYPE }}
+  LIGHTDASH_INSTALL_TYPE: "helm"
+  {{- end }}
+  {{- if not .Values.configMap.LIGHTDASH_HELM_CHART_VERSION }}
+  LIGHTDASH_HELM_CHART_VERSION: {{ .Chart.Version | quote }}
+  {{- end }}
+  {{- if not .Values.configMap.LIGHTDASH_MIGRATION_EXECUTION_MODE }}
+  LIGHTDASH_MIGRATION_EXECUTION_MODE: "helm-job"
+  {{- end }}
   {{- toYaml .Values.configMap | nindent 2 }}
 {{- end }}
