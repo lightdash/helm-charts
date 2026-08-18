@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 2.16.6](https://img.shields.io/badge/Version-2.16.6-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.190.0](https://img.shields.io/badge/AppVersion-1.190.0-informational?style=flat-square)
+![Version: 3.0.0-beta.1](https://img.shields.io/badge/Version-3.0.0--beta.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.191.1](https://img.shields.io/badge/AppVersion-1.191.1-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -208,7 +208,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | lightdashBackend.livenessProbe.timeoutSeconds | int | `15` |  |
 | lightdashBackend.readinessProbe.failureThreshold | int | `2` |  |
 | lightdashBackend.readinessProbe.initialDelaySeconds | int | `5` |  |
-| lightdashBackend.readinessProbe.path | string | `"/api/v1/health"` |  |
+| lightdashBackend.readinessProbe.path | string | `"/api/v1/readyz"` | Backend readiness probe path. Defaults to /api/v1/readyz, which gates on schema migration state. |
 | lightdashBackend.readinessProbe.periodSeconds | int | `5` |  |
 | lightdashBackend.readinessProbe.timeoutSeconds | int | `5` |  |
 | lightdashBackend.startupProbe | object | `{"failureThreshold":18,"initialDelaySeconds":5,"periodSeconds":10,"timeoutSeconds":10}` | Backend startup probe. When migrationJob.enabled is false, size its approximate initialDelaySeconds + (periodSeconds * failureThreshold) budget to cover the 30-minute MIGRATION_WAIT_TIMEOUT_MS default plus the longest expected migration. Enable migrationJob.enabled to run migrations in a hook Job without a startup probe. |
@@ -220,12 +220,12 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | lightdashBackend.terminationGracePeriodSeconds | int | `90` |  |
 | migrationJob.affinity | object | `{}` |  |
 | migrationJob.backoffLimit | int | `10` |  |
-| migrationJob.enabled | bool | `false` |  |
+| migrationJob.enabled | bool | `true` | Run DB migrations in a pre-install/pre-upgrade hook Job. Enabled by default so the Job is the sole migrator. |
 | migrationJob.existingSecret | string | `""` |  |
 | migrationJob.extraEnv | list | `[]` |  |
 | migrationJob.extraVolumeMounts | list | `[]` |  |
 | migrationJob.extraVolumes | list | `[]` |  |
-| migrationJob.inheritGlobalEnv | bool | `false` | When true, the migration Job also receives the top-level extraEnv and existingSecret, so env supplied globally (for example LIGHTDASH_LICENSE_KEY) reaches the migrator. Default false keeps current behaviour. |
+| migrationJob.inheritGlobalEnv | bool | `true` | Let the migration Job inherit top-level extraEnv and existingSecret. Enabled by default so global env reaches the migrator. |
 | migrationJob.podAnnotations | object | `{}` |  |
 | migrationJob.resources | object | `{}` |  |
 | migrationJob.serviceAccount.annotations | object | `{}` |  |
@@ -356,6 +356,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | ssl.enabled | bool | `false` |  |
 | ssl.mountPath | string | `"/etc/ssl/certs"` |  |
 | tolerations | list | `[]` |  |
+| versionCheck.enabled | bool | `true` | Check that semantic image tags meet the 1.169.1 app-version floor. Set false only to bypass a faulty check. |
 | warehouseNatsWorker.command[0] | string | `"node"` |  |
 | warehouseNatsWorker.command[1] | string | `"dist/natsWorker.js"` |  |
 | warehouseNatsWorker.command[2] | string | `"--stream"` |  |
