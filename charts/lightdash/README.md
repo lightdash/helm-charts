@@ -41,19 +41,6 @@ helm install lightdash lightdash/lightdash \
 
 ```
 
-### S3-compatible storage
-
-Lightdash requires S3-compatible storage. Set the endpoint, bucket, and region when you install the chart:
-
-```yaml
-s3:
-  endpoint: https://s3.amazonaws.com
-  bucket: lightdash
-  region: us-east-1
-```
-
-Set `s3.accessKey` and `s3.secretKey` for development only. For production, create a Kubernetes Secret with `S3_ACCESS_KEY` and `S3_SECRET_KEY`, then set `s3.existingSecret` to its name.
-
 ### Database migration startup budget
 
 The backend image runs database migrations before it starts the HTTP server when `migrationJob.enabled` is `false`. The backend startup probe covers this full startup path.
@@ -327,14 +314,6 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | preAggregateNatsWorker.type | string | `"nats"` |  |
 | replicaCount | int | `1` | Specify the number of lightdash instances. |
 | resources | object | `{}` |  |
-| s3.accessKey | string | `""` | Access key for S3-compatible storage. Prefer existingSecret for production credentials. |
-| s3.bucket | string | `""` | S3-compatible storage bucket |
-| s3.endpoint | string | `""` | S3-compatible storage endpoint, for example https://s3.amazonaws.com |
-| s3.existingSecret | string | `""` | Name of an existing Kubernetes Secret containing S3_ACCESS_KEY and S3_SECRET_KEY |
-| s3.forcePathStyle | string | `""` | Set to true when the S3-compatible storage service requires path-style URLs |
-| s3.publicEndpoint | string | `""` | Public endpoint used to access objects stored in S3-compatible storage |
-| s3.region | string | `""` | S3-compatible storage region |
-| s3.secretKey | string | `""` | Secret key for S3-compatible storage. Prefer existingSecret for production credentials. |
 | scheduler.concurrency | int | `3` |  |
 | scheduler.db.maxConnections | string | `nil` |  |
 | scheduler.enabled | bool | `false` |  |
