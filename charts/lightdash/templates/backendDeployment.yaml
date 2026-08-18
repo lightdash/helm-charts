@@ -1,4 +1,3 @@
-{{- include "lightdash.validateAppVersion" . }}
 {{- $volumes := .Values.lightdashBackend.extraVolumes }}
 {{- $volumeMounts := .Values.lightdashBackend.extraVolumeMounts }}
 apiVersion: apps/v1

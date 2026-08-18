@@ -52,10 +52,6 @@ image:
   pullPolicy: IfNotPresent
   tag: ""
 
-versionCheck:
-  # -- Check that semantic image tags meet the 1.169.1 app-version floor. Set false only to bypass a faulty check.
-  enabled: true
-
 imagePullSecrets: []
 
 podAnnotations: {}
@@ -339,10 +335,9 @@ ssl:
 ## @param migrationJob.serviceAccount.name ServiceAccount name (defaults to `<release-fullname>-migration` when create is true, or `default` when create is false)
 ## @param migrationJob.serviceAccount.annotations Annotations on the migration ServiceAccount (e.g. workload identity)
 migrationJob:
-  # -- Run DB migrations in a pre-install/pre-upgrade hook Job. Enabled by default so the Job is the sole migrator.
-  enabled: true
-  # -- Let the migration Job inherit top-level extraEnv and existingSecret. Enabled by default so global env reaches the migrator.
-  inheritGlobalEnv: true
+  enabled: false
+  # -- When true, the migration Job also receives the top-level extraEnv and existingSecret, so env supplied globally (for example LIGHTDASH_LICENSE_KEY) reaches the migrator. Default false keeps current behaviour.
+  inheritGlobalEnv: false
   existingSecret: ""
   backoffLimit: 10
   ttlSecondsAfterFinished: 100
@@ -435,8 +430,9 @@ lightdashBackend:
     timeoutSeconds: 5
     periodSeconds: 5
     failureThreshold: 2
-    # -- Backend readiness probe path. Defaults to /api/v1/readyz, which gates on schema migration state.
-    path: /api/v1/readyz
+    ## Probe endpoint path. /api/v1/health checks the database on every request.
+    ## /api/v1/readyz (backend only) is TTL-cached and gates on schema migration state.
+    path: /api/v1/health
   ## Container lifecycle hooks. The default preStop sleep keeps the pod serving
   ## while the Service endpoint removal propagates, so a rollout does not send
   ## requests to a pod that has begun shutting down. 10s is a conventional value
