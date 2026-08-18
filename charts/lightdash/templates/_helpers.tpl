@@ -258,16 +258,6 @@ Renders a volumeMount for the SSL certificate if ssl.enabled is true.
 {{- end -}}
 {{- end -}}
 
-{{- define "lightdash.validateAppVersion" -}}
-{{- if .Values.versionCheck.enabled -}}
-{{- $tag := .Values.image.tag | default .Chart.AppVersion | toString -}}
-{{- $coreVersion := regexFind "^[0-9]+\\.[0-9]+\\.[0-9]+" $tag -}}
-{{- if and $coreVersion (not (semverCompare ">=1.169.1" $coreVersion)) -}}
-{{- fail (printf "Lightdash image tag %q is below the required app-version floor 1.169.1. This chart major defaults readiness to /api/v1/readyz, which requires the corrected readyz semantics. Bypass a faulty check with --set versionCheck.enabled=false." $tag) -}}
-{{- end -}}
-{{- end -}}
-{{- end -}}
-
 {{/*
 SSL env vars for the migration Job: migrationJob.ssl when enabled, else top-level ssl.
 */}}
