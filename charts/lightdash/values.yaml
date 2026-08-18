@@ -35,6 +35,24 @@ secrets:
 # -- Name of an existing Kubernetes secret to inject into all pods except the migration Job unless migrationJob.inheritGlobalEnv is true. Takes precedence over .Values.secrets when set.
 existingSecret: ""
 
+s3:
+  # -- S3-compatible storage endpoint, for example https://s3.amazonaws.com
+  endpoint: ""
+  # -- Public endpoint used to access objects stored in S3-compatible storage
+  publicEndpoint: ""
+  # -- S3-compatible storage bucket
+  bucket: ""
+  # -- S3-compatible storage region
+  region: ""
+  # -- Access key for S3-compatible storage. Prefer existingSecret for production credentials.
+  accessKey: ""
+  # -- Secret key for S3-compatible storage. Prefer existingSecret for production credentials.
+  secretKey: ""
+  # -- Set to true when the S3-compatible storage service requires path-style URLs
+  forcePathStyle: ""
+  # -- Name of an existing Kubernetes Secret containing S3_ACCESS_KEY and S3_SECRET_KEY
+  existingSecret: ""
+
 extraEnv: []
 # extraEnv:
 #   - name: LIGHTDASH_SECRET

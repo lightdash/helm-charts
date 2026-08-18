@@ -76,6 +76,10 @@ spec:
             - secretRef:
                 name: {{ include "lightdash.fullname" . }}-migration-secrets
             {{- end }}
+            {{- if .Values.s3.existingSecret }}
+            - secretRef:
+                name: {{ .Values.s3.existingSecret }}
+            {{- end }}
           {{- if not (empty .Values.migrationJob.resources) }}
           resources:
             {{- toYaml .Values.migrationJob.resources | nindent 12 }}

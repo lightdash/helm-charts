@@ -1,3 +1,4 @@
+{{- include "lightdash.validateS3Config" . }}
 {{- if .Values.configMap }}
 apiVersion: v1
 kind: ConfigMap
@@ -40,6 +41,23 @@ data:
   {{- end }}
   {{- if not .Values.configMap.LIGHTDASH_MIGRATION_EXECUTION_MODE }}
   LIGHTDASH_MIGRATION_EXECUTION_MODE: "helm-boot"
+  {{- end }}
+  {{- with .Values.s3 }}
+  {{- if .endpoint }}
+  S3_ENDPOINT: {{ .endpoint | quote }}
+  {{- end }}
+  {{- if .publicEndpoint }}
+  S3_PUBLIC_ENDPOINT: {{ .publicEndpoint | quote }}
+  {{- end }}
+  {{- if .bucket }}
+  S3_BUCKET: {{ .bucket | quote }}
+  {{- end }}
+  {{- if .region }}
+  S3_REGION: {{ .region | quote }}
+  {{- end }}
+  {{- if .forcePathStyle }}
+  S3_FORCE_PATH_STYLE: {{ .forcePathStyle | quote }}
+  {{- end }}
   {{- end }}
   {{- toYaml .Values.configMap | nindent 2 }}
 {{- end }}
