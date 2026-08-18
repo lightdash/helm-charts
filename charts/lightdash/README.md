@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 2.16.11](https://img.shields.io/badge/Version-2.16.11-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.196.1](https://img.shields.io/badge/AppVersion-1.196.1-informational?style=flat-square)
+![Version: 2.16.12](https://img.shields.io/badge/Version-2.16.12-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.197.0](https://img.shields.io/badge/AppVersion-1.197.0-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -40,6 +40,19 @@ helm install lightdash lightdash/lightdash \
   --set secrets.PGPASSWORD=changeme \
 
 ```
+
+### S3-compatible storage
+
+Lightdash requires S3-compatible storage. Set the endpoint, bucket, and region when you install the chart:
+
+```yaml
+s3:
+  endpoint: https://s3.amazonaws.com
+  bucket: lightdash
+  region: us-east-1
+```
+
+Set `s3.accessKey` and `s3.secretKey` for development only. For production, create a Kubernetes Secret with `S3_ACCESS_KEY` and `S3_SECRET_KEY`, then set `s3.existingSecret` to its name.
 
 ### Database migration startup budget
 
@@ -314,6 +327,14 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | preAggregateNatsWorker.type | string | `"nats"` |  |
 | replicaCount | int | `1` | Specify the number of lightdash instances. |
 | resources | object | `{}` |  |
+| s3.accessKey | string | `""` | Access key for S3-compatible storage. Prefer existingSecret for production credentials. |
+| s3.bucket | string | `""` | S3-compatible storage bucket |
+| s3.endpoint | string | `""` | S3-compatible storage endpoint, for example https://s3.amazonaws.com |
+| s3.existingSecret | string | `""` | Name of an existing Kubernetes Secret containing S3_ACCESS_KEY and S3_SECRET_KEY |
+| s3.forcePathStyle | string | `""` | Set to true when the S3-compatible storage service requires path-style URLs |
+| s3.publicEndpoint | string | `""` | Public endpoint used to access objects stored in S3-compatible storage |
+| s3.region | string | `""` | S3-compatible storage region |
+| s3.secretKey | string | `""` | Secret key for S3-compatible storage. Prefer existingSecret for production credentials. |
 | scheduler.concurrency | int | `3` |  |
 | scheduler.db.maxConnections | string | `nil` |  |
 | scheduler.enabled | bool | `false` |  |
