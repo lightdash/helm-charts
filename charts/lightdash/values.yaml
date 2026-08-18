@@ -52,6 +52,10 @@ image:
   pullPolicy: IfNotPresent
   tag: ""
 
+versionCheck:
+  # -- Check that semantic image tags meet the 1.169.1 app-version floor. Set false only to bypass a faulty check.
+  enabled: true
+
 imagePullSecrets: []
 
 podAnnotations: {}
