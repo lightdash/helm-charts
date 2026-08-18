@@ -141,6 +141,19 @@ If using an external database, the password will be stored in the lightdash secr
 {{- end -}}
 {{- end -}}
 
+{{- define "lightdash.validateS3Config" -}}
+{{- $configMap := .Values.configMap -}}
+{{- $secrets := .Values.secrets -}}
+{{- $s3 := .Values.s3 -}}
+{{- $hasExistingSecret := .Values.existingSecret -}}
+{{- $hasEndpoint := or $s3.endpoint $configMap.S3_ENDPOINT $secrets.S3_ENDPOINT $hasExistingSecret -}}
+{{- $hasBucket := or $s3.bucket $configMap.S3_BUCKET $secrets.S3_BUCKET $hasExistingSecret -}}
+{{- $hasRegion := or $s3.region $configMap.S3_REGION $secrets.S3_REGION $hasExistingSecret -}}
+{{- if not (and $hasEndpoint $hasBucket $hasRegion) -}}
+{{- fail "S3-compatible storage is required. Set s3.endpoint, s3.bucket, and s3.region, or provide S3_ENDPOINT, S3_BUCKET, and S3_REGION through configMap, secrets, or existingSecret. See https://docs.lightdash.com/self-host/customize-deployment/environment-variables#s3" -}}
+{{- end -}}
+{{- end -}}
+
 {{/*
 Configuration for postgres credentials
 */}}

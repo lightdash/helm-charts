@@ -77,6 +77,13 @@ spec:
             - secretRef:
                 name: {{ template "lightdash.fullname" $ }}
             {{- end }}
+            {{- if .Values.s3.existingSecret }}
+            - secretRef:
+                name: {{ .Values.s3.existingSecret }}
+            {{- else if or .Values.s3.accessKey .Values.s3.secretKey }}
+            - secretRef:
+                name: {{ template "lightdash.fullname" $ }}-s3
+            {{- end }}
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}
