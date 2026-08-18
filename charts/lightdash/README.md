@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 2.14.14](https://img.shields.io/badge/Version-2.14.14-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.182.0](https://img.shields.io/badge/AppVersion-1.182.0-informational?style=flat-square)
+![Version: 2.15.0](https://img.shields.io/badge/Version-2.15.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.182.0](https://img.shields.io/badge/AppVersion-1.182.0-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -171,7 +171,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | configMap.SECURE_COOKIES | string | `"false"` | Secure Cookies |
 | configMap.SITE_URL | string | `""` | Public URL of your instance including protocol e.g. https://lightdash.myorg.com |
 | configMap.TRUST_PROXY | string | `"false"` | Trust the reverse proxy when setting secure cookies (via the "X-Forwarded-Proto" header) |
-| existingSecret | string | `""` | Name of an existing Kubernetes secret to inject into all pods via envFrom. Takes precedence over .Values.secrets when set. |
+| existingSecret | string | `""` | Name of an existing Kubernetes secret to inject into all pods except the migration Job unless migrationJob.inheritGlobalEnv is true. Takes precedence over .Values.secrets when set. |
 | externalDatabase.database | string | `"lightdash"` |  |
 | externalDatabase.existingSecret | string | `""` |  |
 | externalDatabase.host | string | `"localhost"` |  |
@@ -225,6 +225,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | migrationJob.extraEnv | list | `[]` |  |
 | migrationJob.extraVolumeMounts | list | `[]` |  |
 | migrationJob.extraVolumes | list | `[]` |  |
+| migrationJob.inheritGlobalEnv | bool | `false` | When true, the migration Job also receives the top-level extraEnv and existingSecret, so env supplied globally (for example LIGHTDASH_LICENSE_KEY) reaches the migrator. Default false keeps current behaviour. |
 | migrationJob.podAnnotations | object | `{}` |  |
 | migrationJob.resources | object | `{}` |  |
 | migrationJob.serviceAccount.annotations | object | `{}` |  |

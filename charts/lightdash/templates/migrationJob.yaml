@@ -54,12 +54,21 @@ spec:
                   name: {{ include "lightdash.database.secretName" . }}
                   key: {{ include "lightdash.database.secret.passwordKey" . }}
             {{- include "lightdash.migrationJobSslEnvs" . | nindent 12 }}
+            {{- if .Values.migrationJob.inheritGlobalEnv }}
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+            {{- end }}
             {{- with .Values.migrationJob.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
           envFrom:
             - configMapRef:
                 name: {{ include "lightdash.fullname" . }}-migration-configmap
+            {{- if and .Values.migrationJob.inheritGlobalEnv .Values.existingSecret }}
+            - secretRef:
+                name: {{ .Values.existingSecret }}
+            {{- end }}
             {{- if .Values.migrationJob.existingSecret }}
             - secretRef:
                 name: {{ .Values.migrationJob.existingSecret }}
