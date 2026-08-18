@@ -191,6 +191,24 @@ Add environment variables to configure database values
 {{- end -}}
 {{- end -}}
 
+{{- define "lightdash.backendReadinessProbePath" -}}
+{{- $configuredPath := .Values.lightdashBackend.readinessProbe.path -}}
+{{- if $configuredPath -}}
+{{- $configuredPath -}}
+{{- else -}}
+{{- $imageTag := .Values.image.tag | default .Chart.AppVersion | toString -}}
+{{- $version := trimPrefix "v" $imageTag -}}
+{{- $semanticVersionPattern := `^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-((0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*))?(\+([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?$` -}}
+{{- $isSemanticVersion := regexMatch $semanticVersionPattern $version -}}
+{{- $isPrerelease := regexMatch `^[0-9]+\.[0-9]+\.[0-9]+-` $version -}}
+{{- if and $isSemanticVersion (not $isPrerelease) (semverCompare ">=1.169.1" $version) -}}
+/api/v1/readyz
+{{- else -}}
+/api/v1/health
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
 {{/*
  Name of the service account used by the migration hook Job
  */}}

@@ -55,6 +55,10 @@ s3:
 
 Set `s3.accessKey` and `s3.secretKey` for development only. For production, create a Kubernetes Secret with `S3_ACCESS_KEY` and `S3_SECRET_KEY`, then set `s3.existingSecret` to its name.
 
+### Backend probe paths
+
+`/api/v1/health` checks database access, `/api/v1/livez` checks process liveness without the database, and `/api/v1/readyz` checks TTL-cached readiness and migration state. Unless `lightdashBackend.readinessProbe.path` is set explicitly, the backend readiness probe uses `/api/v1/readyz` for stable Lightdash versions 1.169.1 and later, including build metadata, and `/api/v1/health` for earlier, prerelease, or unrecognised versions. Before 1.169.1, a parked migration could remove working pods from service.
+
 ### Database migration startup budget
 
 The backend image runs database migrations before it starts the HTTP server when `migrationJob.enabled` is `false`. The backend startup probe covers this full startup path.
