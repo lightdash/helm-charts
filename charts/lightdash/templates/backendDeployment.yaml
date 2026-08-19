@@ -133,7 +133,7 @@ spec:
             successThreshold: {{ .Values.lightdashBackend.readinessProbe.successThreshold }}
             {{- end }}
             httpGet:
-              path: {{ .Values.lightdashBackend.readinessProbe.path | default "/api/v1/health" }}
+              path: {{ include "lightdash.backendReadinessProbePath" . }}
               port: {{ .Values.service.port }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}

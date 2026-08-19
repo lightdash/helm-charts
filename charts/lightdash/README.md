@@ -54,6 +54,10 @@ s3:
 
 Set `s3.accessKey` and `s3.secretKey` for development only. For production, create a Kubernetes Secret with `S3_ACCESS_KEY` and `S3_SECRET_KEY`, then set `s3.existingSecret` to its name.
 
+### Backend probe paths
+
+`/api/v1/health` checks database access, `/api/v1/livez` checks process liveness without the database, and `/api/v1/readyz` checks TTL-cached readiness and migration state. Unless `lightdashBackend.readinessProbe.path` is set explicitly, the backend readiness probe uses `/api/v1/readyz` for stable Lightdash versions 1.169.1 and later, including build metadata, and `/api/v1/health` for earlier, prerelease, or unrecognised versions. Before 1.169.1, a parked migration could remove working pods from service.
+
 ### Database migration startup budget
 
 The backend image runs database migrations before it starts the HTTP server when `migrationJob.enabled` is `false`. The backend startup probe covers this full startup path.
@@ -221,7 +225,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | lightdashBackend.livenessProbe.timeoutSeconds | int | `15` |  |
 | lightdashBackend.readinessProbe.failureThreshold | int | `2` |  |
 | lightdashBackend.readinessProbe.initialDelaySeconds | int | `5` |  |
-| lightdashBackend.readinessProbe.path | string | `"/api/v1/health"` |  |
+| lightdashBackend.readinessProbe.path | string | `""` | Backend probe endpoint path. /api/v1/health checks database access, /api/v1/livez checks process liveness without the database, and /api/v1/readyz checks TTL-cached readiness and migration state. The default is /api/v1/readyz for stable Lightdash versions 1.169.1 and later, including build metadata, and /api/v1/health for earlier, prerelease, or unrecognised versions. Before 1.169.1, a parked migration could remove working pods from service. |
 | lightdashBackend.readinessProbe.periodSeconds | int | `5` |  |
 | lightdashBackend.readinessProbe.timeoutSeconds | int | `5` |  |
 | lightdashBackend.startupProbe | object | `{"failureThreshold":18,"initialDelaySeconds":5,"periodSeconds":10,"timeoutSeconds":10}` | Backend startup probe. When migrationJob.enabled is false, size its approximate initialDelaySeconds + (periodSeconds * failureThreshold) budget to cover the 30-minute MIGRATION_WAIT_TIMEOUT_MS default plus the longest expected migration. Enable migrationJob.enabled to run migrations in a hook Job without a startup probe. |
