@@ -198,6 +198,10 @@ Add environment variables to configure database values
 {{- else -}}
 {{- $imageTag := .Values.image.tag | default .Chart.AppVersion | toString -}}
 {{- $version := trimPrefix "v" $imageTag -}}
+{{- $knownBuildVariantPattern := `^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)-commercial(\+([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?$` -}}
+{{- if regexMatch $knownBuildVariantPattern $version -}}
+{{- $version = regexReplaceAll `-commercial` $version "" -}}
+{{- end -}}
 {{- $semanticVersionPattern := `^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-((0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*))?(\+([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?$` -}}
 {{- $isSemanticVersion := regexMatch $semanticVersionPattern $version -}}
 {{- $isPrerelease := regexMatch `^[0-9]+\.[0-9]+\.[0-9]+-` $version -}}
