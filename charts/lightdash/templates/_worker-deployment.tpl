@@ -58,13 +58,21 @@ spec:
           image: "{{ $root.Values.image.repository }}:{{ $root.Values.image.tag | default $root.Chart.AppVersion }}"
           imagePullPolicy: {{ $root.Values.image.pullPolicy }}
           command: {{ $workerConfig.command | default (list "node" "dist/scheduler.js") | toJson }}
-          args: {{ $root.Values.image.args }}
+          {{- with $root.Values.image.args }}
+          args: {{ toJson . }}
+          {{- end }}
           env:
             - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
                   name: {{ (include "lightdash.database.secretName" $root) }}
                   key: {{ (include "lightdash.database.secret.passwordKey" $root) }}
+            {{- with (include "lightdash.s3SecretEnvs" $root | trim) }}
+            {{- . | nindent 12 }}
+            {{- end }}
+            {{- with (include "lightdash.sslEnvs" $root | trim) }}
+            {{- . | nindent 12 }}
+            {{- end }}
             - name: PORT
               value: {{ $workerConfig.port | quote }}
             {{- if and $workerConfig.tasks $workerConfig.tasks.include }}
@@ -99,7 +107,9 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ template "lightdash.fullname" $root }}
-            {{- include "lightdash.secretEnvFrom" (dict "root" $root "migration" false) | nindent 12 }}
+            {{- with (include "lightdash.secretEnvFrom" (dict "root" $root "migration" false) | trim) }}
+            {{- . | nindent 12 }}
+            {{- end }}
           {{- if $workerConfig.startupProbe }}
           startupProbe:
             {{- if $workerConfig.startupProbe.initialDelaySeconds }}

@@ -55,40 +55,225 @@ s3:
 
 Set `s3.accessKey` and `s3.secretKey` for development only. For production, create a Kubernetes Secret with `S3_ACCESS_KEY` and `S3_SECRET_KEY`, then set `s3.existingSecret` to its name.
 
-### Vault and externally managed secrets
+### Externally managed secrets (Vault, External Secrets Operator)
 
-Use `secretRef` to inject one Secret managed outside this chart into the backend, every worker, and the optional migration Job. This works with HashiCorp Vault Secrets Operator, External Secrets Operator, or any other controller that materializes a Kubernetes Secret:
+#### How this chart handles secrets
+
+A Kubernetes Secret is a named bundle of key/value pairs living in one namespace. It is base64-encoded, not encrypted, and a pod can only reference a Secret in its own namespace. Containers receive it as environment variables in one of two ways, and this chart uses both on purpose:
+
+- **`env` with a `secretKeyRef`** — "create one variable named `X`, taking its value from key `Y` of Secret `Z`". Surgical: nothing else in that Secret reaches the container. The database password and the two S3 credentials are delivered this way.
+- **`envFrom` with a `secretRef`** — "turn **every** key in Secret `Z` into a variable of the same name". Bulk: the Secret's key names *are* the variable names. The application Secret is delivered this way, because Lightdash reads dozens of optional settings and the chart cannot know which ones you use.
+
+By default the chart **creates** Secrets for you out of plaintext values (`secrets`, `s3.accessKey`, `externalDatabase.password`), which means those values have to live in a values file. Setting `secretRefs.enabled: true` turns on **strict mode**: the chart creates no Secrets at all and renders only *references* to Secrets that already exist — normally produced by a controller that syncs them out of Vault.
+
+Three things follow from that, and they are the crux of the whole feature:
+
+1. **You create the Secrets, before you install the chart.**
+2. **The chart validates names, never contents.** `helm install` succeeding proves the *names* line up. It proves nothing about the keys inside. A missing or misspelled key surfaces when a pod starts, as `CreateContainerConfigError`, not as a Helm error.
+3. **Your values file contains no secrets.** That is the point.
+
+#### Choosing a mechanism
+
+| Mechanism | What it puts in the cluster | Support in this chart |
+|---|---|---|
+| **Vault Secrets Operator (VSO)** or **External Secrets Operator (ESO)** — a controller reconciles a custom resource into a Kubernetes Secret | A real Secret, kept in sync with Vault | Fully supported by `secretRefs`. **Recommended.** |
+| **Per-key mapping through `extraEnv`** — you write `valueFrom.secretKeyRef` entries yourself | Nothing; references keys of a Secret you already have | Supported today on the backend, the workers (`schedulerExtraEnv`) and the migration Job (`migrationJob.extraEnv`) |
+| **Vault Agent Injector** — `vault.hashicorp.com/*` pod annotations, a sidecar renders secrets to files | Files under `/vault/secrets`; no Kubernetes Secret | Partial. See [Vault Agent Injector](#vault-agent-injector) for what does and does not work |
+
+Worked example values files live in [`examples/`](examples/): [`values-vault-vso.yaml`](examples/values-vault-vso.yaml) for the recommended operator setup, and [`values-vault-injector.yaml`](examples/values-vault-injector.yaml) for the injector hybrid.
+
+#### Strict mode: `secretRefs`
 
 ```yaml
-secrets: {}
-secretRef:
-  name: lightdash-vault
-  databasePasswordKey: PGPASSWORD
+secretRefs:
+  enabled: true
+  application:
+    name: lightdash-application
+  database:
+    name: lightdash-database
+    passwordKey: PGPASSWORD
+  s3:
+    name: lightdash-s3
+    accessKey: S3_ACCESS_KEY
+    secretKey: S3_SECRET_KEY
+  migration:
+    name: lightdash-application # required when migrationJob.enabled=true
 ```
 
-Store all required environment variables in that Secret, for example `LIGHTDASH_SECRET`, `PGPASSWORD`, `S3_ACCESS_KEY`, and `S3_SECRET_KEY`. When `secretRef.name` is set, it takes precedence over the chart-created application and S3 Secrets and the application, S3, migration, and external-database existing Secret references. `databasePasswordKey` is used only with `postgresql.enabled=false`; the bundled PostgreSQL chart keeps its own credential lifecycle.
+`accessKey`, `secretKey` and `passwordKey` name the key **inside your Secret**. The resulting environment variable names (`S3_ACCESS_KEY`, `S3_SECRET_KEY`, `PGPASSWORD`) are fixed by the chart.
 
-For HashiCorp Vault Secrets Operator, create the `VaultStaticSecret` separately and point its destination at `secretRef.name`:
+#### What each workload receives
+
+| Workload | Secret-backed `env` | `envFrom` |
+|---|---|---|
+| backend Deployment | `PGPASSWORD`, plus `S3_ACCESS_KEY` and `S3_SECRET_KEY` when `secretRefs.s3.name` is set | application ConfigMap, then `secretRefs.application.name` |
+| all four worker Deployments | same as the backend | same as the backend |
+| migration Job (Helm hook) | `PGPASSWORD` only — **never any S3 credential** | migration ConfigMap, then `secretRefs.migration.name` |
+
+`postgresql.enabled: true` (the default) keeps the bundled database's own credential lifecycle and **ignores `secretRefs.database` entirely**; `PGPASSWORD` resolves to the subchart's Secret. To put the bundled password in Vault, use `postgresql.auth.existingSecret` instead.
+
+#### Which keys each Secret must contain
+
+| Secret | Key | Required? |
+|---|---|---|
+| `secretRefs.application.name` | `LIGHTDASH_SECRET` | **Yes.** Lightdash refuses to start without it |
+| | anything you previously put in `secrets` or `existingSecret`, e.g. `LIGHTDASH_LICENSE_KEY` | carry it over |
+| `secretRefs.database.name` | the key named by `passwordKey` (default `PGPASSWORD`) | **Yes**, when `postgresql.enabled: false`. This is the only key read |
+| `secretRefs.s3.name` | the keys named by `accessKey` and `secretKey` | only if you use the Secret at all — omit the whole block for workload identity |
+| `secretRefs.migration.name` | `LIGHTDASH_SECRET` | **Yes**, when `migrationJob.enabled: true`. See below |
+
+Because the application and migration Secrets are injected with `envFrom`, **their keys must be spelled exactly as Lightdash expects** — `LIGHTDASH_SECRET`, not `lightdash_secret`. A mis-keyed payload does not fail the deploy; it produces an environment variable Lightdash never reads. Rename keys on the operator side (see [Renaming Vault keys](#renaming-vault-keys)).
+
+`PGHOST`, `PGPORT`, `PGUSER` and `PGDATABASE` are **not** read from any Secret — they come from `externalDatabase.*` through a ConfigMap. Putting them in the Vault payload has no effect.
+
+#### Why the migration Job needs `LIGHTDASH_SECRET`
+
+The chart deliberately gives the migration Job less than the backend: the database password and its own Secret, never the application or S3 Secret. Lightdash disagrees. The migration entrypoint imports the same config module the web server uses, and that module validates on import — before any migration runs. It requires `LIGHTDASH_SECRET`, `S3_ENDPOINT`, `S3_BUCKET` and `S3_REGION` unconditionally, even though the migrator uses none of them.
+
+So, with `migrationJob.enabled: true`:
+
+- `secretRefs.migration.name` is **required**. The chart fails the render if it is unset while `migrationJob.extraEnv` is also empty; if you set `migrationJob.extraEnv` the chart assumes you are supplying `LIGHTDASH_SECRET` that way and stops checking. Pointing it at the same Secret as `secretRefs.application.name` is the simplest correct answer, and keeps a single source of truth — `LIGHTDASH_SECRET` encrypts stored warehouse credentials, so two copies that drift apart corrupt data rather than merely misconfigure.
+- Set `s3.endpoint`, `s3.bucket` and `s3.region` rather than putting them in a Secret. Those are not secrets, and they flow into *both* ConfigMaps, so the backend and the migration Job are configured in one place.
+
+#### Vault Secrets Operator
 
 ```yaml
 apiVersion: secrets.hashicorp.com/v1beta1
 kind: VaultStaticSecret
 metadata:
-  name: lightdash
+  name: lightdash-application
+  # Must be the release namespace: VSO writes the Secret into its own namespace,
+  # and a pod can only read Secrets in its own namespace.
+  namespace: lightdash
 spec:
   vaultAuthRef: lightdash
   mount: kvv2
   type: kv-v2
-  path: applications/lightdash
+  path: applications/lightdash/application
   refreshAfter: 60s
   destination:
     create: true
-    name: lightdash-vault
+    name: lightdash-application
+    # Add `overwrite: true` when adopting a Secret this chart previously created.
+    transformation:
+      # Required. Without it VSO adds a `_raw` key holding the entire Vault
+      # response, and because this chart injects the application Secret with
+      # envFrom, `_raw` becomes an environment variable containing that payload.
+      excludeRaw: true
+  # Kubernetes never updates environment variables in a running container, so a
+  # rotation reaches nothing until the pods restart. List every Deployment you
+  # have enabled. Leave `hmacSecretData` at its default: setting it to false
+  # silently disables every target below.
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: RELEASE-lightdash-backend
+    - kind: Deployment
+      name: RELEASE-lightdash-worker
+    - kind: Deployment
+      name: RELEASE-lightdash-app-build-worker
+    - kind: Deployment
+      name: RELEASE-lightdash-pre-aggregate-nats-worker
+    - kind: Deployment
+      name: RELEASE-lightdash-warehouse-nats-worker
 ```
 
-Kubernetes does not update environment variables in already-running containers when the Secret changes. Configure the operator to restart the Lightdash Deployments after a sync, or trigger a rollout through your deployment system.
+Create equivalent resources for the database and S3 destinations. `spec.namespace`, if you ever need it, is the Vault Enterprise namespace — not the Kubernetes one.
 
-If `migrationJob.enabled=true`, ensure the destination Secret exists before installing or upgrading this chart. The migration Job is a Helm pre-install/pre-upgrade hook and can run before a `VaultStaticSecret` supplied through `extraObjects` has been reconciled.
+#### External Secrets Operator
+
+```yaml
+apiVersion: external-secrets.io/v1 # v1beta1 is not served from ESO v0.17.0
+kind: ExternalSecret
+metadata:
+  name: lightdash-application
+  namespace: lightdash
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: vault-backend
+  target:
+    name: lightdash-application # ESO's equivalent of VSO's destination.name
+    creationPolicy: Owner
+  data:
+    # Explicit per-key mapping: secretKey is the environment variable name,
+    # remoteRef.property is the key in Vault.
+    - secretKey: LIGHTDASH_SECRET
+      remoteRef:
+        key: applications/lightdash/application
+        property: lightdash_secret
+```
+
+ESO adds no `_raw` key and cannot restart workloads itself. Use a reloader controller or trigger `kubectl rollout restart` from your deployment system.
+
+#### Renaming Vault keys
+
+If your Vault payload uses different key names, rename them on the operator side rather than in the chart:
+
+- **ESO** — `spec.data[].secretKey` (the name you want) with `remoteRef.property` (the Vault key), as above.
+- **VSO** — `spec.destination.transformation.templates`, optionally with `excludes: [".*"]` to drop the originals:
+  ```yaml
+  transformation:
+    excludeRaw: true
+    excludes: [".*"]
+    templates:
+      LIGHTDASH_SECRET:
+{{ `        text: '{{ get .Secrets "lightdash_secret" }}'` }}
+  ```
+- **In the chart** — `extraEnv` (backend and workers), `schedulerExtraEnv` (workers) and `migrationJob.extraEnv` (migration Job) all accept arbitrary `valueFrom.secretKeyRef` entries and are appended last, so they also override anything delivered by `envFrom`:
+  ```yaml
+  extraEnv:
+    - name: LIGHTDASH_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: lightdash-application
+          key: lightdash_secret
+  ```
+
+#### Vault Agent Injector
+
+The injector is driven by `vault.hashicorp.com/*` pod annotations and renders secrets into files under `/vault/secrets`. It creates no Kubernetes Secret. Put the annotations in `podAnnotations` (backend and all workers) or `migrationJob.podAnnotations`. `podAnnotations` is deliberately **not** processed with `tpl`, so Vault Agent templates pass through untouched.
+
+Because Lightdash reads its configuration from the environment and Kubernetes cannot load an environment variable from a file, the only way to use injected files is to wrap the container command so it sources them:
+
+```yaml
+podAnnotations:
+  vault.hashicorp.com/agent-inject: "true"
+  vault.hashicorp.com/role: lightdash
+  vault.hashicorp.com/agent-inject-secret-env: kv/data/lightdash/app
+  vault.hashicorp.com/agent-inject-perms-env: "0400" # default is 0644
+  vault.hashicorp.com/agent-inject-template-env: |
+{{ `    {{- with secret "kv/data/lightdash/app" -}}
+    {{- range $k, $v := .Data.data }}
+    export {{ $k }}='{{ $v | replaceAll "'" "'\\''" }}'
+    {{- end }}
+    {{- end }}` }}
+
+image:
+  command: ["/bin/sh", "-c", "source /vault/secrets/env && exec dumb-init -- node dist/index.js"]
+```
+
+Each worker takes the same wrapper through its own `command`. Use single quotes with that `replaceAll` escaping rather than the double-quoted form in HashiCorp's own example: inside double quotes a value containing `$(...)` would execute at container start.
+
+Known limits, all of which need a chart change to lift:
+
+- **`PGPASSWORD` is always a `secretKeyRef`.** Every workload reads it from a Secret, unconditionally. A deployment with *no* Kubernetes Secret at all is therefore not possible today — pair the injector with one operator-managed Secret for the database password.
+- **The migration Job's command is hardcoded**, so it cannot source an injected file. Give it `migrationJob.extraEnv` `secretKeyRef` entries, or a `secretRefs.migration.name` Secret, instead.
+- **`podAnnotations` is shared** by the backend and all four workers, and they share one ServiceAccount, so all five must use the same Vault role.
+- **On a Job, set `vault.hashicorp.com/agent-pre-populate-only: "true"`** if you ever annotate `migrationJob.podAnnotations`. Otherwise the Vault Agent sidecar never exits, the Job never completes, and the pre-install hook blocks the release until it times out.
+
+The honest trade-off: the injector's advantage is that secrets stay in a tmpfs file and never become a Kubernetes Secret. The moment you `source` them into the environment, they are readable through `/proc/<pid>/environ` again — you have moved the exposure, not removed it.
+
+#### Caveats
+
+- **Create the Secrets before installing.** The migration Job is a `pre-install`/`pre-upgrade` hook, so it runs *before* Helm applies the rest of the chart. Operator resources supplied through `extraObjects` are applied too late, and Helm never waits for a controller to reconcile a custom resource. Confirm with `kubectl get secret` first.
+- **Rotation does not restart anything.** In strict mode the chart's `checksum/secrets` pod annotation is the hash of an empty file and never changes, so `helm upgrade` will not roll pods either. Use `rolloutRestartTargets`, a reloader, or an explicit rollout.
+- **Reusing an existing external-database Secret needs `secretRefs.database.passwordKey`.** Strict mode ignores `externalDatabase.secretKeys.passwordKey` (default `postgresql-password`) and uses `secretRefs.database.passwordKey` (default `PGPASSWORD`). If the key names disagree, the migration Job fails first and blocks the upgrade.
+- **The S3 configuration check is inert in strict mode.** `S3_ENDPOINT`, `S3_BUCKET` and `S3_REGION` may legitimately arrive inside the application Secret, which the chart cannot read, so it stops validating them at render time. A typo produces a green `helm install` and a crash-looping backend.
+- **Forgetting `enabled: true` fails silently.** The rest of the `secretRefs` block is ignored, and the chart falls back to creating a Secret containing `LIGHTDASH_SECRET: changeme`. Check with `kubectl get deploy <release>-lightdash-backend -o yaml | grep -A2 secretRef`.
+- **A leftover `<release>-lightdash-externaldb` Secret** holding the old plaintext password survives the switch to strict mode; nothing references it, and nothing deletes it. Remove it manually.
+- **`extraEnv` wins over everything.** It is appended last, so an entry named `S3_ACCESS_KEY` overrides the one from `secretRefs.s3` and shows up as a duplicate in `kubectl describe`.
+- **Do not disable a block by nulling it.** `secretRefs: null` aborts the render with a nil-pointer error; use `enabled: false`.
 
 ### Backend probe paths
 

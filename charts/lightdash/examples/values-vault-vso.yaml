@@ -1,0 +1,91 @@
+# Lightdash with HashiCorp Vault, using the Vault Secrets Operator (VSO).
+#
+# This is the recommended shape for a security-strict deployment. VSO reconciles Vault paths into
+# ordinary Kubernetes Secrets; this chart references those Secrets and creates none of its own.
+# Verify with `helm template ... | grep -c '^kind: Secret'` -- it should print 0.
+#
+# WHAT YOU MUST DO FIRST
+#   1. Install VSO and configure a VaultAuth/VaultConnection for your cluster.
+#   2. Create the VaultStaticSecret resources (see the chart README) and confirm the destination
+#      Secrets exist: kubectl -n lightdash get secret lightdash-application lightdash-database lightdash-s3
+#   3. Only then run helm install. The migration Job is a pre-install hook and runs before the rest
+#      of the chart, so Secrets supplied through `extraObjects` would arrive too late.
+#
+# Replace every value marked CHANGE ME.
+
+secretRefs:
+  enabled: true
+
+  # Injected in FULL with envFrom into the backend and every worker: each key of this Secret becomes
+  # an environment variable of the same name. Must contain LIGHTDASH_SECRET, plus anything you used
+  # to put in `secrets`/`existingSecret` (e.g. LIGHTDASH_LICENSE_KEY). Keep the Vault path scoped to
+  # Lightdash configuration only -- unrelated keys would also become environment variables.
+  application:
+    name: lightdash-application
+
+  # Read with secretKeyRef, so ONLY this one key is exposed to the pods.
+  database:
+    name: lightdash-database
+    # The key name inside the Secret. Note that externalDatabase.secretKeys.passwordKey is ignored
+    # in strict mode: if you are reusing a Secret you previously pointed externalDatabase.existingSecret
+    # at, set this to the key that Secret actually contains (often `postgresql-password`).
+    passwordKey: PGPASSWORD
+
+  # Also read with secretKeyRef -- only these two keys are exposed. Delete this whole block when
+  # using IRSA / workload identity / any other ambient credential provider.
+  s3:
+    name: lightdash-s3
+    accessKey: S3_ACCESS_KEY
+    secretKey: S3_SECRET_KEY
+
+  # REQUIRED because migrationJob.enabled is true below. The migration Job receives neither the
+  # application nor the S3 Secret, but Lightdash validates its whole config on startup and refuses
+  # to run without LIGHTDASH_SECRET. Pointing this at the application Secret keeps one source of
+  # truth -- LIGHTDASH_SECRET encrypts stored warehouse credentials, so two copies that drift apart
+  # corrupt data rather than merely misconfigure.
+  migration:
+    name: lightdash-application
+
+# External PostgreSQL. Only the password comes from a Secret; the rest is non-secret connection
+# detail and is delivered through a ConfigMap.
+postgresql:
+  enabled: false
+externalDatabase:
+  host: postgres.internal.example.com # CHANGE ME
+  port: 5432
+  user: lightdash
+  database: lightdash
+  # password / existingSecret / secretKeys.passwordKey are all ignored in strict mode.
+
+# S3 endpoint, bucket and region are NOT secrets. Setting them here puts them in both the
+# application ConfigMap and the migration ConfigMap, which matters because Lightdash requires all
+# three at startup -- including in the migration Job, which never receives the S3 Secret.
+s3:
+  endpoint: https://s3.eu-west-1.amazonaws.com # CHANGE ME
+  bucket: lightdash # CHANGE ME
+  region: eu-west-1 # CHANGE ME
+
+configMap:
+  SITE_URL: https://lightdash.example.com # CHANGE ME
+
+# Run migrations in a dedicated pre-install/pre-upgrade hook Job rather than in the backend, so
+# backend pods never race each other for the migration lock.
+migrationJob:
+  enabled: true
+
+# Enable whichever workers you need. They share podAnnotations and a ServiceAccount with the
+# backend, and receive exactly the same Secrets.
+scheduler:
+  enabled: true
+appBuildWorker:
+  enabled: false
+warehouseNatsWorker:
+  enabled: false
+preAggregateNatsWorker:
+  enabled: false
+
+# Leave these empty. They are the legacy plaintext paths and are ignored in strict mode, but keeping
+# them empty means a mistyped `secretRefs.enabled` cannot silently fall back to shipping
+# `LIGHTDASH_SECRET: changeme` in a chart-created Secret.
+secrets: null
+existingSecret: ""

@@ -115,7 +115,7 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{/*
 Get the name of the postgresql credentials secret.
 If postgres is enabled, subchart creates it's own secret containing the password unless the user specifies an existingSecret
-If using an external database, secretRef takes precedence, then externalDatabase.existingSecret,
+If using an external database, strict secretRefs.database takes precedence, then externalDatabase.existingSecret,
 otherwise the password will be stored in a Secret created by this chart.
 */}}
 {{- define "lightdash.database.secretName" -}}
@@ -125,8 +125,8 @@ otherwise the password will be stored in a Secret created by this chart.
     {{- else -}}
         {{- include "lightdash.postgresql.fullname" . -}}
     {{- end -}}
-{{- else if .Values.secretRef.name -}}
-    {{ .Values.secretRef.name -}}
+{{- else if .Values.secretRefs.enabled -}}
+    {{ required "secretRefs.database.name is required when secretRefs.enabled=true and postgresql.enabled=false" .Values.secretRefs.database.name -}}
 {{- else -}}
     {{- if .Values.externalDatabase.existingSecret -}}
         {{ .Values.externalDatabase.existingSecret -}}
@@ -139,24 +139,33 @@ otherwise the password will be stored in a Secret created by this chart.
 {{- define "lightdash.database.secret.passwordKey" -}}
 {{- if .Values.postgresql.enabled -}}
   {{- ternary "password" .Values.postgresql.auth.secretKeys.userPasswordKey (eq "" .Values.postgresql.auth.existingSecret) -}}
-{{- else if .Values.secretRef.name -}}
-  {{- .Values.secretRef.databasePasswordKey | default "PGPASSWORD" -}}
+{{- else if .Values.secretRefs.enabled -}}
+  {{- .Values.secretRefs.database.passwordKey | default "PGPASSWORD" -}}
 {{- else -}}
   {{- .Values.externalDatabase.secretKeys.passwordKey -}}
 {{- end -}}
 {{- end -}}
 
 {{/*
-Render all Secret envFrom entries for a Lightdash workload. A central secretRef is
-used exactly once when configured. Otherwise preserve the legacy per-component
-selection rules. Pass migration=true for the migration hook Job.
+Render Secret envFrom entries for a Lightdash workload. Strict mode gives the
+backend and workers only the application Secret and gives the migration Job only
+its migration Secret. Otherwise preserve the legacy selection rules.
 */}}
 {{- define "lightdash.secretEnvFrom" -}}
 {{- $root := .root -}}
 {{- $migration := .migration -}}
-{{- if $root.Values.secretRef.name }}
+{{- if $root.Values.secretRefs.enabled }}
+{{- if $migration }}
+{{- if $root.Values.secretRefs.migration.name }}
 - secretRef:
-    name: {{ $root.Values.secretRef.name }}
+    name: {{ $root.Values.secretRefs.migration.name }}
+{{- else if not $root.Values.migrationJob.extraEnv }}
+{{- fail "secretRefs.migration.name is required when secretRefs.enabled=true and migrationJob.enabled=true. The migration Job receives neither the application nor the S3 Secret, but Lightdash reads LIGHTDASH_SECRET while loading its config, so the Job cannot start without it. Point secretRefs.migration.name at a Secret containing LIGHTDASH_SECRET (the same Secret as secretRefs.application.name is fine), or supply it through migrationJob.extraEnv." }}
+{{- end }}
+{{- else }}
+- secretRef:
+    name: {{ required "secretRefs.application.name is required when secretRefs.enabled=true" $root.Values.secretRefs.application.name }}
+{{- end }}
 {{- else if $migration }}
 {{- if and $root.Values.migrationJob.inheritGlobalEnv $root.Values.existingSecret }}
 - secretRef:
@@ -191,16 +200,41 @@ selection rules. Pass migration=true for the migration hook Job.
 {{- end }}
 {{- end -}}
 
+{{/*
+Render only the two S3 credential environment variables from the strict S3
+Secret. This avoids exposing unrelated keys through envFrom.
+*/}}
+{{- define "lightdash.s3SecretEnvs" -}}
+{{- if and .Values.secretRefs.enabled .Values.secretRefs.s3.name }}
+- name: S3_ACCESS_KEY
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.secretRefs.s3.name }}
+      key: {{ .Values.secretRefs.s3.accessKey | default "S3_ACCESS_KEY" }}
+- name: S3_SECRET_KEY
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.secretRefs.s3.name }}
+      key: {{ .Values.secretRefs.s3.secretKey | default "S3_SECRET_KEY" }}
+{{- end }}
+{{- end -}}
+
+{{/*
+Validate that S3 storage is configured. Keys can also arrive through a Secret this
+chart cannot inspect: existingSecret in legacy mode, secretRefs.application.name in
+strict mode. Either one is accepted as evidence that the keys are supplied.
+*/}}
 {{- define "lightdash.validateS3Config" -}}
 {{- $configMap := .Values.configMap -}}
-{{- $secrets := .Values.secrets -}}
+{{- $secrets := ternary (dict) .Values.secrets .Values.secretRefs.enabled -}}
 {{- $s3 := .Values.s3 -}}
-{{- $hasExistingSecret := or .Values.secretRef.name .Values.existingSecret -}}
-{{- $hasEndpoint := or $s3.endpoint $configMap.S3_ENDPOINT $secrets.S3_ENDPOINT $hasExistingSecret -}}
-{{- $hasBucket := or $s3.bucket $configMap.S3_BUCKET $secrets.S3_BUCKET $hasExistingSecret -}}
-{{- $hasRegion := or $s3.region $configMap.S3_REGION $secrets.S3_REGION $hasExistingSecret -}}
+{{- $hasOpaqueSecret := ternary .Values.secretRefs.application.name .Values.existingSecret .Values.secretRefs.enabled -}}
+{{- $hasEndpoint := or $s3.endpoint $configMap.S3_ENDPOINT $secrets.S3_ENDPOINT $hasOpaqueSecret -}}
+{{- $hasBucket := or $s3.bucket $configMap.S3_BUCKET $secrets.S3_BUCKET $hasOpaqueSecret -}}
+{{- $hasRegion := or $s3.region $configMap.S3_REGION $secrets.S3_REGION $hasOpaqueSecret -}}
 {{- if not (and $hasEndpoint $hasBucket $hasRegion) -}}
-{{- fail "S3-compatible storage is required. Set s3.endpoint, s3.bucket, and s3.region, or provide S3_ENDPOINT, S3_BUCKET, and S3_REGION through configMap, secrets, or existingSecret. See https://docs.lightdash.com/self-host/customize-deployment/environment-variables#s3" -}}
+{{- $sources := ternary "configMap or the Secret named by secretRefs.application.name" "configMap, secrets, or existingSecret" .Values.secretRefs.enabled -}}
+{{- fail (printf "S3-compatible storage is required. Set s3.endpoint, s3.bucket, and s3.region, or provide S3_ENDPOINT, S3_BUCKET, and S3_REGION through %s. See https://docs.lightdash.com/self-host/customize-deployment/environment-variables#s3" $sources) -}}
 {{- end -}}
 {{- end -}}
 
