@@ -1,0 +1,117 @@
+# Lightdash with the HashiCorp Vault Agent Injector, for clients who require that application
+# secrets are never stored as Kubernetes Secrets.
+#
+# READ THIS FIRST -- this is a HYBRID, not a pure injector setup.
+#
+# The injector renders secrets to files under /vault/secrets and creates no Kubernetes Secret. It is
+# used here for the application and S3 secrets on the backend and workers. Two things cannot go
+# through it today:
+#
+#   1. PGPASSWORD is an unconditional secretKeyRef on every workload. There is no chart setting that
+#      removes it, so ONE operator-managed Kubernetes Secret must exist for the database password.
+#   2. The migration Job's command is hardcoded, so it cannot source an injected file. It takes its
+#      secrets through migrationJob.extraEnv instead.
+#
+# Both Secrets referenced below (lightdash-database, lightdash-app-secrets) are expected to be
+# produced by VSO or ESO from the same Vault paths the injector reads, so Vault stays the single
+# source of truth. Create them and confirm they exist BEFORE running helm install -- the migration
+# Job is a pre-install hook and runs before the rest of the chart.
+#
+# Honest trade-off: `source /vault/secrets/env` puts the values back into the process environment,
+# where /proc/<pid>/environ can read them. The injector moves the exposure out of the Kubernetes API,
+# it does not remove it. If that distinction does not matter to your threat model, prefer
+# values-vault-vso.yaml, which is simpler and supported end to end.
+#
+# Replace every value marked CHANGE ME.
+
+# Vault Agent Injector annotations. Applied to the backend AND all four worker pod templates -- the
+# chart has one shared podAnnotations map, so all of them use the same Vault role. These are NOT
+# processed with `tpl`, so the Go template syntax below reaches Vault Agent untouched.
+podAnnotations:
+  vault.hashicorp.com/agent-inject: "true"
+  vault.hashicorp.com/role: lightdash # CHANGE ME: Vault Kubernetes auth role
+  vault.hashicorp.com/agent-inject-secret-env: kv/data/lightdash/app # CHANGE ME
+  # Default file mode is 0644, i.e. readable by every container in the pod.
+  vault.hashicorp.com/agent-inject-perms-env: "0400"
+  # The injector's built-in template is not shell-sourceable and reads .Data rather than .Data.data,
+  # so it is wrong for KV v2. Always supply your own. Single quotes with this replaceAll escaping
+  # round-trip values containing spaces, quotes, $(...) and newlines; the double-quoted form in
+  # HashiCorp's own example would execute $(...) at container start.
+  vault.hashicorp.com/agent-inject-template-env: |
+    {{- with secret "kv/data/lightdash/app" -}}
+    {{- range $k, $v := .Data.data }}
+    export {{ $k }}='{{ $v | replaceAll "'" "'\\''" }}'
+    {{- end }}
+    {{- end }}
+
+# Wrap the backend command so it sources the rendered file before exec'ing the app. `exec` matters:
+# it keeps the app as PID 1 so signals and exit codes still work.
+image:
+  command:
+    ["/bin/sh", "-c", "source /vault/secrets/env && exec dumb-init -- node dist/index.js"]
+
+# Each worker needs the same wrapper through its own `command`. Do NOT use image.args for this --
+# it is shared by the backend and every worker.
+scheduler:
+  enabled: true
+  command:
+    ["/bin/sh", "-c", "source /vault/secrets/env && exec node dist/scheduler.js"]
+appBuildWorker:
+  enabled: false
+  command:
+    ["/bin/sh", "-c", "source /vault/secrets/env && exec node dist/scheduler.js"]
+warehouseNatsWorker:
+  enabled: false
+  command:
+    ["/bin/sh", "-c", "source /vault/secrets/env && exec node dist/natsWorker.js --stream warehouse"]
+preAggregateNatsWorker:
+  enabled: false
+  command:
+    ["/bin/sh", "-c", "source /vault/secrets/env && exec node dist/natsWorker.js --stream pre-aggregate"]
+
+# The one Kubernetes Secret this deployment cannot avoid. Have VSO/ESO write the database password
+# into it; `postgresql-password` is the key the chart reads by default here.
+postgresql:
+  enabled: false
+externalDatabase:
+  host: postgres.internal.example.com # CHANGE ME
+  port: 5432
+  user: lightdash
+  database: lightdash
+  existingSecret: lightdash-database
+  secretKeys:
+    passwordKey: postgresql-password
+
+migrationJob:
+  enabled: true
+  # The migration Job cannot source an injected file, so map its secrets in explicitly. Lightdash
+  # validates its entire config on startup, so the migrator needs LIGHTDASH_SECRET even though it
+  # never uses it. This is per-key secret mapping: `key` is the name in the Kubernetes Secret,
+  # `name` on the env entry is the variable Lightdash reads.
+  extraEnv:
+    - name: LIGHTDASH_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: lightdash-app-secrets
+          key: LIGHTDASH_SECRET
+  # If you ever put Vault Agent annotations here, `agent-pre-populate-only: "true"` is mandatory:
+  # otherwise the injected sidecar never exits, the Job never completes, and the pre-install hook
+  # blocks the release until it times out.
+  podAnnotations: {}
+
+# Non-secret S3 settings. Required at startup by both the backend and the migration Job. Keeping
+# them here rather than in Vault means the migration Job gets them from its ConfigMap.
+s3:
+  endpoint: https://s3.eu-west-1.amazonaws.com # CHANGE ME
+  bucket: lightdash # CHANGE ME
+  region: eu-west-1 # CHANGE ME
+  # No accessKey/secretKey/existingSecret: S3_ACCESS_KEY and S3_SECRET_KEY come from the injected
+  # env file on the backend and workers.
+
+configMap:
+  SITE_URL: https://lightdash.example.com # CHANGE ME
+
+# No chart-created Secrets: `secrets: null` (not `{}` -- Helm merges maps, so `{}` would keep the
+# LIGHTDASH_SECRET: changeme default) and no existingSecret.
+secrets: null
+existingSecret: ""
