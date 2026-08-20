@@ -65,21 +65,7 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ include "lightdash.fullname" . }}-migration-configmap
-            {{- if and .Values.migrationJob.inheritGlobalEnv .Values.existingSecret }}
-            - secretRef:
-                name: {{ .Values.existingSecret }}
-            {{- end }}
-            {{- if .Values.migrationJob.existingSecret }}
-            - secretRef:
-                name: {{ .Values.migrationJob.existingSecret }}
-            {{- else if not (empty .Values.secrets) }}
-            - secretRef:
-                name: {{ include "lightdash.fullname" . }}-migration-secrets
-            {{- end }}
-            {{- if .Values.s3.existingSecret }}
-            - secretRef:
-                name: {{ .Values.s3.existingSecret }}
-            {{- end }}
+            {{- include "lightdash.secretEnvFrom" (dict "root" . "migration" true) | nindent 12 }}
           {{- if not (empty .Values.migrationJob.resources) }}
           resources:
             {{- toYaml .Values.migrationJob.resources | nindent 12 }}

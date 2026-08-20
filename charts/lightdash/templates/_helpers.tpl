@@ -115,7 +115,8 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{/*
 Get the name of the postgresql credentials secret.
 If postgres is enabled, subchart creates it's own secret containing the password unless the user specifies an existingSecret
-If using an external database, the password will be stored in the lightdash secret unless the user specifies an existingSecret
+If using an external database, secretRef takes precedence, then externalDatabase.existingSecret,
+otherwise the password will be stored in a Secret created by this chart.
 */}}
 {{- define "lightdash.database.secretName" -}}
 {{- if .Values.postgresql.enabled -}}
@@ -124,6 +125,8 @@ If using an external database, the password will be stored in the lightdash secr
     {{- else -}}
         {{- include "lightdash.postgresql.fullname" . -}}
     {{- end -}}
+{{- else if .Values.secretRef.name -}}
+    {{ .Values.secretRef.name -}}
 {{- else -}}
     {{- if .Values.externalDatabase.existingSecret -}}
         {{ .Values.externalDatabase.existingSecret -}}
@@ -136,16 +139,63 @@ If using an external database, the password will be stored in the lightdash secr
 {{- define "lightdash.database.secret.passwordKey" -}}
 {{- if .Values.postgresql.enabled -}}
   {{- ternary "password" .Values.postgresql.auth.secretKeys.userPasswordKey (eq "" .Values.postgresql.auth.existingSecret) -}}
+{{- else if .Values.secretRef.name -}}
+  {{- .Values.secretRef.databasePasswordKey | default "PGPASSWORD" -}}
 {{- else -}}
   {{- .Values.externalDatabase.secretKeys.passwordKey -}}
 {{- end -}}
+{{- end -}}
+
+{{/*
+Render all Secret envFrom entries for a Lightdash workload. A central secretRef is
+used exactly once when configured. Otherwise preserve the legacy per-component
+selection rules. Pass migration=true for the migration hook Job.
+*/}}
+{{- define "lightdash.secretEnvFrom" -}}
+{{- $root := .root -}}
+{{- $migration := .migration -}}
+{{- if $root.Values.secretRef.name }}
+- secretRef:
+    name: {{ $root.Values.secretRef.name }}
+{{- else if $migration }}
+{{- if and $root.Values.migrationJob.inheritGlobalEnv $root.Values.existingSecret }}
+- secretRef:
+    name: {{ $root.Values.existingSecret }}
+{{- end }}
+{{- if $root.Values.migrationJob.existingSecret }}
+- secretRef:
+    name: {{ $root.Values.migrationJob.existingSecret }}
+{{- else if not (empty $root.Values.secrets) }}
+- secretRef:
+    name: {{ include "lightdash.fullname" $root }}-migration-secrets
+{{- end }}
+{{- if $root.Values.s3.existingSecret }}
+- secretRef:
+    name: {{ $root.Values.s3.existingSecret }}
+{{- end }}
+{{- else }}
+{{- if $root.Values.existingSecret }}
+- secretRef:
+    name: {{ $root.Values.existingSecret }}
+{{- else if $root.Values.secrets }}
+- secretRef:
+    name: {{ include "lightdash.fullname" $root }}
+{{- end }}
+{{- if $root.Values.s3.existingSecret }}
+- secretRef:
+    name: {{ $root.Values.s3.existingSecret }}
+{{- else if or $root.Values.s3.accessKey $root.Values.s3.secretKey }}
+- secretRef:
+    name: {{ include "lightdash.fullname" $root }}-s3
+{{- end }}
+{{- end }}
 {{- end -}}
 
 {{- define "lightdash.validateS3Config" -}}
 {{- $configMap := .Values.configMap -}}
 {{- $secrets := .Values.secrets -}}
 {{- $s3 := .Values.s3 -}}
-{{- $hasExistingSecret := .Values.existingSecret -}}
+{{- $hasExistingSecret := or .Values.secretRef.name .Values.existingSecret -}}
 {{- $hasEndpoint := or $s3.endpoint $configMap.S3_ENDPOINT $secrets.S3_ENDPOINT $hasExistingSecret -}}
 {{- $hasBucket := or $s3.bucket $configMap.S3_BUCKET $secrets.S3_BUCKET $hasExistingSecret -}}
 {{- $hasRegion := or $s3.region $configMap.S3_REGION $secrets.S3_REGION $hasExistingSecret -}}

@@ -1,5 +1,5 @@
 {{- if not .Values.postgresql.enabled -}}
-{{- if not .Values.externalDatabase.existingSecret -}}
+{{- if and (not .Values.secretRef.name) (not .Values.externalDatabase.existingSecret) -}}
 # The user is using an external database and has not provided a secret with the credentials.
 # This creates a secret with the password provided in the values.yaml
 apiVersion: v1

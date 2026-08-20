@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 2.16.48](https://img.shields.io/badge/Version-2.16.48-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.211.0](https://img.shields.io/badge/AppVersion-1.211.0-informational?style=flat-square)
+![Version: 2.16.49](https://img.shields.io/badge/Version-2.16.49-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.211.0](https://img.shields.io/badge/AppVersion-1.211.0-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -53,6 +53,41 @@ s3:
 ```
 
 Set `s3.accessKey` and `s3.secretKey` for development only. For production, create a Kubernetes Secret with `S3_ACCESS_KEY` and `S3_SECRET_KEY`, then set `s3.existingSecret` to its name.
+
+### Vault and externally managed secrets
+
+Use `secretRef` to inject one Secret managed outside this chart into the backend, every worker, and the optional migration Job. This works with HashiCorp Vault Secrets Operator, External Secrets Operator, or any other controller that materializes a Kubernetes Secret:
+
+```yaml
+secrets: {}
+secretRef:
+  name: lightdash-vault
+  databasePasswordKey: PGPASSWORD
+```
+
+Store all required environment variables in that Secret, for example `LIGHTDASH_SECRET`, `PGPASSWORD`, `S3_ACCESS_KEY`, and `S3_SECRET_KEY`. When `secretRef.name` is set, it takes precedence over the chart-created application and S3 Secrets and the application, S3, migration, and external-database existing Secret references. `databasePasswordKey` is used only with `postgresql.enabled=false`; the bundled PostgreSQL chart keeps its own credential lifecycle.
+
+For HashiCorp Vault Secrets Operator, create the `VaultStaticSecret` separately and point its destination at `secretRef.name`:
+
+```yaml
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultStaticSecret
+metadata:
+  name: lightdash
+spec:
+  vaultAuthRef: lightdash
+  mount: kvv2
+  type: kv-v2
+  path: applications/lightdash
+  refreshAfter: 60s
+  destination:
+    create: true
+    name: lightdash-vault
+```
+
+Kubernetes does not update environment variables in already-running containers when the Secret changes. Configure the operator to restart the Lightdash Deployments after a sync, or trigger a rollout through your deployment system.
+
+If `migrationJob.enabled=true`, ensure the destination Secret exists before installing or upgrading this chart. The migration Job is a Helm pre-install/pre-upgrade hook and can run before a `VaultStaticSecret` supplied through `extraObjects` has been reconciled.
 
 ### Backend probe paths
 
@@ -369,6 +404,9 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | scheduler.terminationGracePeriodSeconds | int | `90` |  |
 | scheduler.type | string | `"graphile"` |  |
 | schedulerExtraEnv | list | `[]` |  |
+| secretRef | object | `{"databasePasswordKey":"PGPASSWORD","name":""}` | Central reference to a Secret managed outside this chart, for example by HashiCorp Vault Secrets Operator or External Secrets Operator. When name is set, it takes precedence over secrets, existingSecret, s3.existingSecret, and migrationJob.existingSecret for Lightdash workloads. With an external database, it also takes precedence over externalDatabase.existingSecret. |
+| secretRef.databasePasswordKey | string | `"PGPASSWORD"` | Key containing the external PostgreSQL password in secretRef.name. Ignored when the bundled PostgreSQL chart is enabled. |
+| secretRef.name | string | `""` | Name of the externally managed Kubernetes Secret to inject into the backend, all workers, and the migration Job |
 | secrets.LIGHTDASH_SECRET | string | `"changeme"` | This is the secret used to sign the session ID cookie and to encrypt sensitive information. Do not share this secret! |
 | securityContext | object | `{}` |  |
 | service.port | int | `8080` |  |

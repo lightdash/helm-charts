@@ -99,20 +99,7 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ template "lightdash.fullname" $root }}
-            {{- if $root.Values.existingSecret }}
-            - secretRef:
-                name: {{ $root.Values.existingSecret }}
-            {{- else if $root.Values.secrets }}
-            - secretRef:
-                name: {{ template "lightdash.fullname" $root }}
-            {{- end }}
-            {{- if $root.Values.s3.existingSecret }}
-            - secretRef:
-                name: {{ $root.Values.s3.existingSecret }}
-            {{- else if or $root.Values.s3.accessKey $root.Values.s3.secretKey }}
-            - secretRef:
-                name: {{ template "lightdash.fullname" $root }}-s3
-            {{- end }}
+            {{- include "lightdash.secretEnvFrom" (dict "root" $root "migration" false) | nindent 12 }}
           {{- if $workerConfig.startupProbe }}
           startupProbe:
             {{- if $workerConfig.startupProbe.initialDelaySeconds }}

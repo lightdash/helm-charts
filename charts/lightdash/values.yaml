@@ -35,6 +35,13 @@ secrets:
 # -- Name of an existing Kubernetes secret to inject into all pods except the migration Job unless migrationJob.inheritGlobalEnv is true. Takes precedence over .Values.secrets when set.
 existingSecret: ""
 
+# -- Central reference to a Secret managed outside this chart, for example by HashiCorp Vault Secrets Operator or External Secrets Operator. When name is set, it takes precedence over secrets, existingSecret, s3.existingSecret, and migrationJob.existingSecret for Lightdash workloads. With an external database, it also takes precedence over externalDatabase.existingSecret.
+secretRef:
+  # -- Name of the externally managed Kubernetes Secret to inject into the backend, all workers, and the migration Job
+  name: ""
+  # -- Key containing the external PostgreSQL password in secretRef.name. Ignored when the bundled PostgreSQL chart is enabled.
+  databasePasswordKey: "PGPASSWORD"
+
 s3:
   # -- S3-compatible storage endpoint, for example https://s3.amazonaws.com
   endpoint: ""

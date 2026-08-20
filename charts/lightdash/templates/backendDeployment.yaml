@@ -70,20 +70,7 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ template "lightdash.fullname" $ }}
-            {{- if .Values.existingSecret }}
-            - secretRef:
-                name: {{ .Values.existingSecret }}
-            {{- else if .Values.secrets }}
-            - secretRef:
-                name: {{ template "lightdash.fullname" $ }}
-            {{- end }}
-            {{- if .Values.s3.existingSecret }}
-            - secretRef:
-                name: {{ .Values.s3.existingSecret }}
-            {{- else if or .Values.s3.accessKey .Values.s3.secretKey }}
-            - secretRef:
-                name: {{ template "lightdash.fullname" $ }}-s3
-            {{- end }}
+            {{- include "lightdash.secretEnvFrom" (dict "root" . "migration" false) | nindent 12 }}
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}
