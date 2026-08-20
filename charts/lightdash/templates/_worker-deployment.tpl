@@ -70,9 +70,6 @@ spec:
             {{- with (include "lightdash.s3SecretEnvs" $root | trim) }}
             {{- . | nindent 12 }}
             {{- end }}
-            {{- with (include "lightdash.sslEnvs" $root | trim) }}
-            {{- . | nindent 12 }}
-            {{- end }}
             - name: PORT
               value: {{ $workerConfig.port | quote }}
             {{- if and $workerConfig.tasks $workerConfig.tasks.include }}
