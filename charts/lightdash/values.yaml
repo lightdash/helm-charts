@@ -352,6 +352,13 @@ ssl:
 ## @param migrationJob.serviceAccount.create Create a dedicated ServiceAccount for the migration hook Job (pre-install/pre-upgrade)
 ## @param migrationJob.serviceAccount.name ServiceAccount name (defaults to `<release-fullname>-migration` when create is true, or `default` when create is false)
 ## @param migrationJob.serviceAccount.annotations Annotations on the migration ServiceAccount (e.g. workload identity)
+## @param migrationJob.scaleDownBackend.enabled Scale the backend Deployment to zero before running pre-upgrade migrations. Helm restores replicas after the migration succeeds.
+## @param migrationJob.scaleDownBackend.timeoutSeconds Maximum time to wait for backend pods to terminate
+## @param migrationJob.scaleDownBackend.image.repository kubectl image repository
+## @param migrationJob.scaleDownBackend.image.tag kubectl image tag
+## @param migrationJob.scaleDownBackend.image.pullPolicy kubectl image pull policy
+## @param migrationJob.scaleDownBackend.resources Resource requests and limits for the scale-down containers
+## @param migrationJob.scaleDownBackend.rbac.create Create the Role and RoleBinding required to scale the backend
 migrationJob:
   enabled: false
   # -- When true, the migration Job also receives the top-level extraEnv and existingSecret, so env supplied globally (for example LIGHTDASH_LICENSE_KEY) reaches the migrator. Default false keeps current behaviour.
@@ -364,6 +371,16 @@ migrationJob:
     create: true
     name: ""
     annotations: {}
+  scaleDownBackend:
+    enabled: false
+    timeoutSeconds: 300
+    image:
+      repository: registry.k8s.io/kubectl
+      tag: "v1.33.4"
+      pullPolicy: IfNotPresent
+    resources: {}
+    rbac:
+      create: true
   ssl:
     enabled: false
     mountPath: "/etc/ssl/certs"
