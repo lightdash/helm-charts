@@ -131,6 +131,21 @@ Set `minAvailable` to pin a minimum number of available pods instead. When both 
 
 **Important:** With `replicaCount: 1`, the default permits the only pod to be evicted, so it does not prevent downtime.
 
+## Database migrations during upgrades
+
+To stop backend traffic while the migration hook runs, enable the upgrade-only scale-down init containers:
+
+```yaml
+migrationJob:
+  enabled: true
+  scaleDownBackend:
+    enabled: true
+```
+
+The migration Job removes the backend HPA, scales the backend Deployment to zero, waits for its pods to terminate, and then runs migrations. After the hook succeeds, Helm restores `replicaCount` or recreates the HPA as part of the normal upgrade. This causes backend downtime for the duration of the migration and rollout.
+
+By default, the chart creates the required namespace-scoped RBAC. Set `migrationJob.scaleDownBackend.rbac.create: false` only when the migration service account already has equivalent permissions.
+
 ## Values
 
 Note The `secret.*` values are used to create [kubernetes secrets](https://kubernetes.io/docs/concepts/configuration/secret/).
@@ -245,6 +260,13 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | migrationJob.inheritGlobalEnv | bool | `false` | When true, the migration Job also receives the top-level extraEnv and existingSecret, so env supplied globally (for example LIGHTDASH_LICENSE_KEY) reaches the migrator. Default false keeps current behaviour. |
 | migrationJob.podAnnotations | object | `{}` |  |
 | migrationJob.resources | object | `{}` |  |
+| migrationJob.scaleDownBackend.enabled | bool | `false` |  |
+| migrationJob.scaleDownBackend.image.pullPolicy | string | `"IfNotPresent"` |  |
+| migrationJob.scaleDownBackend.image.repository | string | `"registry.k8s.io/kubectl"` |  |
+| migrationJob.scaleDownBackend.image.tag | string | `"v1.33.4"` |  |
+| migrationJob.scaleDownBackend.rbac.create | bool | `true` |  |
+| migrationJob.scaleDownBackend.resources | object | `{}` |  |
+| migrationJob.scaleDownBackend.timeoutSeconds | int | `300` |  |
 | migrationJob.serviceAccount.annotations | object | `{}` |  |
 | migrationJob.serviceAccount.create | bool | `true` |  |
 | migrationJob.serviceAccount.name | string | `""` |  |
