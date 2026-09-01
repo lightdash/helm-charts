@@ -1,3 +1,4 @@
+{{- $scaleDownWorkloads := and .Release.IsUpgrade (eq (include "lightdash.requiresPreMigrationScaleDown" .) "true") -}}
 {{- if .Values.migrationJob.enabled }}
 apiVersion: batch/v1
 kind: Job
@@ -33,9 +34,56 @@ spec:
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- if .Values.initContainers }}
+      {{- if or $scaleDownWorkloads .Values.initContainers }}
       initContainers:
-        {{- toYaml .Values.initContainers | nindent 8 }}
+        {{- if $scaleDownWorkloads }}
+        - name: remove-backend-hpa
+          image: "{{ .Values.migrationJob.scaleDownWorkloads.image.repository }}:{{ .Values.migrationJob.scaleDownWorkloads.image.tag }}"
+          imagePullPolicy: {{ .Values.migrationJob.scaleDownWorkloads.image.pullPolicy }}
+          command:
+            - kubectl
+          args:
+            - delete
+            - horizontalpodautoscaler
+            - {{ include "lightdash.fullname" . }}
+            - --ignore-not-found=true
+          {{- with .Values.migrationJob.scaleDownWorkloads.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        - name: scale-down-workloads
+          image: "{{ .Values.migrationJob.scaleDownWorkloads.image.repository }}:{{ .Values.migrationJob.scaleDownWorkloads.image.tag }}"
+          imagePullPolicy: {{ .Values.migrationJob.scaleDownWorkloads.image.pullPolicy }}
+          command:
+            - kubectl
+          args:
+            - scale
+            - deployment
+            - --selector={{ include "lightdash.applicationWorkloadSelector" . }}
+            - --replicas=0
+          {{- with .Values.migrationJob.scaleDownWorkloads.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        - name: wait-for-workload-termination
+          image: "{{ .Values.migrationJob.scaleDownWorkloads.image.repository }}:{{ .Values.migrationJob.scaleDownWorkloads.image.tag }}"
+          imagePullPolicy: {{ .Values.migrationJob.scaleDownWorkloads.image.pullPolicy }}
+          command:
+            - kubectl
+          args:
+            - wait
+            - --for=delete
+            - pod
+            - --selector={{ include "lightdash.applicationWorkloadSelector" . }}
+            - --timeout={{ .Values.migrationJob.scaleDownWorkloads.timeoutSeconds }}s
+          {{- with .Values.migrationJob.scaleDownWorkloads.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        {{- end }}
+        {{- with .Values.initContainers }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- end }}
       containers:
         - name: migrate
