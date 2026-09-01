@@ -65,6 +65,63 @@ extract_kind() {
     ' "$input" > "$output"
 }
 
+render() {
+    local output="$1"
+    local lifecycle="$2"
+    shift 2
+    local args=(
+        safety "$chart_dir"
+        --namespace safety-ns
+        --set postgresql.enabled=false
+        --set browserless-chrome.enabled=false
+        --set nats.enabled=false
+        --set s3.endpoint=http://object-store
+        --set s3.bucket=test
+        --set s3.region=local
+        "$@"
+    )
+    if [[ "$lifecycle" == "upgrade" ]]; then
+        args+=(--is-upgrade)
+    fi
+    helm template "${args[@]}" > "$output"
+}
+
+assert_strategy() {
+    local render_file="$1"
+    local source="$2"
+    local strategy_type="$3"
+    local manifest="$temp_dir/deployment.yaml"
+    extract_source "$source" "$render_file" "$manifest"
+    assert_contains "$manifest" '  strategy:'
+    assert_contains "$manifest" "    type: $strategy_type"
+}
+
+assert_no_strategy() {
+    local render_file="$1"
+    local source="$2"
+    local manifest="$temp_dir/deployment.yaml"
+    extract_source "$source" "$render_file" "$manifest"
+    assert_not_contains "$manifest" '  strategy:'
+}
+
+assert_no_rolling_update() {
+    local render_file="$1"
+    local source="$2"
+    local manifest="$temp_dir/deployment.yaml"
+    extract_source "$source" "$render_file" "$manifest"
+    assert_not_contains "$manifest" '    rollingUpdate:'
+}
+
+assert_tuning() {
+    local render_file="$1"
+    local source="$2"
+    local value="$3"
+    local manifest="$temp_dir/deployment.yaml"
+    extract_source "$source" "$render_file" "$manifest"
+    assert_contains "$manifest" '    rollingUpdate:'
+    assert_contains "$manifest" "      maxSurge: $value"
+}
+
 expected_rules='rules:
   - apiGroups:
       - apps
@@ -102,143 +159,273 @@ expected_rules='rules:
       - list
       - watch'
 
-render_case() {
-    local scale_down="$1"
-    local lifecycle="$2"
-    local autoscaling="$3"
-    local workers="$4"
-    local case_name="scale-${scale_down}_${lifecycle}_autoscaling-${autoscaling}_workers-${workers}"
-    local render="$temp_dir/${case_name}.yaml"
-    local job="$temp_dir/${case_name}-job.yaml"
-    local backend="$temp_dir/${case_name}-backend.yaml"
-    local rbac="$temp_dir/${case_name}-rbac.yaml"
-    local role_binding="$temp_dir/${case_name}-role-binding.yaml"
-    local service_account="$temp_dir/${case_name}-service-account.yaml"
-    local helm_args=(
-        safety "$chart_dir"
-        --namespace safety-ns
-        --set postgresql.enabled=false
-        --set browserless-chrome.enabled=false
-        --set nats.enabled=false
-        --set s3.endpoint=http://object-store
-        --set s3.bucket=test
-        --set s3.region=local
-        --set migrationJob.enabled=true
-        --set migrationJob.scaleDownWorkloads.enabled="$scale_down"
-        --set autoscaling.enabled="$autoscaling"
-        --set autoscaling.minReplicas=3
-        --set replicaCount=2
-        --set scheduler.enabled="$workers"
-        --set appBuildWorker.enabled="$workers"
-        --set warehouseNatsWorker.enabled="$workers"
-        --set preAggregateNatsWorker.enabled="$workers"
-    )
-
-    if [[ "$lifecycle" == "upgrade" ]]; then
-        helm_args+=(--is-upgrade)
-    fi
-
-    helm template "${helm_args[@]}" > "$render"
-    extract_source lightdash/templates/migrationJob.yaml "$render" "$job"
-    extract_source lightdash/templates/backendDeployment.yaml "$render" "$backend"
-
-    local deployment_count
-    deployment_count="$(grep -c '^kind: Deployment$' "$render" || true)"
-    if [[ "$workers" == "true" && "$deployment_count" != "5" ]]; then
-        fail "$case_name rendered $deployment_count Deployments instead of 5"
-    fi
-    if [[ "$workers" == "false" && "$deployment_count" != "1" ]]; then
-        fail "$case_name rendered $deployment_count Deployments instead of 1"
-    fi
-
-    if [[ "$autoscaling" == "false" ]]; then
-        assert_contains "$backend" '  replicas: 2'
-    elif [[ "$scale_down" == "true" && "$lifecycle" == "upgrade" ]]; then
-        assert_contains "$backend" '  replicas: 3'
-    else
-        assert_not_contains "$backend" '  replicas:'
-    fi
-
-    if [[ "$scale_down" == "true" && "$lifecycle" == "upgrade" ]]; then
-        extract_source lightdash/templates/migrationScaleDownRbac.yaml "$render" "$rbac"
-        extract_kind RoleBinding "$render" "$role_binding"
-        extract_source lightdash/templates/migrationServiceAccount.yaml "$render" "$service_account"
-        assert_contains "$render" 'name: safety-lightdash-migration-scale-down'
-        assert_contains "$rbac" 'kind: Role'
-        assert_not_contains "$rbac" 'kind: ClusterRole'
-        assert_contains "$render" 'helm.sh/hook-weight: "-3"'
-        assert_contains "$render" 'helm.sh/hook: pre-upgrade'
-        assert_contains "$rbac" 'helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded,hook-failed'
-        assert_contains "$service_account" 'helm.sh/hook-weight: "-2"'
-        assert_contains "$service_account" 'helm.sh/hook: pre-install,pre-upgrade'
-        assert_contains "$role_binding" 'helm.sh/hook-weight: "-1"'
-        assert_contains "$role_binding" 'helm.sh/hook: pre-upgrade'
-        assert_contains "$role_binding" 'helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded,hook-failed'
-        assert_contains "$role_binding" 'name: safety-lightdash-migration'
-        assert_contains "$role_binding" 'namespace: safety-ns'
-        assert_contains "$job" 'helm.sh/hook-weight: "0"'
-        assert_contains "$job" 'serviceAccountName: safety-lightdash-migration'
-        assert_contains "$job" 'name: remove-backend-hpa'
-        assert_contains "$job" 'name: scale-down-workloads'
-        assert_contains "$job" 'name: wait-for-workload-termination'
-        assert_contains "$job" '--replicas=0'
-        assert_contains "$job" 'app.kubernetes.io/component in (backend,worker,app-build-worker,warehouse-nats-worker,pre-aggregate-nats-worker)'
-        assert_not_contains "$job" 'app.kubernetes.io/component=migration'
-
-        local actual_rules
-        actual_rules="$(awk '/^rules:$/ { capture = 1 } capture { print }' "$rbac")"
-        if ! diff -u <(printf '%s\n' "$expected_rules") <(printf '%s\n' "$actual_rules"); then
-            fail "$case_name rendered unexpected RBAC rules"
-        fi
-
-    else
-        assert_not_contains "$render" 'name: safety-lightdash-migration-scale-down'
-        assert_not_contains "$job" 'name: scale-down-workloads'
-        assert_not_contains "$job" 'name: wait-for-workload-termination'
+assert_scale_down() {
+    local render_file="$1"
+    local job="$temp_dir/job.yaml"
+    local role="$temp_dir/role.yaml"
+    local role_binding="$temp_dir/role-binding.yaml"
+    local service_account="$temp_dir/service-account.yaml"
+    extract_source lightdash/templates/migrationJob.yaml "$render_file" "$job"
+    extract_source lightdash/templates/migrationScaleDownRbac.yaml "$render_file" "$role"
+    extract_kind RoleBinding "$render_file" "$role_binding"
+    extract_source lightdash/templates/migrationServiceAccount.yaml "$render_file" "$service_account"
+    assert_contains "$job" 'name: remove-backend-hpa'
+    assert_contains "$job" 'name: scale-down-workloads'
+    assert_contains "$job" 'name: wait-for-workload-termination'
+    assert_contains "$job" '--replicas=0'
+    assert_contains "$job" 'app.kubernetes.io/component in (backend,worker,app-build-worker,warehouse-nats-worker,pre-aggregate-nats-worker)'
+    assert_not_contains "$job" 'app.kubernetes.io/component=migration'
+    assert_contains "$job" 'serviceAccountName: safety-lightdash-migration'
+    assert_contains "$role" 'kind: Role'
+    assert_not_contains "$role" 'kind: ClusterRole'
+    assert_contains "$role" 'helm.sh/hook: pre-upgrade'
+    assert_contains "$role" 'helm.sh/hook-weight: "-3"'
+    assert_contains "$role" 'helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded,hook-failed'
+    assert_contains "$service_account" 'helm.sh/hook: pre-install,pre-upgrade'
+    assert_contains "$service_account" 'helm.sh/hook-weight: "-2"'
+    assert_contains "$role_binding" 'helm.sh/hook: pre-upgrade'
+    assert_contains "$role_binding" 'helm.sh/hook-weight: "-1"'
+    assert_contains "$role_binding" 'helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded,hook-failed'
+    assert_contains "$role_binding" 'name: safety-lightdash-migration'
+    assert_contains "$role_binding" 'namespace: safety-ns'
+    local actual_rules
+    actual_rules="$(awk '/^rules:$/ { capture = 1 } capture { print }' "$role")"
+    if ! diff -u <(printf '%s\n' "$expected_rules") <(printf '%s\n' "$actual_rules"); then
+        fail "rendered unexpected RBAC rules"
     fi
 }
 
-for scale_down in false true; do
-    for lifecycle in install upgrade; do
-        for autoscaling in false true; do
-            for workers in false true; do
-                render_case "$scale_down" "$lifecycle" "$autoscaling" "$workers"
-            done
+assert_no_scale_down() {
+    local render_file="$1"
+    assert_not_contains "$render_file" 'name: safety-lightdash-migration-scale-down'
+    assert_not_contains "$render_file" 'name: remove-backend-hpa'
+    assert_not_contains "$render_file" 'name: scale-down-workloads'
+    assert_not_contains "$render_file" 'name: wait-for-workload-termination'
+}
+
+assert_migration_identity() {
+    local render_file="$1"
+    local job="$temp_dir/job.yaml"
+    local service_account="$temp_dir/service-account.yaml"
+    extract_source lightdash/templates/migrationJob.yaml "$render_file" "$job"
+    extract_source lightdash/templates/migrationServiceAccount.yaml "$render_file" "$service_account"
+    assert_contains "$job" 'serviceAccountName: safety-lightdash-migration'
+    assert_contains "$service_account" 'name: safety-lightdash-migration'
+    assert_contains "$service_account" 'helm.sh/hook: pre-install,pre-upgrade'
+    assert_contains "$service_account" 'helm.sh/hook-weight: "-2"'
+}
+
+deployment_sources=(
+    lightdash/templates/backendDeployment.yaml
+    lightdash/templates/workerDeployment.yaml
+    lightdash/templates/appBuildWorkerDeployment.yaml
+    lightdash/templates/warehouseNatsWorkerDeployment.yaml
+    lightdash/templates/preAggregateNatsWorkerDeployment.yaml
+)
+
+for lifecycle in install upgrade; do
+    for mode in unset RollingUpdate Recreate; do
+        output="$temp_dir/mode-${mode}-${lifecycle}.yaml"
+        mode_value=""
+        if [[ "$mode" != "unset" ]]; then
+            mode_value="$mode"
+        fi
+        render "$output" "$lifecycle" \
+            --set-string upgrade.mode="$mode_value" \
+            --set migrationJob.enabled=true \
+            --set autoscaling.enabled=true \
+            --set autoscaling.minReplicas=3 \
+            --set scheduler.enabled=true \
+            --set appBuildWorker.enabled=true \
+            --set warehouseNatsWorker.enabled=true \
+            --set preAggregateNatsWorker.enabled=true
+
+        for source in "${deployment_sources[@]}"; do
+            if [[ "$mode" == "unset" ]]; then
+                assert_no_strategy "$output" "$source"
+            else
+                assert_strategy "$output" "$source" "$mode"
+            fi
+            if [[ "$mode" == "Recreate" ]]; then
+                assert_no_rolling_update "$output" "$source"
+            fi
         done
+
+        backend="$temp_dir/backend.yaml"
+        extract_source lightdash/templates/backendDeployment.yaml "$output" "$backend"
+        assert_migration_identity "$output"
+        if [[ "$lifecycle" == "upgrade" && "$mode" == "Recreate" ]]; then
+            assert_scale_down "$output"
+            assert_contains "$backend" '  replicas: 3'
+        else
+            assert_no_scale_down "$output"
+            assert_not_contains "$backend" '  replicas:'
+        fi
     done
 done
 
-custom_render="$temp_dir/custom-service-account.yaml"
-custom_job="$temp_dir/custom-service-account-job.yaml"
-helm template safety "$chart_dir" --is-upgrade \
-    --namespace safety-ns \
-    --set postgresql.enabled=false \
-    --set browserless-chrome.enabled=false \
-    --set nats.enabled=false \
-    --set s3.endpoint=http://object-store \
-    --set s3.bucket=test \
-    --set s3.region=local \
+legacy_components=(
+    lightdashBackend
+    scheduler
+    appBuildWorker
+    warehouseNatsWorker
+    preAggregateNatsWorker
+)
+
+for component in "${legacy_components[@]}"; do
+    output="$temp_dir/legacy-${component}.yaml"
+    args=(
+        --set migrationJob.enabled=true
+        --set "$component.strategy.type=Recreate"
+    )
+    if [[ "$component" != "lightdashBackend" ]]; then
+        args+=(--set "$component.enabled=true")
+    fi
+    render "$output" upgrade "${args[@]}"
+    assert_scale_down "$output"
+done
+
+disabled_legacy="$temp_dir/disabled-legacy.yaml"
+render "$disabled_legacy" upgrade \
     --set migrationJob.enabled=true \
-    --set migrationJob.scaleDownWorkloads.enabled=true \
+    --set scheduler.enabled=false \
+    --set scheduler.strategy.type=Recreate
+assert_no_scale_down "$disabled_legacy"
+
+legacy_preserved="$temp_dir/legacy-preserved.yaml"
+render "$legacy_preserved" upgrade \
+    --set migrationJob.enabled=true \
+    --set scheduler.enabled=true \
+    --set appBuildWorker.enabled=true \
+    --set warehouseNatsWorker.enabled=true \
+    --set preAggregateNatsWorker.enabled=true \
+    --set lightdashBackend.strategy.type=RollingUpdate \
+    --set lightdashBackend.strategy.rollingUpdate.maxSurge=11 \
+    --set scheduler.strategy.type=Recreate \
+    --set appBuildWorker.strategy.type=RollingUpdate \
+    --set appBuildWorker.strategy.rollingUpdate.maxSurge=12 \
+    --set warehouseNatsWorker.strategy.type=RollingUpdate \
+    --set warehouseNatsWorker.strategy.rollingUpdate.maxSurge=13
+assert_strategy "$legacy_preserved" lightdash/templates/backendDeployment.yaml RollingUpdate
+assert_tuning "$legacy_preserved" lightdash/templates/backendDeployment.yaml 11
+assert_strategy "$legacy_preserved" lightdash/templates/workerDeployment.yaml Recreate
+assert_no_rolling_update "$legacy_preserved" lightdash/templates/workerDeployment.yaml
+assert_strategy "$legacy_preserved" lightdash/templates/appBuildWorkerDeployment.yaml RollingUpdate
+assert_tuning "$legacy_preserved" lightdash/templates/appBuildWorkerDeployment.yaml 12
+assert_strategy "$legacy_preserved" lightdash/templates/warehouseNatsWorkerDeployment.yaml RollingUpdate
+assert_tuning "$legacy_preserved" lightdash/templates/warehouseNatsWorkerDeployment.yaml 13
+assert_no_strategy "$legacy_preserved" lightdash/templates/preAggregateNatsWorkerDeployment.yaml
+assert_scale_down "$legacy_preserved"
+
+rolling_override="$temp_dir/rolling-override.yaml"
+render "$rolling_override" upgrade \
+    --set upgrade.mode=RollingUpdate \
+    --set migrationJob.enabled=true \
+    --set scheduler.enabled=true \
+    --set appBuildWorker.enabled=true \
+    --set warehouseNatsWorker.enabled=true \
+    --set preAggregateNatsWorker.enabled=true \
+    --set lightdashBackend.strategy.type=Recreate \
+    --set lightdashBackend.strategy.rollingUpdate.maxSurge=21 \
+    --set scheduler.strategy.type=Recreate \
+    --set scheduler.strategy.rollingUpdate.maxSurge=22 \
+    --set appBuildWorker.strategy.type=Recreate \
+    --set appBuildWorker.strategy.rollingUpdate.maxSurge=23 \
+    --set warehouseNatsWorker.strategy.type=Recreate \
+    --set warehouseNatsWorker.strategy.rollingUpdate.maxSurge=24 \
+    --set preAggregateNatsWorker.strategy.type=Recreate \
+    --set preAggregateNatsWorker.strategy.rollingUpdate.maxSurge=25
+surge=21
+for source in "${deployment_sources[@]}"; do
+    assert_strategy "$rolling_override" "$source" RollingUpdate
+    assert_tuning "$rolling_override" "$source" "$surge"
+    surge=$((surge + 1))
+done
+assert_no_scale_down "$rolling_override"
+
+recreate_override="$temp_dir/recreate-override.yaml"
+render "$recreate_override" upgrade \
+    --set upgrade.mode=Recreate \
+    --set migrationJob.enabled=true \
+    --set scheduler.enabled=true \
+    --set appBuildWorker.enabled=true \
+    --set warehouseNatsWorker.enabled=true \
+    --set preAggregateNatsWorker.enabled=true \
+    --set lightdashBackend.strategy.rollingUpdate.maxSurge=31 \
+    --set scheduler.strategy.rollingUpdate.maxSurge=32 \
+    --set appBuildWorker.strategy.rollingUpdate.maxSurge=33 \
+    --set warehouseNatsWorker.strategy.rollingUpdate.maxSurge=34 \
+    --set preAggregateNatsWorker.strategy.rollingUpdate.maxSurge=35
+for source in "${deployment_sources[@]}"; do
+    assert_strategy "$recreate_override" "$source" Recreate
+    assert_no_rolling_update "$recreate_override" "$source"
+done
+assert_scale_down "$recreate_override"
+
+for mask in {0..15}; do
+    scheduler_enabled=false
+    app_build_enabled=false
+    warehouse_enabled=false
+    pre_aggregate_enabled=false
+    ((mask & 1)) && scheduler_enabled=true
+    ((mask & 2)) && app_build_enabled=true
+    ((mask & 4)) && warehouse_enabled=true
+    ((mask & 8)) && pre_aggregate_enabled=true
+    output="$temp_dir/workers-${mask}.yaml"
+    render "$output" upgrade \
+        --set upgrade.mode=Recreate \
+        --set migrationJob.enabled=true \
+        --set scheduler.enabled="$scheduler_enabled" \
+        --set appBuildWorker.enabled="$app_build_enabled" \
+        --set warehouseNatsWorker.enabled="$warehouse_enabled" \
+        --set preAggregateNatsWorker.enabled="$pre_aggregate_enabled"
+    expected_count=$((1 + (mask & 1) + ((mask >> 1) & 1) + ((mask >> 2) & 1) + ((mask >> 3) & 1)))
+    actual_count="$(grep -c '^kind: Deployment$' "$output" || true)"
+    [[ "$actual_count" == "$expected_count" ]] || fail "worker mask $mask rendered $actual_count Deployments instead of $expected_count"
+    assert_scale_down "$output"
+done
+
+migration_off="$temp_dir/migration-off.yaml"
+render "$migration_off" upgrade \
+    --set upgrade.mode=Recreate \
+    --set migrationJob.enabled=false \
+    --set autoscaling.enabled=true \
+    --set scheduler.enabled=true \
+    --set appBuildWorker.enabled=true \
+    --set warehouseNatsWorker.enabled=true \
+    --set preAggregateNatsWorker.enabled=true
+assert_no_scale_down "$migration_off"
+assert_not_contains "$migration_off" 'name: safety-lightdash-migrate'
+for source in "${deployment_sources[@]}"; do
+    assert_strategy "$migration_off" "$source" Recreate
+done
+backend="$temp_dir/backend.yaml"
+extract_source lightdash/templates/backendDeployment.yaml "$migration_off" "$backend"
+assert_not_contains "$backend" '  replicas:'
+
+custom_rbac="$temp_dir/custom-rbac.yaml"
+render "$custom_rbac" upgrade \
+    --set upgrade.mode=Recreate \
+    --set migrationJob.enabled=true \
     --set migrationJob.scaleDownWorkloads.rbac.create=false \
     --set migrationJob.serviceAccount.create=false \
-    --set migrationJob.serviceAccount.name=existing-migrator > "$custom_render"
-extract_source lightdash/templates/migrationJob.yaml "$custom_render" "$custom_job"
-assert_not_contains "$custom_render" 'name: safety-lightdash-migration-scale-down'
-assert_contains "$custom_job" 'serviceAccountName: existing-migrator'
-assert_contains "$custom_job" 'name: scale-down-workloads'
+    --set migrationJob.serviceAccount.name=existing-migrator
+assert_not_contains "$custom_rbac" 'name: safety-lightdash-migration-scale-down'
+job="$temp_dir/job.yaml"
+extract_source lightdash/templates/migrationJob.yaml "$custom_rbac" "$job"
+assert_contains "$job" 'serviceAccountName: existing-migrator'
+assert_contains "$job" 'name: scale-down-workloads'
 
-disabled_render="$temp_dir/migration-disabled.yaml"
-helm template safety "$chart_dir" --is-upgrade \
-    --set postgresql.enabled=false \
-    --set browserless-chrome.enabled=false \
-    --set nats.enabled=false \
-    --set s3.endpoint=http://object-store \
-    --set s3.bucket=test \
-    --set s3.region=local \
-    --set migrationJob.enabled=false \
-    --set migrationJob.scaleDownWorkloads.enabled=true > "$disabled_render"
-assert_not_contains "$disabled_render" 'name: safety-lightdash-migration-scale-down'
-assert_not_contains "$disabled_render" 'name: safety-lightdash-migrate'
+invalid_output="$temp_dir/invalid.yaml"
+invalid_error="$temp_dir/invalid.err"
+if render "$invalid_output" upgrade --set upgrade.mode=BlueGreen 2> "$invalid_error"; then
+    fail "invalid upgrade.mode rendered successfully"
+fi
+assert_contains "$invalid_error" 'upgrade.mode must be one of: RollingUpdate, Recreate'
+
+removed_key="migrationJob.scaleDownWorkloads."'enabled'
+if grep -R -Fq -- "$removed_key" "$chart_dir"; then
+    fail "removed scale-down enabled key is still present"
+fi
 
 printf 'migration scale-down rendering checks passed\n'

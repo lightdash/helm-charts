@@ -1,4 +1,4 @@
-{{- if and .Release.IsUpgrade .Values.migrationJob.enabled .Values.migrationJob.scaleDownWorkloads.enabled .Values.migrationJob.scaleDownWorkloads.rbac.create }}
+{{- if and .Release.IsUpgrade .Values.migrationJob.enabled (eq (include "lightdash.requiresPreMigrationScaleDown" .) "true") .Values.migrationJob.scaleDownWorkloads.rbac.create }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:

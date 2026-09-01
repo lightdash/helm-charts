@@ -133,22 +133,28 @@ Set `minAvailable` to pin a minimum number of available pods instead. When both 
 
 ## Database migrations during upgrades
 
-To stop every Lightdash application process that can access the database while the migration hook runs, enable the upgrade-only scale-down init containers:
+Set one release-wide Deployment strategy when an external upgrade check decides whether an application version can roll safely:
 
 ```yaml
+upgrade:
+  mode: Recreate
 migrationJob:
   enabled: true
-  scaleDownWorkloads:
-    enabled: true
 ```
 
-Before an upgrade migration, the Job removes the backend HPA, scales the backend and every worker Deployment to zero, and waits for all matching application pods to terminate. The migration starts only after that wait succeeds. The migration Job pod is not part of the wait selector. This setting has no scale-down effect during installation.
+Map a `true` upgrade-check result to `upgrade.mode: RollingUpdate`. Map `false` or an unknown result to `upgrade.mode: Recreate`. The chart does not call the upgrade-check service or fetch its verdict.
+
+An explicit mode is authoritative for the backend and all four worker Deployments. `Recreate` removes any per-component `rollingUpdate` block. `RollingUpdate` keeps valid per-component `rollingUpdate` tuning. Leave `upgrade.mode` empty to preserve every existing per-component strategy exactly.
+
+When `migrationJob.enabled` is `true`, a Helm upgrade automatically runs the scale-down sequence if the explicit mode is `Recreate`. For backward compatibility, an empty mode also runs it when the backend or any enabled worker has `strategy.type: Recreate`. It never scales workloads down during installation.
+
+Before an upgrade migration that requires `Recreate`, the Job removes the backend HPA, scales the backend and every worker Deployment to zero, and waits for all matching application pods to terminate. The migration starts only after that wait succeeds. The migration Job pod is not part of the wait selector.
 
 A successful upgrade applies the normal release manifests after the hook. Those manifests restore configured worker replicas and either `replicaCount` or `autoscaling.minReplicas` for the backend, then recreate the backend HPA when autoscaling is enabled. Application downtime lasts from the scale-down until the new pods become ready.
 
 If the migration, wait, or any Kubernetes command fails, the upgrade fails closed. The Job does not restore the HPA or replicas, so the application remains stopped until an operator fixes the problem and retries or rolls back the release.
 
-By default, the chart creates temporary namespace-scoped Role and RoleBinding hooks before the pre-upgrade Job. This makes the permissions available on the first upgrade that enables the setting. Set `migrationJob.scaleDownWorkloads.rbac.create: false` only when the migration service account can get and delete the named backend HPA, list Deployments, patch the scale subresource for the five named Lightdash Deployments, and get, list, and watch pods. When `migrationJob.serviceAccount.create` is `false`, the named custom service account must exist before the upgrade starts. When it is `true`, the chart creates the service account as an earlier hook.
+By default, the chart creates temporary namespace-scoped Role and RoleBinding hooks before a pre-upgrade scale-down. Set `migrationJob.scaleDownWorkloads.rbac.create: false` only when the migration service account can get and delete the named backend HPA, list Deployments, patch the scale subresource for the five named Lightdash Deployments, and get, list, and watch pods. The image, timeout, resources, and RBAC settings remain under `migrationJob.scaleDownWorkloads`. When `migrationJob.serviceAccount.create` is `false`, the named custom service account must exist before the migration hook starts. When it is `true`, the chart creates the migration service account as an earlier hook.
 
 ## Values
 
@@ -264,7 +270,6 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | migrationJob.inheritGlobalEnv | bool | `false` | When true, the migration Job also receives the top-level extraEnv and existingSecret, so env supplied globally (for example LIGHTDASH_LICENSE_KEY) reaches the migrator. Default false keeps current behaviour. |
 | migrationJob.podAnnotations | object | `{}` |  |
 | migrationJob.resources | object | `{}` |  |
-| migrationJob.scaleDownWorkloads.enabled | bool | `false` |  |
 | migrationJob.scaleDownWorkloads.image.pullPolicy | string | `"IfNotPresent"` |  |
 | migrationJob.scaleDownWorkloads.image.repository | string | `"registry.k8s.io/kubectl"` |  |
 | migrationJob.scaleDownWorkloads.image.tag | string | `"v1.33.4"` |  |
@@ -407,6 +412,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | ssl.enabled | bool | `false` |  |
 | ssl.mountPath | string | `"/etc/ssl/certs"` |  |
 | tolerations | list | `[]` |  |
+| upgrade.mode | string | `""` |  |
 | warehouseNatsWorker.command[0] | string | `"node"` |  |
 | warehouseNatsWorker.command[1] | string | `"dist/natsWorker.js"` |  |
 | warehouseNatsWorker.command[2] | string | `"--stream"` |  |

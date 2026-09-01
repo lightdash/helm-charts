@@ -8,6 +8,7 @@ Usage: {{- include "lightdash.workerDeployment" (dict "root" . "component" "work
 {{- $workerConfig := .workerConfig -}}
 {{- $volumes := $workerConfig.extraVolumes }}
 {{- $volumeMounts := $workerConfig.extraVolumeMounts }}
+{{- $strategy := include "lightdash.deploymentStrategy" (dict "root" $root "strategy" $workerConfig.strategy) | trim }}
 {{- if $workerConfig.enabled }}
 apiVersion: apps/v1
 kind: Deployment
@@ -18,9 +19,9 @@ metadata:
     app.kubernetes.io/component: {{ $component }}
 spec:
   replicas: {{ $workerConfig.replicas }}
-  {{- with $workerConfig.strategy }}
+  {{- if $strategy }}
   strategy:
-    {{- toYaml . | nindent 4 }}
+    {{- $strategy | nindent 4 }}
   {{- end }}
   selector:
     matchLabels:

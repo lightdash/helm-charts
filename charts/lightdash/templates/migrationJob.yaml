@@ -1,3 +1,4 @@
+{{- $scaleDownWorkloads := and .Release.IsUpgrade (eq (include "lightdash.requiresPreMigrationScaleDown" .) "true") -}}
 {{- if .Values.migrationJob.enabled }}
 apiVersion: batch/v1
 kind: Job
@@ -33,9 +34,9 @@ spec:
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- if or (and .Release.IsUpgrade .Values.migrationJob.scaleDownWorkloads.enabled) .Values.initContainers }}
+      {{- if or $scaleDownWorkloads .Values.initContainers }}
       initContainers:
-        {{- if and .Release.IsUpgrade .Values.migrationJob.scaleDownWorkloads.enabled }}
+        {{- if $scaleDownWorkloads }}
         - name: remove-backend-hpa
           image: "{{ .Values.migrationJob.scaleDownWorkloads.image.repository }}:{{ .Values.migrationJob.scaleDownWorkloads.image.tag }}"
           imagePullPolicy: {{ .Values.migrationJob.scaleDownWorkloads.image.pullPolicy }}
