@@ -1,0 +1,63 @@
+{{- if and .Release.IsUpgrade .Values.migrationJob.enabled .Values.migrationJob.scaleDownWorkloads.enabled .Values.migrationJob.scaleDownWorkloads.rbac.create }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "lightdash.fullname" . }}-migration-scale-down
+  labels:
+    {{- include "lightdash.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: pre-upgrade
+    helm.sh/hook-weight: "-3"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded,hook-failed
+rules:
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+    verbs:
+      - list
+  - apiGroups:
+      - apps
+    resources:
+      - deployments/scale
+    resourceNames:
+      {{- include "lightdash.applicationDeploymentNames" . | nindent 6 }}
+    verbs:
+      - patch
+  - apiGroups:
+      - autoscaling
+    resources:
+      - horizontalpodautoscalers
+    resourceNames:
+      - {{ include "lightdash.fullname" . }}
+    verbs:
+      - delete
+      - get
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "lightdash.fullname" . }}-migration-scale-down
+  labels:
+    {{- include "lightdash.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: pre-upgrade
+    helm.sh/hook-weight: "-1"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded,hook-failed
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "lightdash.fullname" . }}-migration-scale-down
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "lightdash.migrationServiceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}

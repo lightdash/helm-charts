@@ -33,12 +33,12 @@ spec:
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- if or (and .Release.IsUpgrade .Values.migrationJob.scaleDownBackend.enabled) .Values.initContainers }}
+      {{- if or (and .Release.IsUpgrade .Values.migrationJob.scaleDownWorkloads.enabled) .Values.initContainers }}
       initContainers:
-        {{- if and .Release.IsUpgrade .Values.migrationJob.scaleDownBackend.enabled }}
+        {{- if and .Release.IsUpgrade .Values.migrationJob.scaleDownWorkloads.enabled }}
         - name: remove-backend-hpa
-          image: "{{ .Values.migrationJob.scaleDownBackend.image.repository }}:{{ .Values.migrationJob.scaleDownBackend.image.tag }}"
-          imagePullPolicy: {{ .Values.migrationJob.scaleDownBackend.image.pullPolicy }}
+          image: "{{ .Values.migrationJob.scaleDownWorkloads.image.repository }}:{{ .Values.migrationJob.scaleDownWorkloads.image.tag }}"
+          imagePullPolicy: {{ .Values.migrationJob.scaleDownWorkloads.image.pullPolicy }}
           command:
             - kubectl
           args:
@@ -46,36 +46,36 @@ spec:
             - horizontalpodautoscaler
             - {{ include "lightdash.fullname" . }}
             - --ignore-not-found=true
-          {{- with .Values.migrationJob.scaleDownBackend.resources }}
+          {{- with .Values.migrationJob.scaleDownWorkloads.resources }}
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-        - name: scale-down-backend
-          image: "{{ .Values.migrationJob.scaleDownBackend.image.repository }}:{{ .Values.migrationJob.scaleDownBackend.image.tag }}"
-          imagePullPolicy: {{ .Values.migrationJob.scaleDownBackend.image.pullPolicy }}
+        - name: scale-down-workloads
+          image: "{{ .Values.migrationJob.scaleDownWorkloads.image.repository }}:{{ .Values.migrationJob.scaleDownWorkloads.image.tag }}"
+          imagePullPolicy: {{ .Values.migrationJob.scaleDownWorkloads.image.pullPolicy }}
           command:
             - kubectl
           args:
             - scale
             - deployment
-            - {{ include "lightdash.fullname" . }}-backend
+            - --selector={{ include "lightdash.applicationWorkloadSelector" . }}
             - --replicas=0
-          {{- with .Values.migrationJob.scaleDownBackend.resources }}
+          {{- with .Values.migrationJob.scaleDownWorkloads.resources }}
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-        - name: wait-for-backend-termination
-          image: "{{ .Values.migrationJob.scaleDownBackend.image.repository }}:{{ .Values.migrationJob.scaleDownBackend.image.tag }}"
-          imagePullPolicy: {{ .Values.migrationJob.scaleDownBackend.image.pullPolicy }}
+        - name: wait-for-workload-termination
+          image: "{{ .Values.migrationJob.scaleDownWorkloads.image.repository }}:{{ .Values.migrationJob.scaleDownWorkloads.image.tag }}"
+          imagePullPolicy: {{ .Values.migrationJob.scaleDownWorkloads.image.pullPolicy }}
           command:
             - kubectl
           args:
             - wait
             - --for=delete
             - pod
-            - --selector=app.kubernetes.io/name={{ include "lightdash.name" . }},app.kubernetes.io/instance={{ .Release.Name }},app.kubernetes.io/component=backend
-            - --timeout={{ .Values.migrationJob.scaleDownBackend.timeoutSeconds }}s
-          {{- with .Values.migrationJob.scaleDownBackend.resources }}
+            - --selector={{ include "lightdash.applicationWorkloadSelector" . }}
+            - --timeout={{ .Values.migrationJob.scaleDownWorkloads.timeoutSeconds }}s
+          {{- with .Values.migrationJob.scaleDownWorkloads.resources }}
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}

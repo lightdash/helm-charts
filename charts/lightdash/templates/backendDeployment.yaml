@@ -8,7 +8,9 @@ metadata:
     {{- include "lightdash.labels" . | nindent 4 }}
     app.kubernetes.io/component: backend
 spec:
-  {{- if not .Values.autoscaling.enabled }}
+  {{- if and .Values.autoscaling.enabled .Release.IsUpgrade .Values.migrationJob.enabled .Values.migrationJob.scaleDownWorkloads.enabled }}
+  replicas: {{ .Values.autoscaling.minReplicas }}
+  {{- else if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
   {{- with .Values.lightdashBackend.strategy }}

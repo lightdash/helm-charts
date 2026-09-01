@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 2.16.283](https://img.shields.io/badge/Version-2.16.283-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 2.77.0](https://img.shields.io/badge/AppVersion-2.77.0-informational?style=flat-square)
+![Version: 2.16.284](https://img.shields.io/badge/Version-2.16.284-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 2.77.0](https://img.shields.io/badge/AppVersion-2.77.0-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -133,18 +133,22 @@ Set `minAvailable` to pin a minimum number of available pods instead. When both 
 
 ## Database migrations during upgrades
 
-To stop backend traffic while the migration hook runs, enable the upgrade-only scale-down init containers:
+To stop every Lightdash application process that can access the database while the migration hook runs, enable the upgrade-only scale-down init containers:
 
 ```yaml
 migrationJob:
   enabled: true
-  scaleDownBackend:
+  scaleDownWorkloads:
     enabled: true
 ```
 
-The migration Job removes the backend HPA, scales the backend Deployment to zero, waits for its pods to terminate, and then runs migrations. After the hook succeeds, Helm restores `replicaCount` or recreates the HPA as part of the normal upgrade. This causes backend downtime for the duration of the migration and rollout.
+Before an upgrade migration, the Job removes the backend HPA, scales the backend and every worker Deployment to zero, and waits for all matching application pods to terminate. The migration starts only after that wait succeeds. The migration Job pod is not part of the wait selector. This setting has no scale-down effect during installation.
 
-By default, the chart creates the required namespace-scoped RBAC. Set `migrationJob.scaleDownBackend.rbac.create: false` only when the migration service account already has equivalent permissions.
+A successful upgrade applies the normal release manifests after the hook. Those manifests restore configured worker replicas and either `replicaCount` or `autoscaling.minReplicas` for the backend, then recreate the backend HPA when autoscaling is enabled. Application downtime lasts from the scale-down until the new pods become ready.
+
+If the migration, wait, or any Kubernetes command fails, the upgrade fails closed. The Job does not restore the HPA or replicas, so the application remains stopped until an operator fixes the problem and retries or rolls back the release.
+
+By default, the chart creates temporary namespace-scoped Role and RoleBinding hooks before the pre-upgrade Job. This makes the permissions available on the first upgrade that enables the setting. Set `migrationJob.scaleDownWorkloads.rbac.create: false` only when the migration service account can get and delete the named backend HPA, list Deployments, patch the scale subresource for the five named Lightdash Deployments, and get, list, and watch pods. When `migrationJob.serviceAccount.create` is `false`, the named custom service account must exist before the upgrade starts. When it is `true`, the chart creates the service account as an earlier hook.
 
 ## Values
 
@@ -260,13 +264,13 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | migrationJob.inheritGlobalEnv | bool | `false` | When true, the migration Job also receives the top-level extraEnv and existingSecret, so env supplied globally (for example LIGHTDASH_LICENSE_KEY) reaches the migrator. Default false keeps current behaviour. |
 | migrationJob.podAnnotations | object | `{}` |  |
 | migrationJob.resources | object | `{}` |  |
-| migrationJob.scaleDownBackend.enabled | bool | `false` |  |
-| migrationJob.scaleDownBackend.image.pullPolicy | string | `"IfNotPresent"` |  |
-| migrationJob.scaleDownBackend.image.repository | string | `"registry.k8s.io/kubectl"` |  |
-| migrationJob.scaleDownBackend.image.tag | string | `"v1.33.4"` |  |
-| migrationJob.scaleDownBackend.rbac.create | bool | `true` |  |
-| migrationJob.scaleDownBackend.resources | object | `{}` |  |
-| migrationJob.scaleDownBackend.timeoutSeconds | int | `300` |  |
+| migrationJob.scaleDownWorkloads.enabled | bool | `false` |  |
+| migrationJob.scaleDownWorkloads.image.pullPolicy | string | `"IfNotPresent"` |  |
+| migrationJob.scaleDownWorkloads.image.repository | string | `"registry.k8s.io/kubectl"` |  |
+| migrationJob.scaleDownWorkloads.image.tag | string | `"v1.33.4"` |  |
+| migrationJob.scaleDownWorkloads.rbac.create | bool | `true` |  |
+| migrationJob.scaleDownWorkloads.resources | object | `{}` |  |
+| migrationJob.scaleDownWorkloads.timeoutSeconds | int | `300` |  |
 | migrationJob.serviceAccount.annotations | object | `{}` |  |
 | migrationJob.serviceAccount.create | bool | `true` |  |
 | migrationJob.serviceAccount.name | string | `""` |  |

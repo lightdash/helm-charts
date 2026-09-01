@@ -127,18 +127,22 @@ Set `minAvailable` to pin a minimum number of available pods instead. When both 
 
 ## Database migrations during upgrades
 
-To stop backend traffic while the migration hook runs, enable the upgrade-only scale-down init containers:
+To stop every Lightdash application process that can access the database while the migration hook runs, enable the upgrade-only scale-down init containers:
 
 ```yaml
 migrationJob:
   enabled: true
-  scaleDownBackend:
+  scaleDownWorkloads:
     enabled: true
 ```
 
-The migration Job removes the backend HPA, scales the backend Deployment to zero, waits for its pods to terminate, and then runs migrations. After the hook succeeds, Helm restores `replicaCount` or recreates the HPA as part of the normal upgrade. This causes backend downtime for the duration of the migration and rollout.
+Before an upgrade migration, the Job removes the backend HPA, scales the backend and every worker Deployment to zero, and waits for all matching application pods to terminate. The migration starts only after that wait succeeds. The migration Job pod is not part of the wait selector. This setting has no scale-down effect during installation.
 
-By default, the chart creates the required namespace-scoped RBAC. Set `migrationJob.scaleDownBackend.rbac.create: false` only when the migration service account already has equivalent permissions.
+A successful upgrade applies the normal release manifests after the hook. Those manifests restore configured worker replicas and either `replicaCount` or `autoscaling.minReplicas` for the backend, then recreate the backend HPA when autoscaling is enabled. Application downtime lasts from the scale-down until the new pods become ready.
+
+If the migration, wait, or any Kubernetes command fails, the upgrade fails closed. The Job does not restore the HPA or replicas, so the application remains stopped until an operator fixes the problem and retries or rolls back the release.
+
+By default, the chart creates temporary namespace-scoped Role and RoleBinding hooks before the pre-upgrade Job. This makes the permissions available on the first upgrade that enables the setting. Set `migrationJob.scaleDownWorkloads.rbac.create: false` only when the migration service account can get and delete the named backend HPA, list Deployments, patch the scale subresource for the five named Lightdash Deployments, and get, list, and watch pods. When `migrationJob.serviceAccount.create` is `false`, the named custom service account must exist before the upgrade starts. When it is `true`, the chart creates the service account as an earlier hook.
 
 ## Values
 

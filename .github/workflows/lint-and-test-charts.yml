@@ -34,6 +34,9 @@ jobs:
       - name: Run chart-testing (lint)
         run: ct lint --all
 
+      - name: Check migration scale-down rendering
+        run: scripts/test-migration-scale-down.sh
+
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 35

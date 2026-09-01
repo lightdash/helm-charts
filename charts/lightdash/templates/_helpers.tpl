@@ -220,6 +220,18 @@ Add environment variables to configure database values
 {{- end -}}
 {{- end -}}
 
+{{- define "lightdash.applicationDeploymentNames" -}}
+- {{ include "lightdash.fullname" . }}-backend
+- {{ include "lightdash.fullname" . }}-worker
+- {{ include "lightdash.fullname" . }}-app-build-worker
+- {{ include "lightdash.fullname" . }}-warehouse-nats-worker
+- {{ include "lightdash.fullname" . }}-pre-aggregate-nats-worker
+{{- end -}}
+
+{{- define "lightdash.applicationWorkloadSelector" -}}
+app.kubernetes.io/name={{ include "lightdash.name" . }},app.kubernetes.io/instance={{ .Release.Name }},app.kubernetes.io/component in (backend,worker,app-build-worker,warehouse-nats-worker,pre-aggregate-nats-worker)
+{{- end -}}
+
 
 {{/*
  Create the name of the backend configuration
