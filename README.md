@@ -8,6 +8,8 @@ The 1.0.0 release contains breaking changes. You **must first update your instan
 
 It is recommended to work on this project with VS Code, as the development environment is pre-configured in a [development container](https://code.visualstudio.com/docs/remote/create-dev-container).
 
+For a modular walkthrough that deploys the locally checked-out chart—from `main`, another branch, or a fork—to Google Kubernetes Engine, see [Deploy a local Lightdash Helm chart to GKE](docs/gke-production-deployment-guide.md). The guide lets you choose database, S3-compatible storage, secret, and exposure options; unfinished paths are marked **Coming soon**.
+
 ## Linting
   `ct lint --all`
 

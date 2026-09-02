@@ -1,0 +1,6 @@
+title: Vault GCP Auth Verifier
+description: Read only the GCP service account metadata and public keys needed by Vault GCP auth.
+stage: GA
+includedPermissions:
+  - iam.serviceAccounts.get
+  - iam.serviceAccountKeys.get

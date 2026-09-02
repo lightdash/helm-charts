@@ -1,0 +1,74 @@
+# Provider-neutral Lightdash workload settings.
+# Copy to .context/gke/base-values.yaml and replace REPLACE_GIT_SHA.
+
+replicaCount: 2
+
+image:
+  tag: "1.214.0"
+
+podLabels:
+  deployment-git-sha: "REPLACE_GIT_SHA"
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 1Gi
+    ephemeral-storage: 1Gi
+  limits:
+    cpu: 2
+    memory: 4Gi
+    ephemeral-storage: 4Gi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 70
+
+podDisruptionBudget:
+  enabled: true
+  maxUnavailable: 1
+
+podAntiAffinity:
+  enabled: true
+  node: hard
+  zone: soft
+
+migrationJob:
+  enabled: true
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 86400
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+      ephemeral-storage: 1Gi
+    limits:
+      cpu: 1
+      memory: 2Gi
+      ephemeral-storage: 2Gi
+
+scheduler:
+  enabled: true
+  replicas: 2
+  resources:
+    requests:
+      cpu: 475m
+      memory: 725Mi
+      ephemeral-storage: 1Gi
+    limits:
+      cpu: 1
+      memory: 2Gi
+      ephemeral-storage: 2Gi
+
+appBuildWorker:
+  enabled: false
+
+warehouseNatsWorker:
+  enabled: false
+
+preAggregateNatsWorker:
+  enabled: false
+
+nats:
+  enabled: false

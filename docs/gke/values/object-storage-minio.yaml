@@ -1,0 +1,9 @@
+s3:
+  endpoint: "https://REPLACE_MINIO_API_DOMAIN"
+  publicEndpoint: "https://REPLACE_MINIO_API_DOMAIN"
+  bucket: "lightdash"
+  region: "us-east-1"
+  forcePathStyle: "true"
+  accessKey: ""
+  secretKey: ""
+  existingSecret: ""

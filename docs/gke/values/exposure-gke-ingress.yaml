@@ -1,0 +1,51 @@
+configMap:
+  SECURE_COOKIES: "true"
+  TRUST_PROXY: "true"
+  SITE_URL: "https://REPLACE_LIGHTDASH_DOMAIN"
+
+service:
+  type: ClusterIP
+  port: 8080
+
+backendConfig:
+  create: true
+  spec:
+    timeoutSec: 60
+    connectionDraining:
+      drainingTimeoutSec: 60
+    healthCheck:
+      type: HTTP
+      requestPath: /api/v1/readyz
+      port: 8080
+
+ingress:
+  enabled: true
+  className: ""
+  annotations:
+    kubernetes.io/ingress.class: "gce"
+    kubernetes.io/ingress.global-static-ip-name: "lightdash-ingress-ip"
+    networking.gke.io/managed-certificates: "lightdash-managed-cert"
+    networking.gke.io/v1beta1.FrontendConfig: "lightdash-frontend"
+  hosts:
+    - host: "REPLACE_LIGHTDASH_DOMAIN"
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+extraObjects:
+  - apiVersion: networking.gke.io/v1
+    kind: ManagedCertificate
+    metadata:
+      name: lightdash-managed-cert
+    spec:
+      domains:
+        - "REPLACE_LIGHTDASH_DOMAIN"
+  - apiVersion: networking.gke.io/v1beta1
+    kind: FrontendConfig
+    metadata:
+      name: lightdash-frontend
+    spec:
+      redirectToHttps:
+        enabled: true
+        responseCodeName: PERMANENT_REDIRECT

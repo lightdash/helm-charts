@@ -1,0 +1,104 @@
+# Vault Secrets Operator resources for Lightdash. Replace every REPLACE_* value.
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: lightdash-vault-auth
+  namespace: lightdash
+  annotations:
+    iam.gke.io/gcp-service-account: "lightdash-vso@REPLACE_PROJECT_ID.iam.gserviceaccount.com"
+---
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultConnection
+metadata:
+  name: lightdash-vault
+  namespace: lightdash
+spec:
+  address: "REPLACE_HCP_VAULT_PUBLIC_URL"
+  skipTLSVerify: false
+---
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultAuth
+metadata:
+  name: lightdash-vault-auth
+  namespace: lightdash
+spec:
+  vaultConnectionRef: lightdash-vault
+  namespace: "admin"
+  method: gcp
+  mount: gcp
+  gcp:
+    role: lightdash-gke
+    workloadIdentityServiceAccount: lightdash-vault-auth
+---
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultStaticSecret
+metadata:
+  name: lightdash-application
+  namespace: lightdash
+spec:
+  vaultAuthRef: lightdash-vault-auth
+  namespace: "admin"
+  mount: kv
+  type: kv-v2
+  path: apps/lightdash/application
+  refreshAfter: 60s
+  hmacSecretData: true
+  destination:
+    create: true
+    name: lightdash-application
+    transformation:
+      excludeRaw: true
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: lightdash-backend
+    - kind: Deployment
+      name: lightdash-worker
+---
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultStaticSecret
+metadata:
+  name: lightdash-database
+  namespace: lightdash
+spec:
+  vaultAuthRef: lightdash-vault-auth
+  namespace: "admin"
+  mount: kv
+  type: kv-v2
+  path: apps/lightdash/database
+  refreshAfter: 60s
+  hmacSecretData: true
+  destination:
+    create: true
+    name: lightdash-database
+    transformation:
+      excludeRaw: true
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: lightdash-backend
+    - kind: Deployment
+      name: lightdash-worker
+---
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultStaticSecret
+metadata:
+  name: lightdash-s3
+  namespace: lightdash
+spec:
+  vaultAuthRef: lightdash-vault-auth
+  namespace: "admin"
+  mount: kv
+  type: kv-v2
+  path: apps/lightdash/s3
+  refreshAfter: 60s
+  hmacSecretData: true
+  destination:
+    create: true
+    name: lightdash-s3
+    transformation:
+      excludeRaw: true
+  rolloutRestartTargets:
+    - kind: Deployment
+      name: lightdash-backend
+    - kind: Deployment
+      name: lightdash-worker
