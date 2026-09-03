@@ -182,8 +182,25 @@ helm_local="$PWD/.context/local-vso/bin/helm"
 "$helm_local" repo update
 ```
 
-These Helm commands populate `.context/local-vso/helm/`. They do not change the
-system Helm installation.
+The two commands register the HashiCorp chart repository and download its
+catalogue, writing four files:
+
+```text
+helm/config/repositories.yaml               the repository list, here just hashicorp
+helm/config/repositories.lock               lock file guarding concurrent writes
+helm/cache/repository/hashicorp-index.yaml  every HashiCorp chart and version (~340 KB)
+helm/cache/repository/hashicorp-charts.txt  chart-name index used for completion
+```
+
+`helm/data/` stays empty. It would hold Helm plugins, and this recipe installs
+none. None of this is a credential, and nothing is installed into the cluster
+yet; step 11 deploys the first workload.
+
+Because the three `HELM_*_HOME` variables point into `.context/`, adding the
+repository does not touch your normal Helm configuration: `hashicorp` will not
+appear in `helm repo list` in another terminal. That isolation comes from the
+exported variables, so run the remaining steps in this same shell, or re-export
+all four lines in a new one.
 
 ## 8. Create `vso-resources.yaml`
 
