@@ -4,3 +4,4 @@ package-lock.json
 *.tgz
 .envrc
 .direnv/
+.context/

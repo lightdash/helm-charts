@@ -149,11 +149,17 @@ export BRANCH_NAME="$(git branch --show-current)"
 export GIT_SHA="$(git rev-parse --short=12 HEAD)"
 
 mkdir -p .context/gke
+git check-ignore -v .context/
+
 cp docs/gke/base-values.yaml .context/gke/base-values.yaml
 sed -i '' "s/REPLACE_GIT_SHA/$GIT_SHA/g" .context/gke/base-values.yaml
 ```
 
-`.context/` is ignored by Git. Never put credentials in tracked files or Helm
+This repository's `.gitignore` excludes `.context/`, and the command above
+verifies the rule before creating working files there.
+
+An ignore rule is protection against accidental staging, not a security boundary:
+`git add --force` can bypass it. Never put credentials in tracked files or Helm
 values. The option guides use placeholders in tracked templates and create local
 working copies under `.context/gke/`.
 
