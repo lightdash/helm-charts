@@ -629,47 +629,6 @@ kubectl -n lightdash get pods --watch
 
 Press `Control-C` when PostgreSQL and the backend are ready.
 
-#### Re-running this step
-
-Running the install a second time fails with:
-
-```text
-PASSWORDS ERROR: You must provide your current passwords when upgrading the release.
-```
-
-The bundled PostgreSQL subchart generates random passwords on first install and
-refuses to invent new ones on upgrade, because the database already on disk
-still expects the originals. Read them back out and pass them in:
-
-```bash
-# Recover the passwords the first install generated.
-pg_admin_password="$(kubectl -n lightdash get secret lightdash-postgresql \
-  -o jsonpath='{.data.postgres-password}' | base64 -d)"
-pg_user_password="$(kubectl -n lightdash get secret lightdash-postgresql \
-  -o jsonpath='{.data.password}' | base64 -d)"
-
-# Same install command as above, with the existing passwords supplied.
-"$helm_local" upgrade --install lightdash ./charts/lightdash \
-  --namespace lightdash \
-  --values .context/local-vso/lightdash-values.yaml \
-  --set global.postgresql.auth.postgresPassword="$pg_admin_password" \
-  --set global.postgresql.auth.password="$pg_user_password" \
-  --timeout 10m
-```
-
-To start this step from nothing instead, remove the release and its volume. The
-PersistentVolumeClaim outlives `helm uninstall`, and keeping it is exactly what
-causes the password mismatch on the next install:
-
-```bash
-# Remove the release, then the database volume it left behind.
-"$helm_local" uninstall lightdash --namespace lightdash
-kubectl -n lightdash delete pvc data-lightdash-postgresql-0
-```
-
-Either way you do not need to repeat steps 12 to 14. VSO owns the
-`lightdash-application` Secret, not the Helm release, so it survives both.
-
 ## 16. Verify and open Lightdash
 
 Confirm that the backend references VSO's Secret:
