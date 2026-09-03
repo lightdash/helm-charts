@@ -6,7 +6,7 @@ choices to make part-way through.
 
 | Recipe | Cluster | Database | Secrets |
 |---|---|---|---|
-| [Local Kind + Vault Secrets Operator](local-kind-vault-vso.md) | Kind (disposable) | Bundled PostgreSQL | Vault dev server + VSO |
+| [Local Kind + Vault Secrets Operator](local-kind-vault-vso.md) | Kind — local Kubernetes in Docker, disposable | Bundled PostgreSQL | Vault dev server + VSO |
 
 Recipes deploy `./charts/lightdash` from the currently checked-out commit, not
 the published `lightdash/lightdash` chart, so they exercise unreleased changes.

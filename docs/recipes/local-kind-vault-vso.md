@@ -8,6 +8,30 @@ cluster. It uses a local Vault development server and Vault Secrets Operator
 > storage backend, and a known root token. Its data disappears when the Vault
 > pod or Kind cluster is removed. Never use this configuration for production.
 
+## The tools this recipe uses
+
+**Kind** stands for Kubernetes in Docker. It runs a real Kubernetes cluster
+inside Docker containers on your machine, so this recipe needs no cloud account
+and costs nothing. It is a genuine cluster rather than a simulator, so the
+chart, secret reconciliation, and pod restarts behave as they would in
+production. The cluster is disposable: the last step deletes it and leaves
+nothing behind. This repository's CI uses Kind the same way to install the
+chart on every pull request.
+
+**Vault** stores secrets. Here it runs in development mode inside the cluster,
+which is convenient but insecure, and is the reason this recipe is for learning
+only.
+
+**Vault Secrets Operator (VSO)** is the bridge between the two. Kubernetes
+cannot read from Vault directly, so VSO watches for a resource you create, reads
+the Vault path it names, and writes the result into an ordinary Kubernetes
+Secret. The chart then references that Secret through `secretRefs`, exactly as
+it would with any other externally managed Secret.
+
+Everything is kept separate from your existing setup: the cluster gets its own
+kubeconfig and Helm state under `.context/`, so your usual `kubectl` context is
+never repointed.
+
 ## What this lab creates
 
 ```text
