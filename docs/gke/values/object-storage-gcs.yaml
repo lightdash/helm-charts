@@ -1,9 +1,0 @@
-s3:
-  endpoint: "https://storage.googleapis.com"
-  publicEndpoint: "https://storage.googleapis.com"
-  bucket: "REPLACE_GCS_BUCKET"
-  region: "auto"
-  forcePathStyle: "true"
-  accessKey: ""
-  secretKey: ""
-  existingSecret: ""

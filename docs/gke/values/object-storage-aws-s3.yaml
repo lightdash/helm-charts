@@ -1,9 +1,0 @@
-s3:
-  endpoint: "https://s3.REPLACE_AWS_REGION.amazonaws.com"
-  publicEndpoint: "https://s3.REPLACE_AWS_REGION.amazonaws.com"
-  bucket: "REPLACE_S3_BUCKET"
-  region: "REPLACE_AWS_REGION"
-  forcePathStyle: "false"
-  accessKey: ""
-  secretKey: ""
-  existingSecret: ""

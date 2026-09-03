@@ -1,8 +1,0 @@
-[
-  {
-    "origin": ["https://REPLACE_LIGHTDASH_DOMAIN"],
-    "method": ["GET", "HEAD", "PUT", "POST"],
-    "responseHeader": ["Content-Type", "ETag", "x-goog-resumable"],
-    "maxAgeSeconds": 3600
-  }
-]
