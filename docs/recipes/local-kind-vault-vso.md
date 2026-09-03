@@ -55,9 +55,13 @@ Files under `.context/local-vso/`:
 ## 1. Confirm the workspace and ignore rule
 
 ```bash
-# Run every command in this recipe from the repository root.
+# Move to the top of the Git repository, wherever you cloned it.
 cd "$(git rev-parse --show-toplevel)"
+
+# Show which branch you are on. This recipe deploys whatever is checked out.
 git branch --show-current
+
+# Confirm Git ignores .context/, the scratch folder this recipe writes into.
 git check-ignore -v .context/
 ```
 
@@ -69,7 +73,10 @@ continue if it is not ignored, because this recipe writes working files there.
 ## 2. Check Docker and the Mac architecture
 
 ```bash
+# Check Docker is running, and see how much CPU and memory it may use.
 docker info --format 'server={{.ServerVersion}} cpus={{.NCPU}} memory={{.MemTotal}}'
+
+# Print the Mac's chip: arm64 is Apple Silicon, x86_64 is Intel.
 uname -m
 ```
 
@@ -80,7 +87,11 @@ download commands.
 ## 3. Create the local directory structure
 
 ```bash
+# Somewhere to keep the kind and helm binaries this recipe downloads.
 mkdir -p .context/local-vso/bin
+
+# Three folders that hold this lab's Helm settings, downloaded chart index,
+# and plugins, so none of it mixes with the Helm setup you already have.
 mkdir -p .context/local-vso/helm/config
 mkdir -p .context/local-vso/helm/cache
 mkdir -p .context/local-vso/helm/data
@@ -92,22 +103,28 @@ your global Kubernetes configuration.
 ## 4. Download and verify Kind
 
 ```bash
+# Pin the version and platform so everyone following this gets the same binary.
 kind_version='v0.33.0'
-kind_platform='darwin-arm64'
+kind_platform='darwin-arm64'   # Intel Mac: change to darwin-amd64
 kind_destination="$PWD/.context/local-vso/bin/kind"
 
+# Download the Kind program itself.
 curl -fsSL \
   "https://kind.sigs.k8s.io/dl/${kind_version}/kind-${kind_platform}" \
   -o "$kind_destination"
 
+# Download the fingerprint the Kind project published for that exact file.
 curl -fsSL \
   "https://kind.sigs.k8s.io/dl/${kind_version}/kind-${kind_platform}.sha256sum" \
   -o "$PWD/.context/local-vso/bin/kind.sha256sum"
 
+# Fingerprint what you actually downloaded and compare the two. `test` prints
+# nothing on success and fails the command if they differ.
 kind_expected_checksum="$(awk '{print $1}' .context/local-vso/bin/kind.sha256sum)"
 kind_actual_checksum="$(shasum -a 256 "$kind_destination" | awk '{print $1}')"
 test "$kind_actual_checksum" = "$kind_expected_checksum"
 
+# Mark it runnable and confirm it works.
 chmod +x "$kind_destination"
 "$kind_destination" version
 ```
@@ -121,23 +138,28 @@ The system Helm installation may be a different major version. This lab keeps
 Helm 3.21.4 isolated under `.context/` instead of replacing it.
 
 ```bash
+# 3.21.4 is the version this repository's CI uses.
 helm_version='v3.21.4'
-helm_platform='darwin-arm64'
+helm_platform='darwin-arm64'   # Intel Mac: change to darwin-amd64
 helm_archive="$PWD/.context/local-vso/helm-${helm_version}-${helm_platform}.tar.gz"
 helm_checksum_file="${helm_archive}.sha256sum"
 
+# Download the Helm archive.
 curl -fsSL \
   "https://get.helm.sh/helm-${helm_version}-${helm_platform}.tar.gz" \
   -o "$helm_archive"
 
+# Download its published fingerprint.
 curl -fsSL \
   "https://get.helm.sh/helm-${helm_version}-${helm_platform}.tar.gz.sha256sum" \
   -o "$helm_checksum_file"
 
+# Verify the download matches before unpacking it.
 helm_expected_checksum="$(awk '{print $1}' "$helm_checksum_file")"
 helm_actual_checksum="$(shasum -a 256 "$helm_archive" | awk '{print $1}')"
 test "$helm_actual_checksum" = "$helm_expected_checksum"
 
+# Unpack, copy the binary next to kind, and confirm the version.
 tar -xzf "$helm_archive" -C .context/local-vso
 cp .context/local-vso/darwin-arm64/helm .context/local-vso/bin/helm
 chmod +x .context/local-vso/bin/helm
@@ -147,8 +169,12 @@ chmod +x .context/local-vso/bin/helm
 ## 6. Create the isolated Kind cluster and kubeconfig
 
 ```bash
+# Shorthand so you do not retype the path to the kind binary.
 kind_local="$PWD/.context/local-vso/bin/kind"
 
+# Create the cluster. This is the single Docker container you will see running.
+# --kubeconfig writes the connection details to their own file instead of your
+# usual ~/.kube/config; --wait blocks until the control plane answers.
 "$kind_local" create cluster \
   --name lightdash-vso \
   --kubeconfig "$PWD/.context/local-vso/kubeconfig" \
@@ -162,8 +188,14 @@ not replace the global `kubectl` context.
 Point the current terminal at the local kubeconfig:
 
 ```bash
+# Point THIS terminal at the lab cluster. Your normal kubectl context is
+# untouched, and a new terminal will not have this set.
 export KUBECONFIG="$PWD/.context/local-vso/kubeconfig"
+
+# Which cluster will kubectl talk to? Must say kind-lightdash-vso.
 kubectl config current-context
+
+# One node, and it should be Ready.
 kubectl get nodes
 ```
 
@@ -173,12 +205,19 @@ GKE.
 ## 7. Configure isolated Helm state
 
 ```bash
+# Send Helm's settings, cache, and plugins into .context/ rather than your
+# home folder, so this lab cannot alter your existing Helm setup.
 export HELM_CONFIG_HOME="$PWD/.context/local-vso/helm/config"
 export HELM_CACHE_HOME="$PWD/.context/local-vso/helm/cache"
 export HELM_DATA_HOME="$PWD/.context/local-vso/helm/data"
+
+# Shorthand for the Helm 3 binary downloaded in step 5.
 helm_local="$PWD/.context/local-vso/bin/helm"
 
+# Register HashiCorp's chart repository, where the Vault and VSO charts live.
 "$helm_local" repo add hashicorp https://helm.releases.hashicorp.com --force-update
+
+# Download that repository's catalogue of charts and versions.
 "$helm_local" repo update
 ```
 
@@ -207,6 +246,7 @@ all four lines in a new one.
 Open the file in an editor:
 
 ```bash
+# Open a new, empty file in the nano text editor.
 nano .context/local-vso/vso-resources.yaml
 ```
 
@@ -272,6 +312,7 @@ credential values.
 Open the file:
 
 ```bash
+# Open a second new, empty file.
 nano .context/local-vso/lightdash-values.yaml
 ```
 
@@ -321,10 +362,13 @@ VSO will create the application Secret instead.
 ## 10. Validate the two files before using them
 
 ```bash
+# Parse both files you just typed. A YAML typo stops you here, rather than
+# halfway through an install. Ruby ships with macOS, so there is nothing to add.
 ruby -e 'require "yaml"; ARGV.each { |f| YAML.load_stream(File.read(f)); puts "ok #{f}" }' \
   .context/local-vso/vso-resources.yaml \
   .context/local-vso/lightdash-values.yaml
 
+# Check the chart accepts your values, still without touching the cluster.
 "$helm_local" lint ./charts/lightdash \
   --values .context/local-vso/lightdash-values.yaml
 ```
@@ -335,6 +379,9 @@ files are prepared. The next sections install the workloads.
 ## 11. Install Vault in development mode
 
 ```bash
+# Install Vault into its own namespace.
+#   server.dev.enabled=true  in-memory storage, unseals itself, root token "root"
+#   injector.enabled=false   skip Vault's sidecar injector; this lab uses VSO
 "$helm_local" upgrade --install vault hashicorp/vault \
   --version 0.34.1 \
   --namespace vault \
@@ -344,9 +391,14 @@ files are prepared. The next sections install the workloads.
   --wait \
   --timeout 5m
 
+# Wait until the Vault pod is genuinely ready. Helm's --wait is not enough here;
+# the note below explains why.
 kubectl -n vault wait --for=condition=Ready pod/vault-0 --timeout=180s
 
+# Show what was created.
 kubectl -n vault get pods,services
+
+# Ask Vault about itself. Expect Initialized true and Sealed false.
 kubectl -n vault exec vault-0 -- env VAULT_TOKEN=root vault status
 ```
 
@@ -369,24 +421,31 @@ mode unseals itself; a real Vault would not.
 ## 12. Create the Vault secret
 
 ```bash
+# Turn on a key-value store, version 2, reachable at the path kv/.
 kubectl -n vault exec vault-0 -- \
   env VAULT_TOKEN=root \
   vault secrets enable -path=kv kv-v2
 
+# Generate a random 64-character secret on your Mac. Lightdash signs cookies and
+# encrypts stored warehouse credentials with it.
 local_lightdash_secret="$(openssl rand -hex 32)"
 
+# Store it in Vault, alongside a harmless value used in step 17 to prove that
+# refresh works.
 kubectl -n vault exec vault-0 -- \
   env VAULT_TOKEN=root \
   vault kv put kv/lightdash/application \
   "LIGHTDASH_SECRET=$local_lightdash_secret" \
   "VSO_DEMO_VERSION=one"
 
+# Forget the secret in this shell so it is not left in your session.
 unset local_lightdash_secret
 ```
 
 Verify key names without revealing values:
 
 ```bash
+# List only the key NAMES stored at that path. The values are never printed.
 kubectl -n vault exec vault-0 -- \
   env VAULT_TOKEN=root \
   vault kv get -format=json kv/lightdash/application |
@@ -396,6 +455,10 @@ kubectl -n vault exec vault-0 -- \
 ## 13. Configure Vault Kubernetes authentication
 
 ```bash
+# Teach Vault to trust identities issued by this Kubernetes cluster. The three
+# settings tell Vault where the cluster's API is, which token to use when asking
+# the cluster to vouch for a pod, and which certificate authority to trust.
+# All of this runs inside the Vault pod, so nothing is written to your Mac.
 kubectl -n vault exec vault-0 -- sh -ec '
   export VAULT_TOKEN=root
   vault auth enable kubernetes
@@ -409,6 +472,8 @@ kubectl -n vault exec vault-0 -- sh -ec '
 Create the least-privilege read policy:
 
 ```bash
+# Create a policy allowing read access to exactly one secret and nothing else.
+# The "-" means the policy text is piped in below instead of read from a file.
 kubectl -n vault exec -i vault-0 -- \
   env VAULT_TOKEN=root \
   vault policy write lightdash - <<'EOF'
@@ -425,6 +490,10 @@ EOF
 Bind the Vault role to the future Kubernetes ServiceAccount:
 
 ```bash
+# Tie the two together: a pod running as the lightdash-vault-auth ServiceAccount
+# in the lightdash namespace may log in and receive the lightdash policy, for one
+# hour at a time. Neither exists yet; step 14 creates them, and Vault does not
+# mind binding a role to a name that appears later.
 kubectl -n vault exec vault-0 -- \
   env VAULT_TOKEN=root \
   vault write auth/kubernetes/role/lightdash \
@@ -438,6 +507,7 @@ kubectl -n vault exec vault-0 -- \
 ## 14. Install VSO and apply its resources
 
 ```bash
+# Install the operator that copies secrets out of Vault into Kubernetes.
 "$helm_local" upgrade --install vault-secrets-operator \
   hashicorp/vault-secrets-operator \
   --version 1.5.1 \
@@ -446,9 +516,15 @@ kubectl -n vault exec vault-0 -- \
   --wait \
   --timeout 5m
 
+# Create the namespace Lightdash will run in.
 kubectl create namespace lightdash
+
+# Apply the four objects from step 8: the ServiceAccount pods log in as, how to
+# reach Vault, how to authenticate, and which Vault path to copy where.
 kubectl apply -f .context/local-vso/vso-resources.yaml
 
+# Wait for the Secret to appear. If this succeeds, VSO authenticated to Vault,
+# read the secret, and wrote it into Kubernetes.
 kubectl wait \
   --namespace lightdash \
   --for=create \
@@ -459,8 +535,13 @@ kubectl wait \
 Verify the operator state and Secret key names:
 
 ```bash
+# The three VSO objects and whether they are healthy.
 kubectl -n lightdash get vaultconnection,vaultauth,vaultstaticsecret
+
+# Detailed status and recent events for the sync. Look here first if it failed.
 kubectl -n lightdash describe vaultstaticsecret lightdash-application
+
+# Key names inside the Secret VSO produced. Values stay hidden.
 kubectl -n lightdash get secret lightdash-application -o json |
   jq -r '.data | keys[]'
 ```
@@ -470,6 +551,8 @@ kubectl -n lightdash get secret lightdash-application -o json |
 List rendered Secret names:
 
 ```bash
+# Render the chart to YAML without installing anything, then list the names of
+# any Secret it would create. This proves the chart is not making its own.
 "$helm_local" template lightdash ./charts/lightdash \
   --namespace lightdash \
   --values .context/local-vso/lightdash-values.yaml |
@@ -489,11 +572,14 @@ owns that Secret; VSO owns `lightdash-application`.
 Deploy the local chart, not a published chart reference:
 
 ```bash
+# Install from THIS checkout. "./charts/lightdash" is a local path, so Helm uses
+# your working copy including unreleased changes, not the published chart.
 "$helm_local" upgrade --install lightdash ./charts/lightdash \
   --namespace lightdash \
   --values .context/local-vso/lightdash-values.yaml \
   --timeout 10m
 
+# Watch pods start. New lines appear only as something changes.
 kubectl -n lightdash get pods --watch
 ```
 
@@ -504,6 +590,8 @@ Press `Control-C` when PostgreSQL and the backend are ready.
 Confirm that the backend references VSO's Secret:
 
 ```bash
+# Print the Secrets the backend loads in full. Expect lightdash-application,
+# the one VSO created, which is the whole point of the lab.
 kubectl -n lightdash get deployment lightdash-backend \
   -o jsonpath='{range .spec.template.spec.containers[0].envFrom[*]}{.secretRef.name}{"\n"}{end}'
 ```
@@ -511,6 +599,8 @@ kubectl -n lightdash get deployment lightdash-backend \
 Forward the Service to the Mac:
 
 ```bash
+# Tunnel localhost:8080 on your Mac to the Service in the cluster. Leave this
+# running while you use Lightdash; Control-C closes the tunnel.
 kubectl -n lightdash port-forward service/lightdash 8080:8080
 ```
 
@@ -522,12 +612,19 @@ Do not rotate `LIGHTDASH_SECRET`: Lightdash uses it to encrypt stored
 credentials. Change only the harmless demonstration value:
 
 ```bash
+# Change only the demonstration value in Vault.
 kubectl -n vault exec vault-0 -- \
   env VAULT_TOKEN=root \
   vault kv patch kv/lightdash/application \
   VSO_DEMO_VERSION=two
 
+# VSO re-reads Vault within refreshAfter (15s), updates the Secret, and restarts
+# the backend because vso-resources.yaml lists it in rolloutRestartTargets.
+# Environment variables never change inside a running container, so without that
+# restart the new value would never reach the app.
 kubectl -n lightdash rollout status deployment/lightdash-backend
+
+# Read the value from inside the restarted pod. It should print "two".
 kubectl -n lightdash exec deployment/lightdash-backend -- \
   printenv VSO_DEMO_VERSION
 ```
@@ -540,6 +637,8 @@ This permanently removes the local Vault secrets, PostgreSQL data, VSO, and
 Lightdash installation:
 
 ```bash
+# Delete the cluster and everything inside it: Vault and its secrets, VSO,
+# PostgreSQL and its data, and Lightdash. The Docker container disappears too.
 "$kind_local" delete cluster --name lightdash-vso
 ```
 
