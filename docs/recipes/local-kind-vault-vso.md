@@ -344,9 +344,27 @@ files are prepared. The next sections install the workloads.
   --wait \
   --timeout 5m
 
+kubectl -n vault wait --for=condition=Ready pod/vault-0 --timeout=180s
+
 kubectl -n vault get pods,services
 kubectl -n vault exec vault-0 -- env VAULT_TOKEN=root vault status
 ```
+
+That wait is not redundant with Helm's `--wait`. The Vault chart sets the
+StatefulSet's `updateStrategy` to `OnDelete`, and Helm 3 treats any StatefulSet
+that is not `RollingUpdate` as instantly ready, so `--wait` returns while
+`vault-0` is still `ContainerCreating`. Without it the next command fails with:
+
+```text
+error: unable to upgrade connection: container not found ("vault")
+```
+
+If you hit that, nothing is broken. Wait for the pod to report `1/1 Running`
+and run the command again. `kubectl rollout status` does not help here; it
+refuses to report on an `OnDelete` StatefulSet.
+
+`vault status` should report `Initialized true` and `Sealed false`. Development
+mode unseals itself; a real Vault would not.
 
 ## 12. Create the Vault secret
 
