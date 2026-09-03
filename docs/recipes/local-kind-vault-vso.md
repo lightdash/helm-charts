@@ -78,11 +78,21 @@ docker info --format 'server={{.ServerVersion}} cpus={{.NCPU}} memory={{.MemTota
 
 # Print the Mac's chip: arm64 is Apple Silicon, x86_64 is Intel.
 uname -m
+
+# How much of Docker's virtual disk is already in use.
+docker system df
 ```
 
 This lab was prepared for an Apple Silicon Mac, where `uname -m` prints
 `arm64`. On an Intel Mac, replace `darwin-arm64` with `darwin-amd64` in the
 download commands.
+
+On Apple Silicon you also need roughly 12 GB free on Docker's virtual disk,
+because the Lightdash image is published for amd64 only and step 15 side-loads
+it into the cluster. If `docker system df` shows little headroom, reclaim some
+before starting: `docker builder prune` frees build cache, which costs nothing
+but slower future builds. Docker Desktop's disk size is under
+Settings, Resources, Disk image size.
 
 ## 3. Create the local directory structure
 
@@ -331,9 +341,6 @@ existingSecret: ""
 
 postgresql:
   enabled: true
-  primary:
-    persistence:
-      enabled: false
 
 browserless-chrome:
   enabled: false
@@ -358,6 +365,20 @@ migrationJob:
 `secrets: null` is significant. It prevents Helm from merging the chart's
 default `LIGHTDASH_SECRET: changeme` into a chart-created application Secret.
 VSO will create the application Secret instead.
+
+PostgreSQL storage is deliberately left at its default. Disabling it with
+`postgresql.primary.persistence.enabled: false` looks right for a disposable
+lab but is broken in the bundled postgresql 11.9.13 subchart: it creates the
+`data` volume as an `emptyDir` but keeps the matching `volumeMount` behind the
+same flag, so `PGDATA` (`/bitnami/postgresql/data`) is never mounted. The
+container then exits immediately with:
+
+```text
+mkdir: cannot create directory '/bitnami': Permission denied
+```
+
+Leaving the default on means Kind's built-in storage provisioner creates an 8 Gi
+volume, which is deleted along with the cluster in step 18.
 
 ## 10. Validate the two files before using them
 
@@ -568,6 +589,29 @@ List rendered Secret names:
 
 The only result should be `lightdash-postgresql`. The bundled PostgreSQL chart
 owns that Secret; VSO owns `lightdash-application`.
+
+On Apple Silicon, load the application image into the cluster first:
+
+```bash
+# Lightdash publishes linux/amd64 images only, and Kind refuses to pull an image
+# with no build for the node's architecture, failing with:
+#   no match for platform in manifest: not found
+# Read the tag the chart wants, pull the amd64 build explicitly, and copy it into
+# the node. Docker Desktop runs it under emulation once it is there.
+lightdash_tag="$(awk '/^appVersion:/ {print $2}' charts/lightdash/Chart.yaml | tr -d '"')"
+
+docker pull --platform linux/amd64 "lightdash/lightdash:${lightdash_tag}"
+
+# This copies several gigabytes into the node and takes a few minutes.
+"$kind_local" load docker-image "lightdash/lightdash:${lightdash_tag}" --name lightdash-vso
+
+# Confirm the node now has it. The chart's pull policy is IfNotPresent, so
+# kubelet uses this copy instead of trying to pull again.
+docker exec lightdash-vso-control-plane crictl images | grep lightdash/lightdash
+```
+
+Skip that block on an Intel Mac; the image matches your architecture and
+Kubernetes pulls it normally.
 
 Deploy the local chart, not a published chart reference:
 
