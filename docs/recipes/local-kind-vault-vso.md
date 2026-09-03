@@ -342,6 +342,14 @@ existingSecret: ""
 postgresql:
   enabled: true
 
+# Lightdash validates its whole configuration on startup and requires these
+# three unconditionally, even though this lab never uploads a file. They are
+# not secrets, so they belong here rather than in Vault.
+s3:
+  endpoint: http://minio.lightdash.svc.cluster.local:9000
+  bucket: lightdash
+  region: us-east-1
+
 browserless-chrome:
   enabled: false
 
@@ -379,6 +387,21 @@ mkdir: cannot create directory '/bitnami': Permission denied
 
 Leaving the default on means Kind's built-in storage provisioner creates an 8 Gi
 volume, which is deleted along with the cluster in step 18.
+
+The `s3` block is not optional either. Lightdash parses its entire configuration
+before it does anything else, and that parse requires `S3_ENDPOINT`, `S3_BUCKET`
+and `S3_REGION` whether or not any feature uses them. Omitting them passes
+`helm install` and then crash-loops the backend with:
+
+```text
+ParseError: S3-compatible storage is required. Set S3_ENDPOINT, S3_BUCKET and S3_REGION
+```
+
+The chart cannot catch this for you: in strict mode it accepts
+`secretRefs.application.name` as a possible source for those keys, because it
+has no way to read inside a Secret it did not create. No object store runs in
+this lab, so the address above resolves to nothing and file exports will not
+work. Everything this lab demonstrates does.
 
 ## 10. Validate the two files before using them
 
@@ -662,10 +685,16 @@ kubectl -n vault exec vault-0 -- \
   vault kv patch kv/lightdash/application \
   VSO_DEMO_VERSION=two
 
-# VSO re-reads Vault within refreshAfter (15s), updates the Secret, and restarts
-# the backend because vso-resources.yaml lists it in rolloutRestartTargets.
-# Environment variables never change inside a running container, so without that
-# restart the new value would never reach the app.
+# Wait for VSO to notice. It polls Vault every refreshAfter (15s), rewrites the
+# Secret, then stamps this annotation to restart the backend, because
+# vso-resources.yaml lists it in rolloutRestartTargets. Environment variables
+# never change inside a running container, so without that restart the new value
+# would never reach the app.
+kubectl -n lightdash wait \
+  --for=jsonpath='{.spec.template.metadata.annotations.vso\.secrets\.hashicorp\.com/restartedAt}' \
+  deployment/lightdash-backend --timeout=90s
+
+# Now the restart is under way, wait for the replacement pod.
 kubectl -n lightdash rollout status deployment/lightdash-backend
 
 # Read the value from inside the restarted pod. It should print "two".
@@ -674,6 +703,12 @@ kubectl -n lightdash exec deployment/lightdash-backend -- \
 ```
 
 The last command should print `two`.
+
+Do not skip the `kubectl wait`. `rollout status` reports on whichever rollout is
+in progress, so running it in the seconds before VSO reacts finds the previous
+rollout already complete and returns immediately. `printenv` then reads the pod
+that is still running and prints `one`, which looks like a failure but is only a
+race: check again once the new pod is up and it reads `two`.
 
 ## 18. Delete the lab
 
