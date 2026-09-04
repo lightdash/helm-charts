@@ -32,8 +32,31 @@ secrets:
   # -- 	This is the secret used to sign the session ID cookie and to encrypt sensitive information. Do not share this secret!
   LIGHTDASH_SECRET: changeme
 
-# -- Name of an existing Kubernetes secret to inject into all pods except the migration Job unless migrationJob.inheritGlobalEnv is true. Takes precedence over .Values.secrets when set.
+# -- Name of an existing Kubernetes secret to inject into all pods except the migration Job unless migrationJob.inheritGlobalEnv is true. Takes precedence over .Values.secrets when set. Ignored when secretRefs.enabled is true; use secretRefs.application.name instead.
 existingSecret: ""
+
+# -- Strict least-privilege references to Secrets managed outside this chart, for example by HashiCorp Vault Secrets Operator or External Secrets Operator. When enabled, legacy application, external-database, S3, and migration Secret values are ignored and the chart does not create those Secrets. The chart cannot read the contents of a Secret it does not create, so it validates names only: a missing or misspelled KEY surfaces when the pod starts, not at install time.
+secretRefs:
+  # -- Enable strict per-purpose externally managed Secret references
+  enabled: false
+  application:
+    # -- Secret containing application environment variables for the backend and workers. Injected in full with envFrom, so every key becomes an environment variable of the same name and must be spelled exactly as Lightdash expects it. Must contain LIGHTDASH_SECRET. Required when secretRefs.enabled is true.
+    name: ""
+  database:
+    # -- Secret containing the external PostgreSQL password. Required with strict mode and postgresql.enabled=false; ignored for bundled PostgreSQL.
+    name: ""
+    # -- Key inside secretRefs.database.name that holds the password. externalDatabase.secretKeys.passwordKey is IGNORED in strict mode, so when reusing a Secret you previously pointed externalDatabase.existingSecret at, set this to the key that Secret actually contains (often `postgresql-password`).
+    passwordKey: "PGPASSWORD"
+  s3:
+    # -- Secret containing S3 credentials for the backend and workers. Read with secretKeyRef, so only the two keys below are exposed. Leave empty when using workload identity or another ambient credential provider. Never mounted on the migration Job.
+    name: ""
+    # -- Key containing the S3 access key
+    accessKey: "S3_ACCESS_KEY"
+    # -- Key containing the S3 secret key
+    secretKey: "S3_SECRET_KEY"
+  migration:
+    # -- Secret containing environment variables for the migration Job, injected in full with envFrom. Required when secretRefs.enabled and migrationJob.enabled are both true, because Lightdash reads LIGHTDASH_SECRET while loading its config and the Job receives neither the application nor the S3 Secret. Pointing this at the same Secret as secretRefs.application.name is fine.
+    name: ""
 
 s3:
   # -- S3-compatible storage endpoint, for example https://s3.amazonaws.com
@@ -73,9 +96,14 @@ image:
   repository: lightdash/lightdash
   pullPolicy: IfNotPresent
   tag: ""
+  # -- Override the backend container command. A list, for example ["/bin/sh", "-c", "..."]. Leave empty to use the image default, or the no-migrate command when migrationJob.enabled is true. Workers ignore this; each worker block has its own `command`.
+  command: []
+  # -- Extra container args, applied to the backend AND every worker. Prefer putting a full command in image.command or in the per-worker `command`, since there is no way to give the backend args without also giving them to the workers.
+  args: []
 
 imagePullSecrets: []
 
+# -- Annotations applied to the backend pod template AND to every worker pod template. Not processed with `tpl`, so Helm expressions are emitted verbatim (this is what makes Vault Agent Injector templates safe to put here). The migration Job has its own migrationJob.podAnnotations.
 podAnnotations: {}
 
 podLabels: {}
@@ -364,8 +392,9 @@ ssl:
 ## @param migrationJob.scaleDownWorkloads.rbac.create Create temporary pre-upgrade Role and RoleBinding hooks for the migration service account
 migrationJob:
   enabled: false
-  # -- When true, the migration Job also receives the top-level extraEnv and existingSecret, so env supplied globally (for example LIGHTDASH_LICENSE_KEY) reaches the migrator. Default false keeps current behaviour.
+  # -- When true, the migration Job also receives the top-level extraEnv and existingSecret, so env supplied globally (for example LIGHTDASH_LICENSE_KEY) reaches the migrator. Default false keeps current behaviour. When secretRefs.enabled is true only the extraEnv half applies; existingSecret is ignored.
   inheritGlobalEnv: false
+  # -- Name of an existing Kubernetes secret to inject into the migration Job. Ignored when secretRefs.enabled is true; use secretRefs.migration.name instead.
   existingSecret: ""
   backoffLimit: 10
   ttlSecondsAfterFinished: 100

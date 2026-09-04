@@ -8,6 +8,8 @@ The 1.0.0 release contains breaking changes. You **must first update your instan
 
 It is recommended to work on this project with VS Code, as the development environment is pre-configured in a [development container](https://code.visualstudio.com/docs/remote/create-dev-container).
 
+For end-to-end walkthroughs that deploy the locally checked-out chart—from `main`, another branch, or a fork—see [docs/recipes](docs/recipes/). Each recipe is one self-contained file covering a single path.
+
 ## Linting
   `ct lint --all`
 

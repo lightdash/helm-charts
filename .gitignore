@@ -4,3 +4,7 @@ package-lock.json
 *.tgz
 .envrc
 .direnv/
+.context/
+
+.DS_Store
+.idea/

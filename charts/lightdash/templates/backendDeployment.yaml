@@ -55,38 +55,34 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           {{- if .Values.image.command }}
-          command: {{ .Values.image.command }}
+          command: {{ toJson .Values.image.command }}
           {{- else if .Values.migrationJob.enabled }}
           # Migration Job is the sole migrator; start the server without migrating to avoid racing it for the knex lock.
           command: ["dumb-init", "--", "node", "dist/index.js"]
           {{- end }}
-          args: {{ .Values.image.args }}
+          {{- with .Values.image.args }}
+          args: {{ toJson . }}
+          {{- end }}
           env:
             - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
                   name: {{ (include "lightdash.database.secretName" .) }}
                   key: {{ (include "lightdash.database.secret.passwordKey" .) }}
-              {{- include "lightdash.sslEnvs" . | nindent 12 -}}
-              {{- if .Values.extraEnv }}
-              {{- toYaml .Values.extraEnv | nindent 12 }}
-              {{- end }}
+            {{- with (include "lightdash.s3SecretEnvs" . | trim) }}
+            {{- . | nindent 12 }}
+            {{- end }}
+            {{- with (include "lightdash.sslEnvs" . | trim) }}
+            {{- . | nindent 12 }}
+            {{- end }}
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
           envFrom:
             - configMapRef:
                 name: {{ template "lightdash.fullname" $ }}
-            {{- if .Values.existingSecret }}
-            - secretRef:
-                name: {{ .Values.existingSecret }}
-            {{- else if .Values.secrets }}
-            - secretRef:
-                name: {{ template "lightdash.fullname" $ }}
-            {{- end }}
-            {{- if .Values.s3.existingSecret }}
-            - secretRef:
-                name: {{ .Values.s3.existingSecret }}
-            {{- else if or .Values.s3.accessKey .Values.s3.secretKey }}
-            - secretRef:
-                name: {{ template "lightdash.fullname" $ }}-s3
+            {{- with (include "lightdash.secretEnvFrom" (dict "root" . "migration" false) | trim) }}
+            {{- . | nindent 12 }}
             {{- end }}
           ports:
             - name: http

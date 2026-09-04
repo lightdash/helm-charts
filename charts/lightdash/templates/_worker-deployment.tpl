@@ -59,13 +59,18 @@ spec:
           image: "{{ $root.Values.image.repository }}:{{ $root.Values.image.tag | default $root.Chart.AppVersion }}"
           imagePullPolicy: {{ $root.Values.image.pullPolicy }}
           command: {{ $workerConfig.command | default (list "node" "dist/scheduler.js") | toJson }}
-          args: {{ $root.Values.image.args }}
+          {{- with $root.Values.image.args }}
+          args: {{ toJson . }}
+          {{- end }}
           env:
             - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
                   name: {{ (include "lightdash.database.secretName" $root) }}
                   key: {{ (include "lightdash.database.secret.passwordKey" $root) }}
+            {{- with (include "lightdash.s3SecretEnvs" $root | trim) }}
+            {{- . | nindent 12 }}
+            {{- end }}
             - name: PORT
               value: {{ $workerConfig.port | quote }}
             {{- if and $workerConfig.tasks $workerConfig.tasks.include }}
@@ -100,19 +105,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ template "lightdash.fullname" $root }}
-            {{- if $root.Values.existingSecret }}
-            - secretRef:
-                name: {{ $root.Values.existingSecret }}
-            {{- else if $root.Values.secrets }}
-            - secretRef:
-                name: {{ template "lightdash.fullname" $root }}
-            {{- end }}
-            {{- if $root.Values.s3.existingSecret }}
-            - secretRef:
-                name: {{ $root.Values.s3.existingSecret }}
-            {{- else if or $root.Values.s3.accessKey $root.Values.s3.secretKey }}
-            - secretRef:
-                name: {{ template "lightdash.fullname" $root }}-s3
+            {{- with (include "lightdash.secretEnvFrom" (dict "root" $root "migration" false) | trim) }}
+            {{- . | nindent 12 }}
             {{- end }}
           {{- if $workerConfig.startupProbe }}
           startupProbe:
