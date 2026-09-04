@@ -613,25 +613,41 @@ List rendered Secret names:
 The only result should be `lightdash-postgresql`. The bundled PostgreSQL chart
 owns that Secret; VSO owns `lightdash-application`.
 
-On Apple Silicon, load the application image into the cluster first:
+On Apple Silicon, export and load the application image into the cluster first:
 
 ```bash
 # Lightdash publishes linux/amd64 images only, and Kind refuses to pull an image
 # with no build for the node's architecture, failing with:
 #   no match for platform in manifest: not found
-# Read the tag the chart wants, pull the amd64 build explicitly, and copy it into
-# the node. Docker Desktop runs it under emulation once it is there.
+# Read the tag the chart wants and pull the amd64 build explicitly.
 lightdash_tag="$(awk '/^appVersion:/ {print $2}' charts/lightdash/Chart.yaml | tr -d '"')"
+lightdash_image="lightdash/lightdash:${lightdash_tag}"
+lightdash_archive="$PWD/.context/local-vso/lightdash-${lightdash_tag}-linux-amd64.tar"
 
-docker pull --platform linux/amd64 "lightdash/lightdash:${lightdash_tag}"
+docker pull --platform linux/amd64 "$lightdash_image"
+
+# Docker 29's containerd image store preserves Lightdash's amd64-only OCI image
+# index. Loading that index directly into an arm64 Kind node leaves it unusable,
+# even though Docker Desktop can run a single amd64 image under emulation. Save
+# only the amd64 platform so Kind receives the usable image manifest instead.
+docker image save \
+  --platform linux/amd64 \
+  --output "$lightdash_archive" \
+  "$lightdash_image"
 
 # This copies several gigabytes into the node and takes a few minutes.
-"$kind_local" load docker-image "lightdash/lightdash:${lightdash_tag}" --name lightdash-vso
+"$kind_local" load image-archive "$lightdash_archive" --name lightdash-vso
 
 # Confirm the node now has it. The chart's pull policy is IfNotPresent, so
 # kubelet uses this copy instead of trying to pull again.
-docker exec lightdash-vso-control-plane crictl images | grep lightdash/lightdash
+docker exec lightdash-vso-control-plane crictl images | grep lightdash/lightdash &&
+  rm "$lightdash_archive"
 ```
+
+The final command removes the several-gigabyte temporary archive only after
+the image appears in the node's CRI image list. If the check is empty, do not
+continue to the Helm install: inspect the image directly with
+`docker exec lightdash-vso-control-plane ctr --namespace=k8s.io images list`.
 
 Skip that block on an Intel Mac; the image matches your architecture and
 Kubernetes pulls it normally.
