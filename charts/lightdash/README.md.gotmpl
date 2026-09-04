@@ -345,6 +345,31 @@ Set `minAvailable` to pin a minimum number of available pods instead. When both 
 
 **Important:** With `replicaCount: 1`, the default permits the only pod to be evicted, so it does not prevent downtime.
 
+## Database migrations during upgrades
+
+Set one release-wide Deployment strategy when an external upgrade check decides whether an application version can roll safely:
+
+```yaml
+upgrade:
+  mode: Recreate
+migrationJob:
+  enabled: true
+```
+
+Map a `true` upgrade-check result to `upgrade.mode: RollingUpdate`. Map `false` or an unknown result to `upgrade.mode: Recreate`. The chart does not call the upgrade-check service or fetch its verdict.
+
+An explicit mode is authoritative for the backend and all four worker Deployments. `Recreate` removes any per-component `rollingUpdate` block. `RollingUpdate` keeps valid per-component `rollingUpdate` tuning. Leave `upgrade.mode` empty to preserve every existing per-component strategy exactly.
+
+When `migrationJob.enabled` is `true`, a Helm upgrade automatically runs the scale-down sequence if the explicit mode is `Recreate`. For backward compatibility, an empty mode also runs it when the backend or any enabled worker has `strategy.type: Recreate`. It never scales workloads down during installation.
+
+Before an upgrade migration that requires `Recreate`, the Job removes the backend HPA, scales the backend and every worker Deployment to zero, and waits for all matching application pods to terminate. The migration starts only after that wait succeeds. The migration Job pod is not part of the wait selector.
+
+A successful upgrade applies the normal release manifests after the hook. Those manifests restore configured worker replicas and either `replicaCount` or `autoscaling.minReplicas` for the backend, then recreate the backend HPA when autoscaling is enabled. Application downtime lasts from the scale-down until the new pods become ready.
+
+If the migration, wait, or any Kubernetes command fails, the upgrade fails closed. The Job does not restore the HPA or replicas, so the application remains stopped until an operator fixes the problem and retries or rolls back the release.
+
+By default, the chart creates temporary namespace-scoped Role and RoleBinding hooks before a pre-upgrade scale-down. Set `migrationJob.scaleDownWorkloads.rbac.create: false` only when the migration service account can get and delete the named backend HPA, list Deployments, patch the scale subresource for the five named Lightdash Deployments, and get, list, and watch pods. The image, timeout, resources, and RBAC settings remain under `migrationJob.scaleDownWorkloads`. When `migrationJob.serviceAccount.create` is `false`, the named custom service account must exist before the migration hook starts. When it is `true`, the chart creates the migration service account as an earlier hook.
+
 ## Values
 
 Note The `secret.*` values are used to create [kubernetes secrets](https://kubernetes.io/docs/concepts/configuration/secret/).

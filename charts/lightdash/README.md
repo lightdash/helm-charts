@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 2.16.57](https://img.shields.io/badge/Version-2.16.57-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.214.0](https://img.shields.io/badge/AppVersion-1.214.0-informational?style=flat-square)
+![Version: 2.16.351](https://img.shields.io/badge/Version-2.16.351-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 2.122.0](https://img.shields.io/badge/AppVersion-2.122.0-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -351,6 +351,31 @@ Set `minAvailable` to pin a minimum number of available pods instead. When both 
 
 **Important:** With `replicaCount: 1`, the default permits the only pod to be evicted, so it does not prevent downtime.
 
+## Database migrations during upgrades
+
+Set one release-wide Deployment strategy when an external upgrade check decides whether an application version can roll safely:
+
+```yaml
+upgrade:
+  mode: Recreate
+migrationJob:
+  enabled: true
+```
+
+Map a `true` upgrade-check result to `upgrade.mode: RollingUpdate`. Map `false` or an unknown result to `upgrade.mode: Recreate`. The chart does not call the upgrade-check service or fetch its verdict.
+
+An explicit mode is authoritative for the backend and all four worker Deployments. `Recreate` removes any per-component `rollingUpdate` block. `RollingUpdate` keeps valid per-component `rollingUpdate` tuning. Leave `upgrade.mode` empty to preserve every existing per-component strategy exactly.
+
+When `migrationJob.enabled` is `true`, a Helm upgrade automatically runs the scale-down sequence if the explicit mode is `Recreate`. For backward compatibility, an empty mode also runs it when the backend or any enabled worker has `strategy.type: Recreate`. It never scales workloads down during installation.
+
+Before an upgrade migration that requires `Recreate`, the Job removes the backend HPA, scales the backend and every worker Deployment to zero, and waits for all matching application pods to terminate. The migration starts only after that wait succeeds. The migration Job pod is not part of the wait selector.
+
+A successful upgrade applies the normal release manifests after the hook. Those manifests restore configured worker replicas and either `replicaCount` or `autoscaling.minReplicas` for the backend, then recreate the backend HPA when autoscaling is enabled. Application downtime lasts from the scale-down until the new pods become ready.
+
+If the migration, wait, or any Kubernetes command fails, the upgrade fails closed. The Job does not restore the HPA or replicas, so the application remains stopped until an operator fixes the problem and retries or rolls back the release.
+
+By default, the chart creates temporary namespace-scoped Role and RoleBinding hooks before a pre-upgrade scale-down. Set `migrationJob.scaleDownWorkloads.rbac.create: false` only when the migration service account can get and delete the named backend HPA, list Deployments, patch the scale subresource for the five named Lightdash Deployments, and get, list, and watch pods. The image, timeout, resources, and RBAC settings remain under `migrationJob.scaleDownWorkloads`. When `migrationJob.serviceAccount.create` is `false`, the named custom service account must exist before the migration hook starts. When it is `true`, the chart creates the migration service account as an earlier hook.
+
 ## Values
 
 Note The `secret.*` values are used to create [kubernetes secrets](https://kubernetes.io/docs/concepts/configuration/secret/).
@@ -467,6 +492,12 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | migrationJob.inheritGlobalEnv | bool | `false` | When true, the migration Job also receives the top-level extraEnv and existingSecret, so env supplied globally (for example LIGHTDASH_LICENSE_KEY) reaches the migrator. Default false keeps current behaviour. When secretRefs.enabled is true only the extraEnv half applies; existingSecret is ignored. |
 | migrationJob.podAnnotations | object | `{}` |  |
 | migrationJob.resources | object | `{}` |  |
+| migrationJob.scaleDownWorkloads.image.pullPolicy | string | `"IfNotPresent"` |  |
+| migrationJob.scaleDownWorkloads.image.repository | string | `"registry.k8s.io/kubectl"` |  |
+| migrationJob.scaleDownWorkloads.image.tag | string | `"v1.33.4"` |  |
+| migrationJob.scaleDownWorkloads.rbac.create | bool | `true` |  |
+| migrationJob.scaleDownWorkloads.resources | object | `{}` |  |
+| migrationJob.scaleDownWorkloads.timeoutSeconds | int | `300` |  |
 | migrationJob.serviceAccount.annotations | object | `{}` |  |
 | migrationJob.serviceAccount.create | bool | `true` |  |
 | migrationJob.serviceAccount.name | string | `""` |  |
@@ -612,6 +643,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | ssl.enabled | bool | `false` |  |
 | ssl.mountPath | string | `"/etc/ssl/certs"` |  |
 | tolerations | list | `[]` |  |
+| upgrade.mode | string | `""` |  |
 | warehouseNatsWorker.command[0] | string | `"node"` |  |
 | warehouseNatsWorker.command[1] | string | `"dist/natsWorker.js"` |  |
 | warehouseNatsWorker.command[2] | string | `"--stream"` |  |

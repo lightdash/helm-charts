@@ -1,5 +1,7 @@
 {{- $volumes := .Values.lightdashBackend.extraVolumes }}
 {{- $volumeMounts := .Values.lightdashBackend.extraVolumeMounts }}
+{{- $requiresPreMigrationScaleDown := eq (include "lightdash.requiresPreMigrationScaleDown" .) "true" }}
+{{- $strategy := include "lightdash.deploymentStrategy" (dict "root" . "strategy" .Values.lightdashBackend.strategy) | trim }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -8,12 +10,14 @@ metadata:
     {{- include "lightdash.labels" . | nindent 4 }}
     app.kubernetes.io/component: backend
 spec:
-  {{- if not .Values.autoscaling.enabled }}
+  {{- if and .Values.autoscaling.enabled .Release.IsUpgrade .Values.migrationJob.enabled $requiresPreMigrationScaleDown }}
+  replicas: {{ .Values.autoscaling.minReplicas }}
+  {{- else if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
-  {{- with .Values.lightdashBackend.strategy }}
+  {{- if $strategy }}
   strategy:
-    {{- toYaml . | nindent 4 }}
+    {{- $strategy | nindent 4 }}
   {{- end }}
   selector:
     matchLabels:

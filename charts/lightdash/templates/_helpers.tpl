@@ -238,6 +238,13 @@ strict mode. Either one is accepted as evidence that the keys are supplied.
 {{- end -}}
 {{- end -}}
 
+{{- define "lightdash.validateUpgradeMode" -}}
+{{- $mode := default "" .Values.upgrade.mode -}}
+{{- if and (ne $mode "") (ne $mode "RollingUpdate") (ne $mode "Recreate") -}}
+{{- fail "upgrade.mode must be one of: RollingUpdate, Recreate" -}}
+{{- end -}}
+{{- end -}}
+
 {{/*
 Configuration for postgres credentials
 */}}
@@ -302,6 +309,47 @@ Add environment variables to configure database values
 {{- else -}}
     {{- .Values.migrationJob.serviceAccount.name | default "default" -}}
 {{- end -}}
+{{- end -}}
+
+{{- define "lightdash.deploymentStrategy" -}}
+{{- $mode := default "" .root.Values.upgrade.mode -}}
+{{- $strategy := .strategy -}}
+{{- if eq $mode "Recreate" }}
+type: Recreate
+{{- else if eq $mode "RollingUpdate" }}
+type: RollingUpdate
+{{- with $strategy.rollingUpdate }}
+rollingUpdate:
+{{- toYaml . | nindent 2 }}
+{{- end }}
+{{- else }}
+{{- with $strategy }}
+{{- toYaml . }}
+{{- end }}
+{{- end }}
+{{- end -}}
+
+{{- define "lightdash.requiresPreMigrationScaleDown" -}}
+{{- $mode := default "" .Values.upgrade.mode -}}
+{{- $backendRecreate := eq (default "" .Values.lightdashBackend.strategy.type) "Recreate" -}}
+{{- $schedulerRecreate := and .Values.scheduler.enabled (eq (default "" .Values.scheduler.strategy.type) "Recreate") -}}
+{{- $appBuildRecreate := and .Values.appBuildWorker.enabled (eq (default "" .Values.appBuildWorker.strategy.type) "Recreate") -}}
+{{- $warehouseRecreate := and .Values.warehouseNatsWorker.enabled (eq (default "" .Values.warehouseNatsWorker.strategy.type) "Recreate") -}}
+{{- $preAggregateRecreate := and .Values.preAggregateNatsWorker.enabled (eq (default "" .Values.preAggregateNatsWorker.strategy.type) "Recreate") -}}
+{{- $legacyRecreate := or $backendRecreate $schedulerRecreate $appBuildRecreate $warehouseRecreate $preAggregateRecreate -}}
+{{- if or (eq $mode "Recreate") (and (eq $mode "") $legacyRecreate) -}}true{{- else -}}false{{- end -}}
+{{- end -}}
+
+{{- define "lightdash.applicationDeploymentNames" -}}
+- {{ include "lightdash.fullname" . }}-backend
+- {{ include "lightdash.fullname" . }}-worker
+- {{ include "lightdash.fullname" . }}-app-build-worker
+- {{ include "lightdash.fullname" . }}-warehouse-nats-worker
+- {{ include "lightdash.fullname" . }}-pre-aggregate-nats-worker
+{{- end -}}
+
+{{- define "lightdash.applicationWorkloadSelector" -}}
+app.kubernetes.io/name={{ include "lightdash.name" . }},app.kubernetes.io/instance={{ .Release.Name }},app.kubernetes.io/component in (backend,worker,app-build-worker,warehouse-nats-worker,pre-aggregate-nats-worker)
 {{- end -}}
 
 

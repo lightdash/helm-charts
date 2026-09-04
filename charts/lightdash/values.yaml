@@ -88,6 +88,10 @@ schedulerExtraEnv: []
 # -- Specify the number of lightdash instances.
 replicaCount: 1
 
+## @param upgrade.mode Release-wide Deployment strategy. Accepted values are RollingUpdate and Recreate. Empty preserves each component strategy.
+upgrade:
+  mode: ""
+
 image:
   repository: lightdash/lightdash
   pullPolicy: IfNotPresent
@@ -380,6 +384,12 @@ ssl:
 ## @param migrationJob.serviceAccount.create Create a dedicated ServiceAccount for the migration hook Job (pre-install/pre-upgrade)
 ## @param migrationJob.serviceAccount.name ServiceAccount name (defaults to `<release-fullname>-migration` when create is true, or `default` when create is false)
 ## @param migrationJob.serviceAccount.annotations Annotations on the migration ServiceAccount (e.g. workload identity)
+## @param migrationJob.scaleDownWorkloads.timeoutSeconds Maximum time to wait for Lightdash application pods to terminate
+## @param migrationJob.scaleDownWorkloads.image.repository kubectl image repository
+## @param migrationJob.scaleDownWorkloads.image.tag kubectl image tag
+## @param migrationJob.scaleDownWorkloads.image.pullPolicy kubectl image pull policy
+## @param migrationJob.scaleDownWorkloads.resources Resource requests and limits for the scale-down containers
+## @param migrationJob.scaleDownWorkloads.rbac.create Create temporary pre-upgrade Role and RoleBinding hooks for the migration service account
 migrationJob:
   enabled: false
   # -- When true, the migration Job also receives the top-level extraEnv and existingSecret, so env supplied globally (for example LIGHTDASH_LICENSE_KEY) reaches the migrator. Default false keeps current behaviour. When secretRefs.enabled is true only the extraEnv half applies; existingSecret is ignored.
@@ -393,6 +403,15 @@ migrationJob:
     create: true
     name: ""
     annotations: {}
+  scaleDownWorkloads:
+    timeoutSeconds: 300
+    image:
+      repository: registry.k8s.io/kubectl
+      tag: "v1.33.4"
+      pullPolicy: IfNotPresent
+    resources: {}
+    rbac:
+      create: true
   ssl:
     enabled: false
     mountPath: "/etc/ssl/certs"
@@ -491,6 +510,7 @@ lightdashBackend:
       exec:
         command: ["sh", "-c", "sleep 10"]
   ## Deployment update strategy. Empty uses the Kubernetes default RollingUpdate.
+  ## Ignored when upgrade.mode is set.
   ## Set type: Recreate for an upgrade declared breaking.
   strategy: {}
   extraVolumeMounts: []
@@ -542,6 +562,7 @@ scheduler:
   ## Set a hook only if your topology needs one.
   lifecycle: {}
   ## Deployment update strategy. Empty uses the Kubernetes default RollingUpdate.
+  ## Ignored when upgrade.mode is set.
   ## Set type: Recreate for an upgrade declared breaking.
   strategy: {}
   tasks:
@@ -595,6 +616,7 @@ appBuildWorker:
   ## Set a hook only if your topology needs one.
   lifecycle: {}
   ## Deployment update strategy. Empty uses the Kubernetes default RollingUpdate.
+  ## Ignored when upgrade.mode is set.
   ## Set type: Recreate for an upgrade declared breaking.
   strategy: {}
   tasks:
@@ -644,6 +666,7 @@ warehouseNatsWorker:
   ## Set a hook only if your topology needs one.
   lifecycle: {}
   ## Deployment update strategy. Empty uses the Kubernetes default RollingUpdate.
+  ## Ignored when upgrade.mode is set.
   ## Set type: Recreate for an upgrade declared breaking.
   strategy: {}
   extraVolumeMounts: []
@@ -690,6 +713,7 @@ preAggregateNatsWorker:
   ## Set a hook only if your topology needs one.
   lifecycle: {}
   ## Deployment update strategy. Empty uses the Kubernetes default RollingUpdate.
+  ## Ignored when upgrade.mode is set.
   ## Set type: Recreate for an upgrade declared breaking.
   strategy: {}
   extraVolumeMounts: []
