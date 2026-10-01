@@ -41,6 +41,28 @@ helm install lightdash lightdash/lightdash \
 
 ```
 
+### Pinning the Lightdash version
+
+The chart deploys the Lightdash image tagged with the chart's `appVersion` by default. To run a different Lightdash version, set `image.tag`:
+
+```
+helm upgrade --install lightdash lightdash/lightdash --set image.tag=2.410.0
+```
+
+or in your values file:
+
+```yaml
+image:
+  tag: "2.410.0"
+```
+
+`image.tag` applies to the backend, every worker, and the migration Job. Leave it empty to follow the chart's `appVersion`.
+
+Notes:
+- `helm list` still shows the chart's `appVersion`; Helm has no runtime override for it.
+- The chart's templates (env vars, migration flow) target its own `appVersion`. Prefer upgrading the chart to pinning a tag far from it.
+- Use `image.repository` to pull from a mirror or private registry.
+
 ### S3-compatible storage
 
 Lightdash requires S3-compatible storage. Set the endpoint, bucket, and region when you install the chart:
@@ -450,8 +472,8 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | image.args | list | `[]` | Extra container args, applied to the backend AND every worker. Prefer putting a full command in image.command or in the per-worker `command`, since there is no way to give the backend args without also giving them to the workers. |
 | image.command | list | `[]` | Override the backend container command. A list, for example ["/bin/sh", "-c", "..."]. Leave empty to use the image default, or the no-migrate command when migrationJob.enabled is true. Workers ignore this; each worker block has its own `command`. |
 | image.pullPolicy | string | `"IfNotPresent"` |  |
-| image.repository | string | `"lightdash/lightdash"` |  |
-| image.tag | string | `""` |  |
+| image.repository | string | `"lightdash/lightdash"` | Lightdash image repository. Change it to pull from a mirror or private registry. |
+| image.tag | string | `""` | Lightdash version to deploy, for example "2.410.0". Empty uses the chart appVersion. Applies to the backend, workers, and migration Job. |
 | imagePullSecrets | list | `[]` |  |
 | ingress.annotations | object | `{}` |  |
 | ingress.className | string | `""` |  |

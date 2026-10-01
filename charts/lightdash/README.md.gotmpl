@@ -42,6 +42,28 @@ helm install lightdash lightdash/lightdash \
 
 ```
 
+### Pinning the Lightdash version
+
+The chart deploys the Lightdash image tagged with the chart's `appVersion` by default. To run a different Lightdash version, set `image.tag`:
+
+```
+helm upgrade --install lightdash lightdash/lightdash --set image.tag=2.410.0
+```
+
+or in your values file:
+
+```yaml
+image:
+  tag: "2.410.0"
+```
+
+`image.tag` applies to the backend, every worker, and the migration Job. Leave it empty to follow the chart's `appVersion`.
+
+Notes:
+- `helm list` still shows the chart's `appVersion`; Helm has no runtime override for it.
+- The chart's templates (env vars, migration flow) target its own `appVersion`. Prefer upgrading the chart to pinning a tag far from it.
+- Use `image.repository` to pull from a mirror or private registry.
+
 ### S3-compatible storage
 
 Lightdash requires S3-compatible storage. Set the endpoint, bucket, and region when you install the chart:

@@ -93,8 +93,10 @@ upgrade:
   mode: ""
 
 image:
+  # -- Lightdash image repository. Change it to pull from a mirror or private registry.
   repository: lightdash/lightdash
   pullPolicy: IfNotPresent
+  # -- Lightdash version to deploy, for example "2.410.0". Empty uses the chart appVersion. Applies to the backend, workers, and migration Job.
   tag: ""
   # -- Override the backend container command. A list, for example ["/bin/sh", "-c", "..."]. Leave empty to use the image default, or the no-migrate command when migrationJob.enabled is true. Workers ignore this; each worker block has its own `command`.
   command: []
