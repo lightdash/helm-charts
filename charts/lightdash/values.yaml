@@ -464,6 +464,8 @@ serviceAccount:
   create: true
   name: ""
   annotations: {}
+  # -- Mount the service account's Kubernetes API token in the backend and worker pods. Lightdash does not call the Kubernetes API, so set this to `false` unless another container in those pods needs the token. GKE Workload Identity works without it.
+  automountServiceAccountToken: true
 
 ## Customise backend configuration for GCP
 backendConfig:

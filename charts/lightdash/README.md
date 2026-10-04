@@ -658,6 +658,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | service.port | int | `8080` |  |
 | service.type | string | `"ClusterIP"` |  |
 | serviceAccount.annotations | object | `{}` |  |
+| serviceAccount.automountServiceAccountToken | bool | `true` | Mount the service account's Kubernetes API token in the backend and worker pods. Lightdash does not call the Kubernetes API, so set this to `false` unless another container in those pods needs the token. GKE Workload Identity works without it. |
 | serviceAccount.create | bool | `true` |  |
 | serviceAccount.name | string | `""` |  |
 | ssl.certFileName | string | `""` |  |
