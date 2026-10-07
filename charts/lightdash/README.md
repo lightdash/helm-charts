@@ -504,6 +504,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | lightdashBackend.startupProbe.timeoutSeconds | int | `10` | Timeout for each backend startup probe |
 | lightdashBackend.strategy | object | `{}` |  |
 | lightdashBackend.terminationGracePeriodSeconds | int | `90` |  |
+| migrationJob.activeDeadlineSeconds | string | `""` | Hard limit in seconds on how long the Job may run, including time spent pending. Leave empty to disable; set a positive integer to enable. |
 | migrationJob.affinity | object | `{}` |  |
 | migrationJob.backoffLimit | int | `10` |  |
 | migrationJob.enabled | bool | `false` |  |

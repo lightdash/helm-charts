@@ -372,6 +372,7 @@ ssl:
 ## @param migrationJob.enabled Run DB migrations in a pre-install/pre-upgrade hook Job. When enabled, backend pods start without migrating (the Job is the sole migrator) to avoid the knex migration-lock race on upgrade; set image.command to override the backend command.
 ## @param migrationJob.backoffLimit Number of retries before the Job is marked failed
 ## @param migrationJob.ttlSecondsAfterFinished Seconds after which the Job is eligible for automatic cleanup
+## @param migrationJob.activeDeadlineSeconds Hard limit on how long the Job may run, including time spent pending. Leave empty to disable; set a positive integer to enable.
 ## @param migrationJob.extraEnv Extra env vars for the migration container
 ## @param migrationJob.extraVolumes Extra volumes for the migration pod
 ## @param migrationJob.extraVolumeMounts Extra volume mounts for the migration container
@@ -400,6 +401,8 @@ migrationJob:
   existingSecret: ""
   backoffLimit: 10
   ttlSecondsAfterFinished: 100
+  # -- Hard limit in seconds on how long the Job may run, including time spent pending. Leave empty to disable; set a positive integer to enable.
+  activeDeadlineSeconds: ""
   podAnnotations: {}
   serviceAccount:
     create: true
