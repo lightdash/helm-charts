@@ -1,0 +1,16 @@
+node_modules
+cdk.out
+cdk.context.json
+*.tsbuildinfo
+
+# Compiled output. The app runs through ts-node, so these only appear when
+# someone runs `npm run build`.
+*.js
+*.d.ts
+
+# The repository root ignores package-lock.json for every directory. Infra
+# code is re-included here: without the lockfile, `npm install` resolves a
+# different aws-cdk-lib months later and a redeploy is no longer the same
+# deployment. A subdirectory rule wins over the parent, so the root file stays
+# untouched.
+!package-lock.json
