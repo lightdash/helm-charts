@@ -371,7 +371,8 @@ ssl:
 ## Migration Job (runs for both bundled and external DB)
 ## @param migrationJob.enabled Run DB migrations in a pre-install/pre-upgrade hook Job. When enabled, backend pods start without migrating (the Job is the sole migrator) to avoid the knex migration-lock race on upgrade; set image.command to override the backend command.
 ## @param migrationJob.backoffLimit Number of retries before the Job is marked failed
-## @param migrationJob.ttlSecondsAfterFinished Seconds after which the Job is eligible for automatic cleanup
+## @param migrationJob.ttlSecondsAfterFinished Seconds after which the Job is eligible for automatic cleanup. The default of 100 deletes a DeadlineExceeded Job and its pod logs within about two minutes; raise it when activeDeadlineSeconds is set.
+## @param migrationJob.activeDeadlineSeconds Hard limit in seconds on the whole Job, including pending time and, on a Recreate upgrade, scale-down. Leave empty to disable. Size it as scale-down wait plus image pull plus pending time plus migration time. See the README.
 ## @param migrationJob.extraEnv Extra env vars for the migration container
 ## @param migrationJob.extraVolumes Extra volumes for the migration pod
 ## @param migrationJob.extraVolumeMounts Extra volume mounts for the migration container
@@ -399,7 +400,10 @@ migrationJob:
   # -- Name of an existing Kubernetes secret to inject into the migration Job. Ignored when secretRefs.enabled is true; use secretRefs.migration.name instead.
   existingSecret: ""
   backoffLimit: 10
+  # -- Seconds after which the Job is eligible for automatic cleanup. The default of 100 deletes a DeadlineExceeded Job and its pod logs within about two minutes; raise it when activeDeadlineSeconds is set.
   ttlSecondsAfterFinished: 100
+  # -- Hard limit in seconds on the whole Job, including pending time and, on a Recreate upgrade, scale-down. Leave empty to disable. Size it as scale-down wait plus image pull plus pending time plus migration time. See the README.
+  activeDeadlineSeconds: ""
   podAnnotations: {}
   serviceAccount:
     create: true

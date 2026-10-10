@@ -504,6 +504,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | lightdashBackend.startupProbe.timeoutSeconds | int | `10` | Timeout for each backend startup probe |
 | lightdashBackend.strategy | object | `{}` |  |
 | lightdashBackend.terminationGracePeriodSeconds | int | `90` |  |
+| migrationJob.activeDeadlineSeconds | string | `""` | Hard limit in seconds on the whole Job, including pending time and, on a Recreate upgrade, scale-down. Leave empty to disable. Size it as scale-down wait plus image pull plus pending time plus migration time. See the README. |
 | migrationJob.affinity | object | `{}` |  |
 | migrationJob.backoffLimit | int | `10` |  |
 | migrationJob.enabled | bool | `false` |  |
@@ -528,7 +529,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | migrationJob.ssl.enabled | bool | `false` |  |
 | migrationJob.ssl.mountPath | string | `"/etc/ssl/certs"` |  |
 | migrationJob.tolerations | list | `[]` |  |
-| migrationJob.ttlSecondsAfterFinished | int | `100` |  |
+| migrationJob.ttlSecondsAfterFinished | int | `100` | Seconds after which the Job is eligible for automatic cleanup. The default of 100 deletes a DeadlineExceeded Job and its pod logs within about two minutes; raise it when activeDeadlineSeconds is set. |
 | nameOverride | string | `""` |  |
 | nats.config.cluster.enabled | bool | `false` |  |
 | nats.config.jetstream.enabled | bool | `true` |  |
