@@ -60,5 +60,13 @@ data:
   S3_FORCE_PATH_STYLE: {{ .forcePathStyle | quote }}
   {{- end }}
   {{- end }}
+  {{- with .Values.chartRegistry }}
+  {{- if .url }}
+  LIGHTDASH_CHART_REGISTRY_URL: {{ .url | quote }}
+  {{- end }}
+  {{- if .allowPrivateHosts }}
+  LIGHTDASH_CHART_REGISTRY_ALLOW_PRIVATE_HOSTS: "true"
+  {{- end }}
+  {{- end }}
   {{- toYaml .Values.configMap | nindent 2 }}
 {{- end }}

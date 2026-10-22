@@ -72,6 +72,9 @@ spec:
             {{- with (include "lightdash.s3SecretEnvs" . | trim) }}
             {{- . | nindent 12 }}
             {{- end }}
+            {{- with (include "lightdash.chartRegistrySecretEnvs" . | trim) }}
+            {{- . | nindent 12 }}
+            {{- end }}
             {{- with (include "lightdash.sslEnvs" . | trim) }}
             {{- . | nindent 12 }}
             {{- end }}

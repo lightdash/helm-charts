@@ -76,6 +76,21 @@ s3:
 
 Set `s3.accessKey` and `s3.secretKey` for development only. For production, create a Kubernetes Secret with `S3_ACCESS_KEY` and `S3_SECRET_KEY`, then set `s3.existingSecret` to its name.
 
+### Private chart type registry mirror
+
+By default an enterprise instance reads official chart types from the public registry. Deployments that cannot reach the internet can mirror the published registry tree through an internal artifact proxy and point the instance at it:
+
+```yaml
+chartRegistry:
+  url: https://artifacts.internal.example/lightdash-library
+  allowPrivateHosts: true
+  existingSecret: lightdash-chart-registry
+```
+
+- `chartRegistry.url` and `chartRegistry.allowPrivateHosts` go into the ConfigMap as `LIGHTDASH_CHART_REGISTRY_URL` and `LIGHTDASH_CHART_REGISTRY_ALLOW_PRIVATE_HOSTS`. The private-hosts flag only lifts the private-address check: the registry must still be served over https, redirects are still refused, and the connection stays pinned to the resolved address. Do not use `LIGHTDASH_CHART_REGISTRY_ALLOW_INSECURE` for a mirror; it also allows plain http and is meant for local fixtures.
+- When the mirror requires authentication, create a Secret whose `LIGHTDASH_CHART_REGISTRY_AUTHORIZATION_HEADER` key holds the full header value, for example `Basic <base64>` or `Bearer <token>`, and set `chartRegistry.existingSecret` to its name (`chartRegistry.secretKey` if the key is spelled differently). The backend and the workers read it with a `secretKeyRef`; the migration Job never receives it. In strict `secretRefs` mode you can instead add the key to the application Secret.
+- A mirror signed by an internal CA also needs the CA bundle in the container's trust store: mount it and set `NODE_EXTRA_CA_CERTS` through `extraEnv`.
+
 ### Externally managed secrets (Vault, External Secrets Operator)
 
 #### How this chart handles secrets
@@ -450,6 +465,10 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | browserless-chrome.resources.requests.cpu | string | `"500m"` |  |
 | browserless-chrome.resources.requests.memory | string | `"512Mi"` |  |
 | browserless-chrome.service.port | int | `80` |  |
+| chartRegistry.allowPrivateHosts | bool | `false` | Allow a registry on a private or internal address (a self-hosted mirror behind your firewall), rendered as LIGHTDASH_CHART_REGISTRY_ALLOW_PRIVATE_HOSTS. Transport stays https-only and the connection stays pinned to the resolved address. Do not use LIGHTDASH_CHART_REGISTRY_ALLOW_INSECURE for a mirror; it also permits plain http. |
+| chartRegistry.existingSecret | string | `""` | Name of an existing Kubernetes Secret holding the full Authorization header value for a registry behind authentication, for example "Basic <base64>" or "Bearer <token>". Delivered to the backend and the workers as LIGHTDASH_CHART_REGISTRY_AUTHORIZATION_HEADER with a secretKeyRef; the migration Job never receives it. Empty sends no credentials. |
+| chartRegistry.secretKey | string | `"LIGHTDASH_CHART_REGISTRY_AUTHORIZATION_HEADER"` | Key inside chartRegistry.existingSecret that holds the header value |
+| chartRegistry.url | string | `""` | URL of the chart type registry the instance reads, rendered as LIGHTDASH_CHART_REGISTRY_URL. Empty keeps the application default, the official registry. |
 | configMap.DBT_PROJECT_DIR | string | `""` | Path to your local dbt project. Only set this value if you are mounting a DBT project |
 | configMap.PORT | string | `"8080"` | Port for lightdash |
 | configMap.SECURE_COOKIES | string | `"false"` | Secure Cookies |

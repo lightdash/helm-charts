@@ -37,6 +37,9 @@ jobs:
       - name: Check migration scale-down rendering
         run: scripts/test-migration-scale-down.sh
 
+      - name: Check chart registry rendering
+        run: scripts/test-chart-registry-rendering.sh
+
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 35

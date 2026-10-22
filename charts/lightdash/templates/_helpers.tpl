@@ -220,6 +220,23 @@ Secret. This avoids exposing unrelated keys through envFrom.
 {{- end -}}
 
 {{/*
+Render the chart type registry Authorization header from the operator's Secret
+with a secretKeyRef, so only that one key reaches the container. Backend and
+workers only; the migration Job never talks to the registry.
+*/}}
+{{- define "lightdash.chartRegistrySecretEnvs" -}}
+{{- with .Values.chartRegistry }}
+{{- if .existingSecret }}
+- name: LIGHTDASH_CHART_REGISTRY_AUTHORIZATION_HEADER
+  valueFrom:
+    secretKeyRef:
+      name: {{ .existingSecret }}
+      key: {{ .secretKey | default "LIGHTDASH_CHART_REGISTRY_AUTHORIZATION_HEADER" }}
+{{- end }}
+{{- end }}
+{{- end -}}
+
+{{/*
 Validate that S3 storage is configured. Keys can also arrive through a Secret this
 chart cannot inspect: existingSecret in legacy mode, secretRefs.application.name in
 strict mode. Either one is accepted as evidence that the keys are supplied.
