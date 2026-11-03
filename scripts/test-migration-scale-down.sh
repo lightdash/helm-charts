@@ -447,11 +447,18 @@ render "$analytics_default" install
 assert_not_contains "$analytics_default" '# Source: lightdash/templates/analyticsContentWorkerDeployment.yaml'
 
 analytics_enabled="$temp_dir/analytics-enabled.yaml"
-render "$analytics_enabled" install --set analyticsContentWorker.enabled=true
+render "$analytics_enabled" install \
+    --set analyticsContentWorker.enabled=true \
+    --set image.repository=example.com/lightdash \
+    --set image.tag=analytics-sync-release
 analytics_worker="$temp_dir/analytics-worker.yaml"
 extract_source lightdash/templates/analyticsContentWorkerDeployment.yaml "$analytics_enabled" "$analytics_worker"
 assert_contains "$analytics_worker" 'name: safety-lightdash-analytics-content-worker'
 assert_contains "$analytics_worker" 'command: ["node","dist/scheduler.js"]'
+assert_contains "$analytics_worker" 'image: "example.com/lightdash:analytics-sync-release"'
+analytics_backend="$temp_dir/analytics-backend.yaml"
+extract_source lightdash/templates/backendDeployment.yaml "$analytics_enabled" "$analytics_backend"
+assert_contains "$analytics_backend" 'image: "example.com/lightdash:analytics-sync-release"'
 assert_env_value() {
     local name="$1"
     local value="$2"
