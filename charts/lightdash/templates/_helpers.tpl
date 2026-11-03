@@ -334,9 +334,10 @@ rollingUpdate:
 {{- $backendRecreate := eq (default "" .Values.lightdashBackend.strategy.type) "Recreate" -}}
 {{- $schedulerRecreate := and .Values.scheduler.enabled (eq (default "" .Values.scheduler.strategy.type) "Recreate") -}}
 {{- $appBuildRecreate := and .Values.appBuildWorker.enabled (eq (default "" .Values.appBuildWorker.strategy.type) "Recreate") -}}
+{{- $analyticsContentRecreate := and .Values.analyticsContentWorker.enabled (eq (default "" .Values.analyticsContentWorker.strategy.type) "Recreate") -}}
 {{- $warehouseRecreate := and .Values.warehouseNatsWorker.enabled (eq (default "" .Values.warehouseNatsWorker.strategy.type) "Recreate") -}}
 {{- $preAggregateRecreate := and .Values.preAggregateNatsWorker.enabled (eq (default "" .Values.preAggregateNatsWorker.strategy.type) "Recreate") -}}
-{{- $legacyRecreate := or $backendRecreate $schedulerRecreate $appBuildRecreate $warehouseRecreate $preAggregateRecreate -}}
+{{- $legacyRecreate := or $backendRecreate $schedulerRecreate $appBuildRecreate $analyticsContentRecreate $warehouseRecreate $preAggregateRecreate -}}
 {{- if or (eq $mode "Recreate") (and (eq $mode "") $legacyRecreate) -}}true{{- else -}}false{{- end -}}
 {{- end -}}
 
@@ -344,12 +345,13 @@ rollingUpdate:
 - {{ include "lightdash.fullname" . }}-backend
 - {{ include "lightdash.fullname" . }}-worker
 - {{ include "lightdash.fullname" . }}-app-build-worker
+- {{ include "lightdash.fullname" . }}-analytics-content-worker
 - {{ include "lightdash.fullname" . }}-warehouse-nats-worker
 - {{ include "lightdash.fullname" . }}-pre-aggregate-nats-worker
 {{- end -}}
 
 {{- define "lightdash.applicationWorkloadSelector" -}}
-app.kubernetes.io/name={{ include "lightdash.name" . }},app.kubernetes.io/instance={{ .Release.Name }},app.kubernetes.io/component in (backend,worker,app-build-worker,warehouse-nats-worker,pre-aggregate-nats-worker)
+app.kubernetes.io/name={{ include "lightdash.name" . }},app.kubernetes.io/instance={{ .Release.Name }},app.kubernetes.io/component in (backend,worker,app-build-worker,analytics-content-worker,warehouse-nats-worker,pre-aggregate-nats-worker)
 {{- end -}}
 
 

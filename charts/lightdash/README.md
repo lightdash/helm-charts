@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 2.16.1487](https://img.shields.io/badge/Version-2.16.1487-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 3.128.5](https://img.shields.io/badge/AppVersion-3.128.5-informational?style=flat-square)
+![Version: 2.16.1488](https://img.shields.io/badge/Version-2.16.1488-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 3.128.5](https://img.shields.io/badge/AppVersion-3.128.5-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -62,6 +62,27 @@ Notes:
 - `helm list` still shows the chart's `appVersion`; Helm has no runtime override for it.
 - The chart's templates (env vars, migration flow) target its own `appVersion`. Prefer upgrading the chart to pinning a tag far from it.
 - Use `image.repository` to pull from a mirror or private registry.
+
+### Automatic analytics content updates
+
+Enable `analyticsContentWorker` after deploying an application release that supports
+`reconcileAnalyticsContent` and `syncAnalyticsContent`:
+
+```yaml
+analyticsContentWorker:
+  enabled: true
+```
+
+This creates a separate `RELEASE-lightdash-analytics-content-worker` Deployment
+running `node dist/scheduler.js`. Its task allowlist contains only analytics content
+reconciliation and sync, with concurrency 1 and a three-connection application
+PostgreSQL pool. It uses independent CPU/memory resources, health probes, and
+shutdown handling. The ordinary scheduler must also remain enabled to run the
+nightly analytics processing that queues these jobs.
+
+The application excludes these tasks from ordinary scheduler pools by default.
+Keep them out of any custom `scheduler.tasks.include` list. Enabling the Helm
+worker on an older application release does not add support for the tasks.
 
 ### S3-compatible storage
 
@@ -192,6 +213,8 @@ spec:
       name: RELEASE-lightdash-worker
     - kind: Deployment
       name: RELEASE-lightdash-app-build-worker
+    - kind: Deployment
+      name: RELEASE-lightdash-analytics-content-worker
     - kind: Deployment
       name: RELEASE-lightdash-pre-aggregate-nats-worker
     - kind: Deployment
@@ -406,6 +429,39 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | affinity | object | `{}` |  |
+| analyticsContentWorker.concurrency | int | `1` |  |
+| analyticsContentWorker.db.maxConnections | int | `3` |  |
+| analyticsContentWorker.enabled | bool | `false` |  |
+| analyticsContentWorker.extraVolumeMounts | list | `[]` |  |
+| analyticsContentWorker.extraVolumes | list | `[]` |  |
+| analyticsContentWorker.lifecycle | object | `{}` |  |
+| analyticsContentWorker.livenessProbe.failureThreshold | int | `20` |  |
+| analyticsContentWorker.livenessProbe.initialDelaySeconds | int | `5` |  |
+| analyticsContentWorker.livenessProbe.periodSeconds | int | `15` |  |
+| analyticsContentWorker.livenessProbe.timeoutSeconds | int | `15` |  |
+| analyticsContentWorker.pollInterval | int | `5000` |  |
+| analyticsContentWorker.port | int | `8080` |  |
+| analyticsContentWorker.readinessProbe.failureThreshold | int | `2` |  |
+| analyticsContentWorker.readinessProbe.initialDelaySeconds | int | `5` |  |
+| analyticsContentWorker.readinessProbe.path | string | `"/api/v1/health"` |  |
+| analyticsContentWorker.readinessProbe.periodSeconds | int | `5` |  |
+| analyticsContentWorker.readinessProbe.timeoutSeconds | int | `5` |  |
+| analyticsContentWorker.replicas | int | `1` |  |
+| analyticsContentWorker.resources.limits.cpu | string | `"1"` |  |
+| analyticsContentWorker.resources.limits.ephemeral-storage | string | `"1Gi"` |  |
+| analyticsContentWorker.resources.limits.memory | string | `"1536Mi"` |  |
+| analyticsContentWorker.resources.requests.cpu | string | `"250m"` |  |
+| analyticsContentWorker.resources.requests.ephemeral-storage | string | `"256Mi"` |  |
+| analyticsContentWorker.resources.requests.memory | string | `"725Mi"` |  |
+| analyticsContentWorker.startupProbe.failureThreshold | int | `18` |  |
+| analyticsContentWorker.startupProbe.initialDelaySeconds | int | `5` |  |
+| analyticsContentWorker.startupProbe.periodSeconds | int | `10` |  |
+| analyticsContentWorker.startupProbe.timeoutSeconds | int | `10` |  |
+| analyticsContentWorker.strategy | object | `{}` |  |
+| analyticsContentWorker.tasks.exclude | string | `nil` |  |
+| analyticsContentWorker.tasks.include | string | `"reconcileAnalyticsContent,syncAnalyticsContent"` |  |
+| analyticsContentWorker.terminationGracePeriodSeconds | int | `90` |  |
+| analyticsContentWorker.type | string | `"graphile"` |  |
 | appBuildWorker.concurrency | int | `10` |  |
 | appBuildWorker.db.maxConnections | string | `nil` |  |
 | appBuildWorker.enabled | bool | `false` |  |

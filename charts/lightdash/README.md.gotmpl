@@ -64,6 +64,27 @@ Notes:
 - The chart's templates (env vars, migration flow) target its own `appVersion`. Prefer upgrading the chart to pinning a tag far from it.
 - Use `image.repository` to pull from a mirror or private registry.
 
+### Automatic analytics content updates
+
+Enable `analyticsContentWorker` after deploying an application release that supports
+`reconcileAnalyticsContent` and `syncAnalyticsContent`:
+
+```yaml
+analyticsContentWorker:
+  enabled: true
+```
+
+This creates a separate `RELEASE-lightdash-analytics-content-worker` Deployment
+running `node dist/scheduler.js`. Its task allowlist contains only analytics content
+reconciliation and sync, with concurrency 1 and a three-connection application
+PostgreSQL pool. It uses independent CPU/memory resources, health probes, and
+shutdown handling. The ordinary scheduler must also remain enabled to run the
+nightly analytics processing that queues these jobs.
+
+The application excludes these tasks from ordinary scheduler pools by default.
+Keep them out of any custom `scheduler.tasks.include` list. Enabling the Helm
+worker on an older application release does not add support for the tasks.
+
 ### S3-compatible storage
 
 Lightdash requires S3-compatible storage. Set the endpoint, bucket, and region when you install the chart:
@@ -193,6 +214,8 @@ spec:
       name: RELEASE-lightdash-worker
     - kind: Deployment
       name: RELEASE-lightdash-app-build-worker
+    - kind: Deployment
+      name: RELEASE-lightdash-analytics-content-worker
     - kind: Deployment
       name: RELEASE-lightdash-pre-aggregate-nats-worker
     - kind: Deployment

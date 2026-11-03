@@ -137,6 +137,7 @@ expected_rules='rules:
       - safety-lightdash-backend
       - safety-lightdash-worker
       - safety-lightdash-app-build-worker
+      - safety-lightdash-analytics-content-worker
       - safety-lightdash-warehouse-nats-worker
       - safety-lightdash-pre-aggregate-nats-worker
     verbs:
@@ -173,7 +174,7 @@ assert_scale_down() {
     assert_contains "$job" 'name: scale-down-workloads'
     assert_contains "$job" 'name: wait-for-workload-termination'
     assert_contains "$job" '--replicas=0'
-    assert_contains "$job" 'app.kubernetes.io/component in (backend,worker,app-build-worker,warehouse-nats-worker,pre-aggregate-nats-worker)'
+    assert_contains "$job" 'app.kubernetes.io/component in (backend,worker,app-build-worker,analytics-content-worker,warehouse-nats-worker,pre-aggregate-nats-worker)'
     assert_not_contains "$job" 'app.kubernetes.io/component=migration'
     assert_contains "$job" 'serviceAccountName: safety-lightdash-migration'
     assert_contains "$role" 'kind: Role'
@@ -219,6 +220,7 @@ deployment_sources=(
     lightdash/templates/backendDeployment.yaml
     lightdash/templates/workerDeployment.yaml
     lightdash/templates/appBuildWorkerDeployment.yaml
+    lightdash/templates/analyticsContentWorkerDeployment.yaml
     lightdash/templates/warehouseNatsWorkerDeployment.yaml
     lightdash/templates/preAggregateNatsWorkerDeployment.yaml
 )
@@ -237,6 +239,7 @@ for lifecycle in install upgrade; do
             --set autoscaling.minReplicas=3 \
             --set scheduler.enabled=true \
             --set appBuildWorker.enabled=true \
+            --set analyticsContentWorker.enabled=true \
             --set warehouseNatsWorker.enabled=true \
             --set preAggregateNatsWorker.enabled=true
 
@@ -268,6 +271,7 @@ legacy_components=(
     lightdashBackend
     scheduler
     appBuildWorker
+    analyticsContentWorker
     warehouseNatsWorker
     preAggregateNatsWorker
 )
@@ -297,6 +301,7 @@ render "$legacy_preserved" upgrade \
     --set migrationJob.enabled=true \
     --set scheduler.enabled=true \
     --set appBuildWorker.enabled=true \
+    --set analyticsContentWorker.enabled=true \
     --set warehouseNatsWorker.enabled=true \
     --set preAggregateNatsWorker.enabled=true \
     --set lightdashBackend.strategy.type=RollingUpdate \
@@ -323,6 +328,7 @@ render "$rolling_override" upgrade \
     --set migrationJob.enabled=true \
     --set scheduler.enabled=true \
     --set appBuildWorker.enabled=true \
+    --set analyticsContentWorker.enabled=true \
     --set warehouseNatsWorker.enabled=true \
     --set preAggregateNatsWorker.enabled=true \
     --set lightdashBackend.strategy.type=Recreate \
@@ -331,10 +337,12 @@ render "$rolling_override" upgrade \
     --set scheduler.strategy.rollingUpdate.maxSurge=22 \
     --set appBuildWorker.strategy.type=Recreate \
     --set appBuildWorker.strategy.rollingUpdate.maxSurge=23 \
+    --set analyticsContentWorker.strategy.type=Recreate \
+    --set analyticsContentWorker.strategy.rollingUpdate.maxSurge=24 \
     --set warehouseNatsWorker.strategy.type=Recreate \
-    --set warehouseNatsWorker.strategy.rollingUpdate.maxSurge=24 \
+    --set warehouseNatsWorker.strategy.rollingUpdate.maxSurge=25 \
     --set preAggregateNatsWorker.strategy.type=Recreate \
-    --set preAggregateNatsWorker.strategy.rollingUpdate.maxSurge=25
+    --set preAggregateNatsWorker.strategy.rollingUpdate.maxSurge=26
 surge=21
 for source in "${deployment_sources[@]}"; do
     assert_strategy "$rolling_override" "$source" RollingUpdate
@@ -349,37 +357,42 @@ render "$recreate_override" upgrade \
     --set migrationJob.enabled=true \
     --set scheduler.enabled=true \
     --set appBuildWorker.enabled=true \
+    --set analyticsContentWorker.enabled=true \
     --set warehouseNatsWorker.enabled=true \
     --set preAggregateNatsWorker.enabled=true \
     --set lightdashBackend.strategy.rollingUpdate.maxSurge=31 \
     --set scheduler.strategy.rollingUpdate.maxSurge=32 \
     --set appBuildWorker.strategy.rollingUpdate.maxSurge=33 \
-    --set warehouseNatsWorker.strategy.rollingUpdate.maxSurge=34 \
-    --set preAggregateNatsWorker.strategy.rollingUpdate.maxSurge=35
+    --set analyticsContentWorker.strategy.rollingUpdate.maxSurge=34 \
+    --set warehouseNatsWorker.strategy.rollingUpdate.maxSurge=35 \
+    --set preAggregateNatsWorker.strategy.rollingUpdate.maxSurge=36
 for source in "${deployment_sources[@]}"; do
     assert_strategy "$recreate_override" "$source" Recreate
     assert_no_rolling_update "$recreate_override" "$source"
 done
 assert_scale_down "$recreate_override"
 
-for mask in {0..15}; do
+for mask in {0..31}; do
     scheduler_enabled=false
     app_build_enabled=false
     warehouse_enabled=false
     pre_aggregate_enabled=false
+    analytics_content_enabled=false
     ((mask & 1)) && scheduler_enabled=true
     ((mask & 2)) && app_build_enabled=true
     ((mask & 4)) && warehouse_enabled=true
     ((mask & 8)) && pre_aggregate_enabled=true
+    ((mask & 16)) && analytics_content_enabled=true
     output="$temp_dir/workers-${mask}.yaml"
     render "$output" upgrade \
         --set upgrade.mode=Recreate \
         --set migrationJob.enabled=true \
         --set scheduler.enabled="$scheduler_enabled" \
         --set appBuildWorker.enabled="$app_build_enabled" \
+        --set analyticsContentWorker.enabled="$analytics_content_enabled" \
         --set warehouseNatsWorker.enabled="$warehouse_enabled" \
         --set preAggregateNatsWorker.enabled="$pre_aggregate_enabled"
-    expected_count=$((1 + (mask & 1) + ((mask >> 1) & 1) + ((mask >> 2) & 1) + ((mask >> 3) & 1)))
+    expected_count=$((1 + (mask & 1) + ((mask >> 1) & 1) + ((mask >> 2) & 1) + ((mask >> 3) & 1) + ((mask >> 4) & 1)))
     actual_count="$(grep -c '^kind: Deployment$' "$output" || true)"
     [[ "$actual_count" == "$expected_count" ]] || fail "worker mask $mask rendered $actual_count Deployments instead of $expected_count"
     assert_scale_down "$output"
@@ -392,6 +405,7 @@ render "$migration_off" upgrade \
     --set autoscaling.enabled=true \
     --set scheduler.enabled=true \
     --set appBuildWorker.enabled=true \
+    --set analyticsContentWorker.enabled=true \
     --set warehouseNatsWorker.enabled=true \
     --set preAggregateNatsWorker.enabled=true
 assert_no_scale_down "$migration_off"
@@ -428,4 +442,31 @@ if grep -R -Fq -- "$removed_key" "$chart_dir"; then
     fail "removed scale-down enabled key is still present"
 fi
 
-printf 'migration scale-down rendering checks passed\n'
+analytics_default="$temp_dir/analytics-default.yaml"
+render "$analytics_default" install
+assert_not_contains "$analytics_default" '# Source: lightdash/templates/analyticsContentWorkerDeployment.yaml'
+
+analytics_enabled="$temp_dir/analytics-enabled.yaml"
+render "$analytics_enabled" install --set analyticsContentWorker.enabled=true
+analytics_worker="$temp_dir/analytics-worker.yaml"
+extract_source lightdash/templates/analyticsContentWorkerDeployment.yaml "$analytics_enabled" "$analytics_worker"
+assert_contains "$analytics_worker" 'name: safety-lightdash-analytics-content-worker'
+assert_contains "$analytics_worker" 'command: ["node","dist/scheduler.js"]'
+assert_env_value() {
+    local name="$1"
+    local value="$2"
+    awk -v name="$name" -v expected="\"$value\"" '
+        $2 == "name:" && $3 == name { found = 1; next }
+        found { matched = ($1 == "value:" && $2 == expected); exit }
+        END { exit !matched }
+    ' "$analytics_worker" || fail "expected $name=$value in analytics worker"
+}
+assert_env_value SCHEDULER_INCLUDE_TASKS reconcileAnalyticsContent,syncAnalyticsContent
+assert_env_value SCHEDULER_CONCURRENCY 1
+assert_env_value PGMAXCONNECTIONS 3
+assert_env_value SCHEDULER_POLL_INTERVAL 5000
+assert_contains "$analytics_worker" 'cpu: 250m'
+assert_contains "$analytics_worker" 'memory: 1536Mi'
+assert_not_contains "$analytics_worker" 'name: SCHEDULER_EXCLUDE_TASKS'
+
+printf 'migration scale-down and analytics worker rendering checks passed\n'

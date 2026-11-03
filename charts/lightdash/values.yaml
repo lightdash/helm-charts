@@ -646,6 +646,52 @@ appBuildWorker:
   extraVolumeMounts: []
   extraVolumes: []
 
+## Dedicated graphile worker for analytics models and managed dashboards.
+## Requires an application release that supports both analytics content tasks.
+## These tasks are excluded from the application's ordinary scheduler defaults.
+analyticsContentWorker:
+  type: graphile
+  port: 8080
+  enabled: false
+  replicas: 1
+  concurrency: 1
+  pollInterval: 5000
+  db:
+    maxConnections: 3
+  resources:
+    requests:
+      memory: 725Mi
+      cpu: 250m
+      ephemeral-storage: 256Mi
+    limits:
+      memory: 1536Mi
+      cpu: "1"
+      ephemeral-storage: 1Gi
+  terminationGracePeriodSeconds: 90
+  startupProbe:
+    initialDelaySeconds: 5
+    timeoutSeconds: 10
+    periodSeconds: 10
+    failureThreshold: 18
+  livenessProbe:
+    initialDelaySeconds: 5
+    timeoutSeconds: 15
+    periodSeconds: 15
+    failureThreshold: 20
+  readinessProbe:
+    initialDelaySeconds: 5
+    timeoutSeconds: 5
+    periodSeconds: 5
+    failureThreshold: 2
+    path: /api/v1/health
+  lifecycle: {}
+  strategy: {}
+  tasks:
+    exclude:
+    include: reconcileAnalyticsContent,syncAnalyticsContent
+  extraVolumeMounts: []
+  extraVolumes: []
+
 ## Dedicated warehouse async query worker configuration
 warehouseNatsWorker:
   type: nats

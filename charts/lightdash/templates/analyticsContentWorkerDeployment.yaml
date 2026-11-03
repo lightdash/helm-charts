@@ -1,0 +1,2 @@
+{{- /* Analytics content worker deployment using reusable template - DO NOT REMOVE THIS COMMENT OTHERWISE FORMATTING WILL BREAK */ -}}
+{{- include "lightdash.workerDeployment" (dict "root" . "component" "analytics-content-worker" "workerConfig" .Values.analyticsContentWorker) -}}
