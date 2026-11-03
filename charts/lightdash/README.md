@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 2.16.1493](https://img.shields.io/badge/Version-2.16.1493-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 3.131.0](https://img.shields.io/badge/AppVersion-3.131.0-informational?style=flat-square)
+![Version: 2.16.1494](https://img.shields.io/badge/Version-2.16.1494-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 3.131.1](https://img.shields.io/badge/AppVersion-3.131.1-informational?style=flat-square)
 
 ## Prerequisites
 
