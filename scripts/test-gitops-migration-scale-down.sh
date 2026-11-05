@@ -22,6 +22,8 @@ cleanup() {
         kubectl -n "$app_namespace" get pods,deployments,hpa || true
         kubectl -n "$app_namespace" logs job/gitops-lightdash-migrate --all-containers=true --prefix=true || true
         kubectl -n "$app_namespace" get events --sort-by=.lastTimestamp || true
+        kubectl -n "$argo_namespace" logs pod/fixture-git || true
+        kubectl -n "$argo_namespace" logs deployment/argocd-repo-server --tail=100 || true
         kubectl -n "$argo_namespace" logs statefulset/argocd-application-controller --tail=100 || true
     fi
     kubectl delete namespace "$app_namespace" "$argo_namespace" --ignore-not-found --wait=false || true
@@ -71,7 +73,6 @@ git -C "$temp_dir/fixtures" init --initial-branch=main --quiet
 git -C "$temp_dir/fixtures" add manifests.yaml
 git -C "$temp_dir/fixtures" -c user.name=Smoke -c user.email=smoke@example.invalid commit --quiet -m fixtures
 git clone --bare --quiet "$temp_dir/fixtures" "$temp_dir/repository.git"
-git --git-dir="$temp_dir/repository.git" update-server-info
 tar -czf "$temp_dir/repository.tar.gz" -C "$temp_dir" repository.git
 
 kubectl create namespace "$argo_namespace"
@@ -89,23 +90,23 @@ metadata:
 spec:
   containers:
     - name: git
-      image: python:3.13-alpine
+      image: quay.io/argoproj/argocd:$argo_version
       command:
-        - python3
-        - -c
+        - sh
+        - -ec
         - |
-          import http.server, os, tarfile
-          os.mkdir('/tmp/repo')
-          with tarfile.open('/source/repository.tar.gz') as archive:
-              archive.extractall('/tmp/repo', filter='data')
-          os.chdir('/tmp/repo')
-          http.server.ThreadingHTTPServer(('0.0.0.0', 8080), http.server.SimpleHTTPRequestHandler).serve_forever()
+          mkdir /tmp/repo
+          tar -xzf /source/repository.tar.gz -C /tmp/repo
+          exec git daemon --reuseaddr --verbose --base-path=/tmp/repo --export-all --listen=0.0.0.0 --port=9418
       ports:
-        - containerPort: 8080
+        - containerPort: 9418
       readinessProbe:
-        httpGet:
-          path: /repository.git/HEAD
-          port: 8080
+        exec:
+          command:
+            - git
+            - ls-remote
+            - git://127.0.0.1:9418/repository.git
+            - refs/heads/main
       volumeMounts:
         - name: source
           mountPath: /source
@@ -122,13 +123,15 @@ spec:
   selector:
     app: fixture-git
   ports:
-    - port: 8080
-      targetPort: 8080
+    - port: 9418
+      targetPort: 9418
 YAML
 kubectl -n "$argo_namespace" rollout status deployment/argocd-repo-server --timeout=300s
 kubectl -n "$argo_namespace" rollout status deployment/argocd-redis --timeout=300s
 kubectl -n "$argo_namespace" rollout status statefulset/argocd-application-controller --timeout=300s
 kubectl -n "$argo_namespace" wait --for=condition=Ready pod/fixture-git --timeout=120s
+kubectl -n "$argo_namespace" exec deployment/argocd-repo-server -- \
+    git ls-remote "git://fixture-git.$argo_namespace.svc.cluster.local:9418/repository.git" refs/heads/main
 kubectl -n "$app_namespace" apply -f "$temp_dir/sentinel.yaml"
 kubectl -n "$app_namespace" rollout status deployment/unrelated-backend --timeout=120s
 sentinel_uid="$(kubectl -n "$app_namespace" get pods -l app.kubernetes.io/instance=unrelated -o jsonpath='{.items[0].metadata.uid}')"
@@ -140,7 +143,7 @@ metadata:
   name: migration-smoke
 spec:
   sourceRepos:
-    - http://fixture-git.$argo_namespace.svc.cluster.local:8080/repository.git
+    - git://fixture-git.$argo_namespace.svc.cluster.local:9418/repository.git
   destinations:
     - namespace: $app_namespace
       server: https://kubernetes.default.svc
@@ -155,7 +158,7 @@ metadata:
 spec:
   project: migration-smoke
   source:
-    repoURL: http://fixture-git.$argo_namespace.svc.cluster.local:8080/repository.git
+    repoURL: git://fixture-git.$argo_namespace.svc.cluster.local:9418/repository.git
     targetRevision: main
     path: .
     directory: {}
