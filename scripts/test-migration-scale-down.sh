@@ -300,6 +300,13 @@ for lifecycle in install upgrade; do
     done
 done
 
+legacy_install="$temp_dir/legacy-install.yaml"
+render "$legacy_install" install \
+    --set migrationJob.enabled=true \
+    --set upgrade.mode=Recreate \
+    --set migrationJob.scaleDownWorkloads=null
+assert_no_scale_down "$legacy_install"
+
 legacy_components=(
     lightdashBackend
     scheduler
