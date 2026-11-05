@@ -1,4 +1,4 @@
-{{- $scaleDownWorkloads := and .Release.IsUpgrade (eq (include "lightdash.requiresPreMigrationScaleDown" .) "true") -}}
+{{- $scaleDownWorkloads := eq (include "lightdash.shouldScaleDownWorkloads" .) "true" -}}
 {{- if .Values.migrationJob.enabled }}
 apiVersion: batch/v1
 kind: Job
@@ -55,6 +55,45 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
         - name: scale-down-workloads
+          {{- if .Values.migrationJob.scaleDownWorkloads.force }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - node
+          env:
+            - name: NODE_EXTRA_CA_CERTS
+              value: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+          args:
+            - -e
+            - |
+              const fs = require('node:fs');
+              const credentials = '/var/run/secrets/kubernetes.io/serviceaccount';
+              const namespace = fs.readFileSync(`${credentials}/namespace`, 'utf8').trim();
+              const token = fs.readFileSync(`${credentials}/token`, 'utf8').trim();
+              const base = `/apis/apps/v1/namespaces/${encodeURIComponent(namespace)}/deployments`;
+              const selector = {{ include "lightdash.applicationWorkloadSelector" . | toJson }};
+              async function request(path, method, body) {
+                const response = await fetch(`https://kubernetes.default.svc${path}`, {
+                  method,
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/merge-patch+json',
+                  },
+                  body: body === null ? undefined : JSON.stringify(body),
+                  signal: AbortSignal.timeout(30000),
+                });
+                if (!response.ok) throw new Error(`${method} ${path} failed: HTTP ${response.status}`);
+                return response;
+              }
+              async function scaleDown() {
+                const response = await request(`${base}?labelSelector=${encodeURIComponent(selector)}`, 'GET', null);
+                const deployments = await response.json();
+                for (const deployment of deployments.items) {
+                  await request(`${base}/${encodeURIComponent(deployment.metadata.name)}/scale`, 'PATCH', {spec: {replicas: 0}});
+                }
+              }
+              scaleDown().catch((error) => { console.error(error); process.exit(1); });
+          {{- else }}
           image: "{{ .Values.migrationJob.scaleDownWorkloads.image.repository }}:{{ .Values.migrationJob.scaleDownWorkloads.image.tag }}"
           imagePullPolicy: {{ .Values.migrationJob.scaleDownWorkloads.image.pullPolicy }}
           command:
@@ -64,6 +103,7 @@ spec:
             - deployment
             - --selector={{ include "lightdash.applicationWorkloadSelector" . }}
             - --replicas=0
+          {{- end }}
           {{- with .Values.migrationJob.scaleDownWorkloads.resources }}
           resources:
             {{- toYaml . | nindent 12 }}

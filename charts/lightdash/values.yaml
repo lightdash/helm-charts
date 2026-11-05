@@ -423,6 +423,8 @@ migrationJob:
     name: ""
     annotations: {}
   scaleDownWorkloads:
+    # -- Run the Recreate shutdown barrier without a Helm upgrade (e.g. Argo CD). Requires migrationJob.enabled and a Recreate strategy. Runs on every full sync; see the README.
+    force: false
     timeoutSeconds: 300
     image:
       repository: registry.k8s.io/kubectl

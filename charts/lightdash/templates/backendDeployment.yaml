@@ -1,6 +1,6 @@
 {{- $volumes := .Values.lightdashBackend.extraVolumes }}
 {{- $volumeMounts := .Values.lightdashBackend.extraVolumeMounts }}
-{{- $requiresPreMigrationScaleDown := eq (include "lightdash.requiresPreMigrationScaleDown" .) "true" }}
+{{- $scaleDownWorkloads := eq (include "lightdash.shouldScaleDownWorkloads" .) "true" }}
 {{- $strategy := include "lightdash.deploymentStrategy" (dict "root" . "strategy" .Values.lightdashBackend.strategy) | trim }}
 apiVersion: apps/v1
 kind: Deployment
@@ -10,7 +10,7 @@ metadata:
     {{- include "lightdash.labels" . | nindent 4 }}
     app.kubernetes.io/component: backend
 spec:
-  {{- if and .Values.autoscaling.enabled .Release.IsUpgrade .Values.migrationJob.enabled $requiresPreMigrationScaleDown }}
+  {{- if and .Values.autoscaling.enabled $scaleDownWorkloads }}
   replicas: {{ .Values.autoscaling.minReplicas }}
   {{- else if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
