@@ -341,7 +341,8 @@ rollingUpdate:
 {{- end -}}
 
 {{- define "lightdash.shouldScaleDownWorkloads" -}}
-{{- if and .Values.migrationJob.enabled (or .Release.IsUpgrade .Values.migrationJob.scaleDownWorkloads.force) (eq (include "lightdash.requiresPreMigrationScaleDown" .) "true") -}}true{{- else -}}false{{- end -}}
+{{- $scaleDown := default dict .Values.migrationJob.scaleDownWorkloads -}}
+{{- if and .Values.migrationJob.enabled (or .Release.IsUpgrade $scaleDown.force) (eq (include "lightdash.requiresPreMigrationScaleDown" .) "true") -}}true{{- else -}}false{{- end -}}
 {{- end -}}
 
 {{- define "lightdash.applicationDeploymentNames" -}}
