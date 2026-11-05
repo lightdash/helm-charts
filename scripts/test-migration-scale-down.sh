@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+repo_dir="$(CDPATH= cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 chart_dir="$repo_dir/charts/lightdash"
 temp_dir="$(mktemp -d)"
 trap 'rm -rf "$temp_dir"' EXIT
@@ -161,6 +161,7 @@ expected_rules='rules:
 
 assert_scale_down() {
     local render_file="$1"
+    local force="${2:-false}"
     local job="$temp_dir/job.yaml"
     local role="$temp_dir/role.yaml"
     local role_binding="$temp_dir/role-binding.yaml"
@@ -172,18 +173,28 @@ assert_scale_down() {
     assert_contains "$job" 'name: remove-backend-hpa'
     assert_contains "$job" 'name: scale-down-workloads'
     assert_contains "$job" 'name: wait-for-workload-termination'
-    assert_contains "$job" '--replicas=0'
+    local hook=pre-upgrade
+    if [[ "$force" == "true" ]]; then
+        hook=pre-install,pre-upgrade
+        assert_contains "$job" 'const deployments = await response.json();'
+        assert_contains "$job" "'PATCH', {spec: {replicas: 0}}"
+        assert_contains "$job" 'name: NODE_EXTRA_CA_CERTS'
+        assert_not_contains "$job" '--replicas=0'
+    else
+        assert_contains "$job" '--replicas=0'
+        assert_not_contains "$job" 'const deployments = await response.json();'
+    fi
     assert_contains "$job" 'app.kubernetes.io/component in (backend,worker,app-build-worker,warehouse-nats-worker,pre-aggregate-nats-worker)'
     assert_not_contains "$job" 'app.kubernetes.io/component=migration'
     assert_contains "$job" 'serviceAccountName: safety-lightdash-migration'
     assert_contains "$role" 'kind: Role'
     assert_not_contains "$role" 'kind: ClusterRole'
-    assert_contains "$role" 'helm.sh/hook: pre-upgrade'
+    assert_contains "$role" "helm.sh/hook: $hook"
     assert_contains "$role" 'helm.sh/hook-weight: "-3"'
     assert_contains "$role" 'helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded,hook-failed'
     assert_contains "$service_account" 'helm.sh/hook: pre-install,pre-upgrade'
     assert_contains "$service_account" 'helm.sh/hook-weight: "-2"'
-    assert_contains "$role_binding" 'helm.sh/hook: pre-upgrade'
+    assert_contains "$role_binding" "helm.sh/hook: $hook"
     assert_contains "$role_binding" 'helm.sh/hook-weight: "-1"'
     assert_contains "$role_binding" 'helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded,hook-failed'
     assert_contains "$role_binding" 'name: safety-lightdash-migration'
@@ -264,6 +275,38 @@ for lifecycle in install upgrade; do
     done
 done
 
+for lifecycle in install upgrade; do
+    for mode in unset RollingUpdate Recreate; do
+        for force in false true; do
+            output="$temp_dir/force-${force}-${mode}-${lifecycle}.yaml"
+            mode_value=""
+            [[ "$mode" == "unset" ]] || mode_value="$mode"
+            render "$output" "$lifecycle" \
+                --set-string upgrade.mode="$mode_value" \
+                --set migrationJob.enabled=true \
+                --set migrationJob.scaleDownWorkloads.force="$force" \
+                --set autoscaling.enabled=true \
+                --set autoscaling.minReplicas=3
+            backend="$temp_dir/backend.yaml"
+            extract_source lightdash/templates/backendDeployment.yaml "$output" "$backend"
+            if [[ "$mode" == "Recreate" && ( "$lifecycle" == "upgrade" || "$force" == "true" ) ]]; then
+                assert_scale_down "$output" "$force"
+                assert_contains "$backend" '  replicas: 3'
+            else
+                assert_no_scale_down "$output"
+                assert_not_contains "$backend" '  replicas:'
+            fi
+        done
+    done
+done
+
+legacy_install="$temp_dir/legacy-install.yaml"
+render "$legacy_install" install \
+    --set migrationJob.enabled=true \
+    --set upgrade.mode=Recreate \
+    --set migrationJob.scaleDownWorkloads=null
+assert_no_scale_down "$legacy_install"
+
 legacy_components=(
     lightdashBackend
     scheduler
@@ -283,11 +326,19 @@ for component in "${legacy_components[@]}"; do
     fi
     render "$output" upgrade "${args[@]}"
     assert_scale_down "$output"
+    render "$output" install "${args[@]}" --set migrationJob.scaleDownWorkloads.force=true
+    assert_scale_down "$output" true
 done
 
 disabled_legacy="$temp_dir/disabled-legacy.yaml"
 render "$disabled_legacy" upgrade \
     --set migrationJob.enabled=true \
+    --set scheduler.enabled=false \
+    --set scheduler.strategy.type=Recreate
+assert_no_scale_down "$disabled_legacy"
+render "$disabled_legacy" install \
+    --set migrationJob.enabled=true \
+    --set migrationJob.scaleDownWorkloads.force=true \
     --set scheduler.enabled=false \
     --set scheduler.strategy.type=Recreate
 assert_no_scale_down "$disabled_legacy"
@@ -341,6 +392,14 @@ for source in "${deployment_sources[@]}"; do
     assert_tuning "$rolling_override" "$source" "$surge"
     surge=$((surge + 1))
 done
+assert_no_scale_down "$rolling_override"
+render "$rolling_override" install \
+    --set upgrade.mode=RollingUpdate \
+    --set migrationJob.enabled=true \
+    --set migrationJob.scaleDownWorkloads.force=true \
+    --set lightdashBackend.strategy.type=Recreate \
+    --set scheduler.enabled=true \
+    --set scheduler.strategy.type=Recreate
 assert_no_scale_down "$rolling_override"
 
 recreate_override="$temp_dir/recreate-override.yaml"
@@ -402,6 +461,14 @@ done
 backend="$temp_dir/backend.yaml"
 extract_source lightdash/templates/backendDeployment.yaml "$migration_off" "$backend"
 assert_not_contains "$backend" '  replicas:'
+render "$migration_off" install \
+    --set upgrade.mode=Recreate \
+    --set migrationJob.enabled=false \
+    --set migrationJob.scaleDownWorkloads.force=true \
+    --set autoscaling.enabled=true
+assert_no_scale_down "$migration_off"
+extract_source lightdash/templates/backendDeployment.yaml "$migration_off" "$backend"
+assert_not_contains "$backend" '  replicas:'
 
 custom_rbac="$temp_dir/custom-rbac.yaml"
 render "$custom_rbac" upgrade \
@@ -415,6 +482,28 @@ job="$temp_dir/job.yaml"
 extract_source lightdash/templates/migrationJob.yaml "$custom_rbac" "$job"
 assert_contains "$job" 'serviceAccountName: existing-migrator'
 assert_contains "$job" 'name: scale-down-workloads'
+render "$custom_rbac" install \
+    --set upgrade.mode=Recreate \
+    --set migrationJob.enabled=true \
+    --set migrationJob.scaleDownWorkloads.force=true \
+    --set migrationJob.scaleDownWorkloads.rbac.create=false \
+    --set migrationJob.serviceAccount.create=false \
+    --set migrationJob.serviceAccount.name=existing-migrator
+assert_not_contains "$custom_rbac" 'name: safety-lightdash-migration-scale-down'
+extract_source lightdash/templates/migrationJob.yaml "$custom_rbac" "$job"
+assert_contains "$job" 'serviceAccountName: existing-migrator'
+assert_contains "$job" 'name: scale-down-workloads'
+
+fixed_replicas="$temp_dir/fixed-replicas.yaml"
+render "$fixed_replicas" install \
+    --set upgrade.mode=Recreate \
+    --set migrationJob.enabled=true \
+    --set migrationJob.scaleDownWorkloads.force=true \
+    --set autoscaling.enabled=false \
+    --set replicaCount=4
+assert_scale_down "$fixed_replicas" true
+extract_source lightdash/templates/backendDeployment.yaml "$fixed_replicas" "$backend"
+assert_contains "$backend" '  replicas: 4'
 
 invalid_output="$temp_dir/invalid.yaml"
 invalid_error="$temp_dir/invalid.err"
