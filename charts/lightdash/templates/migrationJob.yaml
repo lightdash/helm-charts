@@ -70,10 +70,13 @@ spec:
               const credentials = '/var/run/secrets/kubernetes.io/serviceaccount';
               const namespace = fs.readFileSync(`${credentials}/namespace`, 'utf8').trim();
               const token = fs.readFileSync(`${credentials}/token`, 'utf8').trim();
+              const host = process.env.KUBERNETES_SERVICE_HOST;
+              const address = host.includes(':') ? `[${host}]` : host;
+              const server = `https://${address}:${process.env.KUBERNETES_SERVICE_PORT}`;
               const base = `/apis/apps/v1/namespaces/${encodeURIComponent(namespace)}/deployments`;
               const selector = {{ include "lightdash.applicationWorkloadSelector" . | toJson }};
               async function request(path, method, body) {
-                const response = await fetch(`https://kubernetes.default.svc${path}`, {
+                const response = await fetch(`${server}${path}`, {
                   method,
                   headers: {
                     Authorization: `Bearer ${token}`,
