@@ -38,6 +38,42 @@ entries:
     - https://github.com/lightdash/helm-charts/releases/download/lightdash-3.0.0-beta.1/lightdash-3.0.0-beta.1.tgz
     version: 3.0.0-beta.1
   - apiVersion: v2
+    appVersion: 3.269.1
+    created: "2026-11-16T15:39:10.659470826Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 1.x.x
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 11.x.x
+    - condition: browserless-chrome.enabled
+      name: browserless-chrome
+      repository: https://charts.sagikazarmark.dev
+      version: 0.0.5
+    - condition: nats.enabled
+      name: nats
+      repository: https://nats-io.github.io/k8s/helm/charts/
+      version: 2.12.4
+    description: A Helm chart to deploy lightdash on kubernetes
+    digest: 2f321a78f29092f8b2f0b4635083eb4e5c661ba324337807326e3575574cd29e
+    icon: https://docs.lightdash.com/img/logo.png
+    maintainers:
+    - email: oliver@lightdash.com
+      name: owlas
+      url: https://github.com/owlas
+    - email: jim@ramtank.com
+      name: jim80net
+      url: https://github.com/jim80net
+    name: lightdash
+    type: application
+    urls:
+    - https://github.com/lightdash/helm-charts/releases/download/lightdash-2.16.1754/lightdash-2.16.1754.tgz
+    version: 2.16.1754
+  - apiVersion: v2
     appVersion: 3.269.0
     created: "2026-11-16T15:34:05.715131291Z"
     dependencies:
@@ -60136,4 +60172,4 @@ entries:
     urls:
     - https://github.com/lightdash/helm-charts/releases/download/lightdash-0.1.0/lightdash-0.1.0.tgz
     version: 0.1.0
-generated: "2026-11-16T15:34:05.717329009Z"
+generated: "2026-11-16T15:39:10.663157468Z"
