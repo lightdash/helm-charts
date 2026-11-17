@@ -2,6 +2,10 @@ name: GitOps Migration Scale-down
 
 on:
   pull_request:
+    paths:
+      - 'charts/lightdash/**'
+      - 'scripts/test-gitops-migration-scale-down*'
+      - '.github/workflows/gitops-migration-scale-down.yml'
   workflow_dispatch:
 
 jobs:
