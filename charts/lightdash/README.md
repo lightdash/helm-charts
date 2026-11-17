@@ -2,7 +2,7 @@
 
 A Helm chart to deploy lightdash on kubernetes
 
-![Version: 2.16.1776](https://img.shields.io/badge/Version-2.16.1776-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 3.281.0](https://img.shields.io/badge/AppVersion-3.281.0-informational?style=flat-square)
+![Version: 2.16.1777](https://img.shields.io/badge/Version-2.16.1777-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 3.281.0](https://img.shields.io/badge/AppVersion-3.281.0-informational?style=flat-square)
 
 ## Prerequisites
 
@@ -388,15 +388,44 @@ Map a `true` upgrade-check result to `upgrade.mode: RollingUpdate`. Map `false` 
 
 An explicit mode is authoritative for the backend and all four worker Deployments. `Recreate` removes any per-component `rollingUpdate` block. `RollingUpdate` keeps valid per-component `rollingUpdate` tuning. Leave `upgrade.mode` empty to preserve every existing per-component strategy exactly.
 
-When `migrationJob.enabled` is `true`, a Helm upgrade automatically runs the scale-down sequence if the explicit mode is `Recreate`. For backward compatibility, an empty mode also runs it when the backend or any enabled worker has `strategy.type: Recreate`. It never scales workloads down during installation.
+When `migrationJob.enabled` is `true`, a Helm upgrade automatically runs the scale-down sequence if the explicit mode is `Recreate`. For backward compatibility, an empty mode also runs it when the backend or any enabled worker has `strategy.type: Recreate`. By default, it never scales workloads down during installation.
 
-Before an upgrade migration that requires `Recreate`, the Job removes the backend HPA, scales the backend and every worker Deployment to zero, and waits for all matching application pods to terminate. The migration starts only after that wait succeeds. The migration Job pod is not part of the wait selector.
+### Argo CD and other GitOps tools
+
+Argo CD renders charts with `helm template`, so Helm never identifies a sync as an upgrade. Opt into the same shutdown barrier for GitOps syncs:
+
+```yaml
+upgrade:
+  mode: Recreate
+migrationJob:
+  enabled: true
+  scaleDownWorkloads:
+    force: true
+```
+
+`force` only bypasses the upgrade lifecycle check. The migration Job must still be enabled, and the strategy must still require `Recreate` (including the legacy per-component settings above). An explicit `RollingUpdate` never triggers scale-down. The default is `false`, preserving Helm CLI and existing deployments.
+
+With `force: true`, the barrier also runs on first installation and every full sync, including syncs without an application version change. An empty set of application Deployments is a no-op. The forced scaling step uses Node from the configured Lightdash application image, with the `migrationJob.scaleDownWorkloads.resources` settings, so size those for Node rather than kubectl; the HPA removal and pod wait use the configured kubectl image. No shell is required in that image.
+
+Use a **full, hook-aware sync** that reapplies all workload and HPA manifests after the migration hook succeeds. For Argo CD:
+
+- Keep `ApplyOutOfSyncOnly` disabled and avoid selective sync: the restore manifests must be applied even if they matched the desired state before the hook stopped workloads.
+- If autoscaling is enabled, ignore `/spec/replicas` when comparing the backend Deployment, but do not combine that rule with `RespectIgnoreDifferences=true`, which can prevent the sync from restoring replicas.
+- If Argo CD uses the `app.kubernetes.io/instance` label for tracking, keep the Application name equal to the Helm release name, or configure a separate tracking label, so the label stays the Helm release name used by the workload selector.
+- Use the chart's Helm hooks throughout the Application. Defining native Argo CD hooks in the same Application causes Argo CD to ignore Helm hooks.
+- Ensure database and external Secrets are ready before the PreSync migration hook, as for any migration-Job installation. Pause other controllers that could restore application replicas or recreate the HPA during migration.
+
+These requirements follow [Argo CD's Helm hook mapping](https://argo-cd.readthedocs.io/en/stable/user-guide/helm/#helm-hooks) and [sync options](https://argo-cd.readthedocs.io/en/stable/user-guide/sync-options/). Other GitOps tools must provide the same hook ordering and restore behavior; rendering and applying all resources at once does not provide a shutdown barrier.
+
+### Shutdown and restoration
+
+Before an upgrade migration that requires `Recreate` (or on every sync with `force`), the Job removes the backend HPA, scales the backend and every worker Deployment to zero, and waits for all matching application pods to terminate. The migration starts only after that wait succeeds. The migration Job pod is not part of the wait selector.
 
 A successful upgrade applies the normal release manifests after the hook. Those manifests restore configured worker replicas and either `replicaCount` or `autoscaling.minReplicas` for the backend, then recreate the backend HPA when autoscaling is enabled. Application downtime lasts from the scale-down until the new pods become ready.
 
 If the migration, wait, or any Kubernetes command fails, the upgrade fails closed. The Job does not restore the HPA or replicas, so the application remains stopped until an operator fixes the problem and retries or rolls back the release.
 
-By default, the chart creates temporary namespace-scoped Role and RoleBinding hooks before a pre-upgrade scale-down. Set `migrationJob.scaleDownWorkloads.rbac.create: false` only when the migration service account can get and delete the named backend HPA, list Deployments, patch the scale subresource for the five named Lightdash Deployments, and get, list, and watch pods. The image, timeout, resources, and RBAC settings remain under `migrationJob.scaleDownWorkloads`. When `migrationJob.serviceAccount.create` is `false`, the named custom service account must exist before the migration hook starts. When it is `true`, the chart creates the migration service account as an earlier hook.
+By default, the chart creates temporary namespace-scoped Role and RoleBinding hooks before the scale-down (pre-upgrade, or also pre-install with `force`). Set `migrationJob.scaleDownWorkloads.rbac.create: false` only when the migration service account can get and delete the named backend HPA, list Deployments, patch the scale subresource for the five named Lightdash Deployments, and get, list, and watch pods. The image, timeout, resources, and RBAC settings remain under `migrationJob.scaleDownWorkloads`. When `migrationJob.serviceAccount.create` is `false`, the named custom service account must exist before the migration hook starts. When it is `true`, the chart creates the migration service account as an earlier hook.
 
 ## Values
 
@@ -515,6 +544,7 @@ If you don't want helm to manage this, you may wish to separately create a secre
 | migrationJob.inheritGlobalEnv | bool | `false` | When true, the migration Job also receives the top-level extraEnv and existingSecret, so env supplied globally (for example LIGHTDASH_LICENSE_KEY) reaches the migrator. Default false keeps current behaviour. When secretRefs.enabled is true only the extraEnv half applies; existingSecret is ignored. |
 | migrationJob.podAnnotations | object | `{}` |  |
 | migrationJob.resources | object | `{}` |  |
+| migrationJob.scaleDownWorkloads.force | bool | `false` | Run the Recreate shutdown barrier without a Helm upgrade (e.g. Argo CD). Requires migrationJob.enabled and a Recreate strategy. Runs on every full sync; see the README. |
 | migrationJob.scaleDownWorkloads.image.pullPolicy | string | `"IfNotPresent"` |  |
 | migrationJob.scaleDownWorkloads.image.repository | string | `"registry.k8s.io/kubectl"` |  |
 | migrationJob.scaleDownWorkloads.image.tag | string | `"v1.33.4"` |  |
