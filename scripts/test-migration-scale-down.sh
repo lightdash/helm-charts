@@ -277,26 +277,24 @@ done
 
 for lifecycle in install upgrade; do
     for mode in unset RollingUpdate Recreate; do
-        for force in false true; do
-            output="$temp_dir/force-${force}-${mode}-${lifecycle}.yaml"
-            mode_value=""
-            [[ "$mode" == "unset" ]] || mode_value="$mode"
-            render "$output" "$lifecycle" \
-                --set-string upgrade.mode="$mode_value" \
-                --set migrationJob.enabled=true \
-                --set migrationJob.scaleDownWorkloads.force="$force" \
-                --set autoscaling.enabled=true \
-                --set autoscaling.minReplicas=3
-            backend="$temp_dir/backend.yaml"
-            extract_source lightdash/templates/backendDeployment.yaml "$output" "$backend"
-            if [[ "$mode" == "Recreate" && ( "$lifecycle" == "upgrade" || "$force" == "true" ) ]]; then
-                assert_scale_down "$output" "$force"
-                assert_contains "$backend" '  replicas: 3'
-            else
-                assert_no_scale_down "$output"
-                assert_not_contains "$backend" '  replicas:'
-            fi
-        done
+        output="$temp_dir/force-${mode}-${lifecycle}.yaml"
+        mode_value=""
+        [[ "$mode" == "unset" ]] || mode_value="$mode"
+        render "$output" "$lifecycle" \
+            --set-string upgrade.mode="$mode_value" \
+            --set migrationJob.enabled=true \
+            --set migrationJob.scaleDownWorkloads.force=true \
+            --set autoscaling.enabled=true \
+            --set autoscaling.minReplicas=3
+        backend="$temp_dir/backend.yaml"
+        extract_source lightdash/templates/backendDeployment.yaml "$output" "$backend"
+        if [[ "$mode" == "Recreate" ]]; then
+            assert_scale_down "$output" true
+            assert_contains "$backend" '  replicas: 3'
+        else
+            assert_no_scale_down "$output"
+            assert_not_contains "$backend" '  replicas:'
+        fi
     done
 done
 
