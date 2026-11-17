@@ -362,7 +362,7 @@ spec:
     spec:
       containers:
         - name: minio
-          image: minio/minio:latest
+          image: coollabsio/minio:RELEASE.2025-10-15T17-29-55Z
           args:
             - server
             - /data
@@ -412,7 +412,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: bucket
-          image: minio/mc:latest
+          image: coollabsio/minio:RELEASE.2025-10-15T17-29-55Z
           command:
             - /bin/sh
             - -c
