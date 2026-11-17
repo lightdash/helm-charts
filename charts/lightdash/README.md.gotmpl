@@ -405,7 +405,7 @@ Use a **full, hook-aware sync** that reapplies all workload and HPA manifests af
 
 - Keep `ApplyOutOfSyncOnly` disabled and avoid selective sync: the restore manifests must be applied even if they matched the desired state before the hook stopped workloads.
 - If autoscaling is enabled, ignore `/spec/replicas` when comparing the backend Deployment, but do not combine that rule with `RespectIgnoreDifferences=true`, which can prevent the sync from restoring replicas.
-- Keep the Argo CD Application name equal to the Helm release name, or configure a separate Argo tracking label so `app.kubernetes.io/instance` remains the Helm release name used by the workload selector.
+- If Argo CD uses the `app.kubernetes.io/instance` label for tracking, keep the Application name equal to the Helm release name, or configure a separate tracking label, so the label stays the Helm release name used by the workload selector.
 - Use the chart's Helm hooks throughout the Application. Defining native Argo CD hooks in the same Application causes Argo CD to ignore Helm hooks.
 - Ensure database and external Secrets are ready before the PreSync migration hook, as for any migration-Job installation. Pause other controllers that could restore application replicas or recreate the HPA during migration.
 
@@ -413,7 +413,7 @@ These requirements follow [Argo CD's Helm hook mapping](https://argo-cd.readthed
 
 ### Shutdown and restoration
 
-Before an upgrade migration that requires `Recreate`, the Job removes the backend HPA, scales the backend and every worker Deployment to zero, and waits for all matching application pods to terminate. The migration starts only after that wait succeeds. The migration Job pod is not part of the wait selector.
+Before an upgrade migration that requires `Recreate` (or on every sync with `force`), the Job removes the backend HPA, scales the backend and every worker Deployment to zero, and waits for all matching application pods to terminate. The migration starts only after that wait succeeds. The migration Job pod is not part of the wait selector.
 
 A successful upgrade applies the normal release manifests after the hook. Those manifests restore configured worker replicas and either `replicaCount` or `autoscaling.minReplicas` for the backend, then recreate the backend HPA when autoscaling is enabled. Application downtime lasts from the scale-down until the new pods become ready.
 

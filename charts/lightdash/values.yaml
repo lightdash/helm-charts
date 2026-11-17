@@ -400,6 +400,7 @@ ssl:
 ## @param migrationJob.serviceAccount.create Create a dedicated ServiceAccount for the migration hook Job (pre-install/pre-upgrade)
 ## @param migrationJob.serviceAccount.name ServiceAccount name (defaults to `<release-fullname>-migration` when create is true, or `default` when create is false)
 ## @param migrationJob.serviceAccount.annotations Annotations on the migration ServiceAccount (e.g. workload identity)
+## @param migrationJob.scaleDownWorkloads.force Run the Recreate shutdown barrier without a Helm upgrade (e.g. Argo CD)
 ## @param migrationJob.scaleDownWorkloads.timeoutSeconds Maximum time to wait for Lightdash application pods to terminate
 ## @param migrationJob.scaleDownWorkloads.image.repository kubectl image repository
 ## @param migrationJob.scaleDownWorkloads.image.tag kubectl image tag
